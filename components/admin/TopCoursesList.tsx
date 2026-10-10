@@ -3,7 +3,21 @@
 import Image from 'next/image';
 import { Award, Star } from 'lucide-react';
 
-const topCourses = [
+interface TopCourseItem {
+  id: string;
+  title: string;
+  category: string;
+  sales: number;
+  rating: number;
+  price: string;
+  thumbnail: string;
+}
+
+interface TopCoursesListProps {
+  courses?: TopCourseItem[];
+}
+
+const defaultTopCourses: TopCourseItem[] = [
   {
     id: '1',
     title: 'General English Foundation Capsule',
@@ -33,7 +47,7 @@ const topCourses = [
   },
   {
     id: '4',
-    title: 'Business English & Career Skills',
+    title: 'Business English & Corporate Skills',
     category: 'Business English',
     sales: 840,
     rating: 4.9,
@@ -42,20 +56,22 @@ const topCourses = [
   },
 ];
 
-export default function TopCoursesList() {
+export default function TopCoursesList({ courses }: TopCoursesListProps) {
+  const topCourses = courses && courses.length > 0 ? courses : defaultTopCourses;
+
   return (
     <div className="bg-white rounded-3xl p-6 shadow-sm border border-slate-100 space-y-5">
       <div className="flex items-center justify-between">
         <h3 className="font-display font-bold text-base text-slate-900 flex items-center gap-2">
           <Award className="w-4 h-4 text-amber-500" />
-          Top Selling Courses
+          <span>Top Performing English Capsules</span>
         </h3>
-        <span className="text-xs font-semibold text-[#8B5CF6] hover:underline cursor-pointer">
-          View All
+        <span className="text-xs font-semibold text-purple-600">
+          Live Rankings
         </span>
       </div>
 
-      <div className="space-y-4">
+      <div className="space-y-3.5">
         {topCourses.map((course, idx) => (
           <div
             key={course.id}
@@ -65,12 +81,13 @@ export default function TopCoursesList() {
               <span className="text-xs font-extrabold text-slate-400 w-4 text-center">
                 #{idx + 1}
               </span>
-              <div className="relative w-12 h-10 rounded-xl overflow-hidden flex-shrink-0 border border-slate-200">
+              <div className="relative w-12 h-10 rounded-xl overflow-hidden flex-shrink-0 border border-slate-200 bg-slate-100">
                 <Image
                   src={course.thumbnail}
                   alt={course.title}
                   fill
                   className="object-cover"
+                  sizes="48px"
                 />
               </div>
               <div className="min-w-0">
@@ -82,7 +99,7 @@ export default function TopCoursesList() {
                     <Star className="w-3 h-3 fill-amber-400" /> {course.rating}
                   </span>
                   <span>•</span>
-                  <span>{course.sales} sales</span>
+                  <span>{course.sales} learners</span>
                 </p>
               </div>
             </div>

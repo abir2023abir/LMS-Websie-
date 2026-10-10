@@ -41,7 +41,7 @@ export default function ReviewsSection() {
   };
 
   return (
-    <section className="bg-[#111827] text-white py-20 relative overflow-hidden border-t border-white/10">
+    <section id="reviews" className="bg-[#111827] text-white py-20 relative overflow-hidden border-t border-white/10">
       <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 space-y-12">
         {/* Header */}
         <div className="space-y-3">

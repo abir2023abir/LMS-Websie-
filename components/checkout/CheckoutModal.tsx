@@ -75,7 +75,7 @@ export default function CheckoutModal({
       if (onSuccess) onSuccess();
 
       setTimeout(() => {
-        router.push('/dashboard/student');
+        router.push('/student');
         onClose();
       }, 1800);
     } catch (err: any) {

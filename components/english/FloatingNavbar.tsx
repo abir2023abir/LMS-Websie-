@@ -2,7 +2,7 @@
 
 import { useState } from 'react';
 import Link from 'next/link';
-import { ArrowRight, Menu, X, Shield, Award, BookOpen, GraduationCap, LayoutDashboard } from 'lucide-react';
+import { ArrowRight, Menu, X, LayoutDashboard } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useAuth } from '@/context/AuthContext';
 
@@ -13,9 +13,10 @@ export default function FloatingNavbar() {
   const navItems = [
     { name: 'Home', href: '/' },
     { name: 'All Courses', href: '/courses' },
+    { name: 'Kids English', href: '/#kids-english' },
+    { name: 'Blog', href: '/blog' },
     { name: 'Certificate Verification', href: '/verify-certificate' },
-    { name: 'Price Offers', href: '/#courses' },
-    { name: 'Our Branches', href: '/#branches' },
+    { name: 'About Us', href: '/#about' },
   ];
 
   return (
@@ -48,20 +49,10 @@ export default function FloatingNavbar() {
 
         {/* ── Right: Action Pill Buttons ── */}
         <div className="hidden sm:flex items-center gap-3">
-          {/* Admin link shortcut */}
-          <Link
-            href="/admin"
-            className="group flex items-center bg-white/5 border border-white/15 hover:border-white/30 text-white rounded-full px-3.5 py-1.5 text-xs font-semibold transition-all hover:bg-white/10"
-            title="Admin Management Panel"
-          >
-            <Shield className="w-3.5 h-3.5 text-[#FACC15] mr-1.5" />
-            <span>Admin</span>
-          </Link>
-
           {/* User Auth / Dashboard Button */}
           {user ? (
             <Link
-              href={role === 'Instructor' ? '/dashboard/instructor' : '/dashboard/student'}
+              href={role === 'Instructor' ? '/dashboard/instructor' : '/student'}
               className="group flex items-center bg-[#FACC15] hover:bg-[#eab308] text-[#111827] rounded-full pl-4 pr-1 py-1 text-xs font-bold transition-all shadow-lg shadow-[#FACC15]/20"
             >
               <span>Dashboard</span>
@@ -112,16 +103,10 @@ export default function FloatingNavbar() {
               </Link>
             ))}
             <div className="pt-2 border-t border-white/10 flex flex-col gap-2">
-              <Link href="/admin" onClick={() => setMobileMenuOpen(false)}>
-                <div className="w-full flex items-center justify-between bg-white/10 text-white font-bold text-xs py-2.5 px-4 rounded-full border border-white/15">
-                  <span className="flex items-center gap-1.5">
-                    <Shield className="w-3.5 h-3.5 text-[#FACC15]" /> Admin Panel
-                  </span>
-                  <ArrowRight className="w-4 h-4" />
-                </div>
-              </Link>
-
-              <Link href={user ? '/dashboard/student' : '/login'} onClick={() => setMobileMenuOpen(false)}>
+              <Link
+                href={user ? (role === 'Instructor' ? '/dashboard/instructor' : '/student') : '/login'}
+                onClick={() => setMobileMenuOpen(false)}
+              >
                 <div className="w-full flex items-center justify-between bg-[#FACC15] text-[#111827] font-bold text-xs py-2.5 px-4 rounded-full">
                   <span>{user ? 'My Dashboard' : 'Log In / Sign Up'}</span>
                   <ArrowRight className="w-4 h-4" />

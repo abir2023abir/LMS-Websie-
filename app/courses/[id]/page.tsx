@@ -4,92 +4,60 @@ import { useState, useEffect } from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
 import { useParams } from 'next/navigation';
-import Navbar from '@/components/layout/Navbar';
-import Footer from '@/components/layout/Footer';
-import Button from '@/components/ui/Button';
+import FloatingNavbar from '@/components/english/FloatingNavbar';
+import EnglishFooter from '@/components/english/EnglishFooter';
 import VideoPlayer from '@/components/player/VideoPlayer';
 import CheckoutModal from '@/components/checkout/CheckoutModal';
 import { getCourseById } from '@/lib/db';
-import { featuredCourses } from '@/lib/data';
-import type { CourseSchema, ModuleSchema, LessonSchema } from '@/types/course';
+import { getFallbackCourseData } from '@/lib/progress';
+import type { CourseSchema, LessonSchema } from '@/types/course';
 import {
   Star,
   Clock,
   BookOpen,
   Users,
-  Award,
   CheckCircle,
   PlayCircle,
   ChevronDown,
   ChevronUp,
-  Share2,
-  ShieldCheck,
-  Zap,
+  Sparkles,
+  ArrowLeft,
+  Globe,
+  FileCheck,
+  Check,
+  ChevronsRight,
 } from 'lucide-react';
 
 export default function CourseDetailsPage() {
   const params = useParams();
-  const courseId = params?.id as string;
+  const courseId = (params?.id as string) || '1';
 
   const [course, setCourse] = useState<CourseSchema | null>(null);
   const [loading, setLoading] = useState(true);
-  const [activeTab, setActiveTab] = useState<'overview' | 'curriculum'>('overview');
-  const [isEnrolled, setIsEnrolled] = useState(false);
+  const [activeTab, setActiveTab] = useState<'overview' | 'curriculum' | 'reviews'>('overview');
   const [showCheckoutModal, setShowCheckoutModal] = useState(false);
   const [activeVideoUrl, setActiveVideoUrl] = useState<string | undefined>(undefined);
-  const [activeLessonTitle, setActiveLessonTitle] = useState<string>('Introduction & Overview');
-  const [openModules, setOpenModules] = useState<Record<string, boolean>>({ 'mod-0': true });
+  const [activeLessonTitle, setActiveLessonTitle] = useState<string>('Introduction & Capsule Orientation');
+  const [openModules, setOpenModules] = useState<Record<string, boolean>>({ 'mod-1': true, 'mod-0': true });
 
   useEffect(() => {
     async function loadCourse() {
       setLoading(true);
       if (!courseId) return;
 
-      const fetched = await getCourseById(courseId);
+      let fetched = await getCourseById(courseId);
+      if (!fetched || !fetched.modules) {
+        fetched = getFallbackCourseData(courseId);
+      }
 
       if (fetched) {
         setCourse(fetched);
-      } else {
-        const match = featuredCourses.find((c) => c.id === courseId || c.slug === courseId);
-        if (match) {
-          const fallbackCourse: CourseSchema = {
-            id: match.id,
-            title: match.title,
-            description: match.description,
-            instructorId: match.instructor.name,
-            instructorName: match.instructor.name,
-            price: match.price,
-            originalPrice: match.originalPrice,
-            thumbnail: match.thumbnail,
-            category: match.category,
-            level: match.level,
-            rating: match.rating,
-            reviewCount: match.reviewCount,
-            studentCount: match.studentCount,
-            duration: match.duration,
-            lessonCount: match.lessonCount,
-            modules: [
-              {
-                id: 'mod-0',
-                title: 'Module 1: Foundations & Getting Started',
-                lessons: [
-                  { id: 'l1', title: '1.1 Course Orientation & Goals', videoUrl: 'https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/BigBuckBunny.mp4', duration: '08:15' },
-                  { id: 'l2', title: '1.2 Architecture Overview & Setup', videoUrl: 'https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ElephantsDream.mp4', duration: '14:20' },
-                ],
-              },
-              {
-                id: 'mod-1',
-                title: 'Module 2: Advanced Core Concepts',
-                lessons: [
-                  { id: 'l3', title: '2.1 Building Real-World Applications', videoUrl: 'https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ForBiggerBlazes.mp4', duration: '18:45' },
-                  { id: 'l4', title: '2.2 Performance Optimization & Security', videoUrl: 'https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ForBiggerEscapes.mp4', duration: '22:10' },
-                ],
-              },
-            ],
-          };
-          setCourse(fallbackCourse);
+        if (fetched.modules?.[0]?.lessons?.[0]?.videoUrl) {
+          setActiveVideoUrl(fetched.modules[0].lessons[0].videoUrl);
+          setActiveLessonTitle(fetched.modules[0].lessons[0].title);
         }
       }
+
       setLoading(false);
     }
 
@@ -111,343 +79,398 @@ export default function CourseDetailsPage() {
     setShowCheckoutModal(true);
   };
 
-  const handleCheckoutSuccess = () => {
-    setIsEnrolled(true);
-  };
-
   if (loading) {
     return (
-      <div className="min-h-screen bg-dark-900 text-white flex flex-col justify-between">
-        <Navbar />
-        <div className="max-w-7xl mx-auto px-4 py-32 text-center text-slate-400">
-          Loading course details...
+      <div className="min-h-screen bg-slate-50 text-[#111827] flex items-center justify-center p-4">
+        <div className="flex items-center gap-3 bg-white border border-slate-200 px-6 py-4 rounded-2xl shadow-xl">
+          <div className="w-5 h-5 border-2 border-[#111827] border-t-transparent rounded-full animate-spin" />
+          <span className="font-semibold text-[#111827]">Loading English Capsule Details...</span>
         </div>
-        <Footer />
       </div>
     );
   }
 
   if (!course) {
     return (
-      <div className="min-h-screen bg-dark-900 text-white flex flex-col justify-between">
-        <Navbar />
-        <div className="max-w-7xl mx-auto px-4 py-32 text-center">
-          <h2 className="font-display font-bold text-3xl mb-4">Course Not Found</h2>
-          <p className="text-slate-400 mb-6">The course you are looking for does not exist or has been removed.</p>
-          <Link href="/courses">
-            <Button variant="primary" size="md">Browse All Courses</Button>
+      <div className="min-h-screen bg-slate-50 text-[#111827] flex flex-col justify-between">
+        <FloatingNavbar />
+        <main className="max-w-4xl mx-auto px-4 py-36 text-center space-y-4">
+          <h1 className="text-2xl font-bold font-display text-[#111827]">English Capsule Not Found</h1>
+          <p className="text-sm text-slate-600">The requested capsule might have been updated or moved.</p>
+          <Link
+            href="/courses"
+            className="inline-block bg-[#FACC15] text-[#111827] font-bold text-xs px-6 py-3 rounded-xl shadow"
+          >
+            Explore All English Capsules
           </Link>
-        </div>
-        <Footer />
+        </main>
+        <EnglishFooter />
       </div>
     );
   }
 
+  const modules = course.modules || [];
+  let totalLessons = 0;
+  modules.forEach((m) => {
+    totalLessons += m.lessons?.length || 0;
+  });
+
+  const discount =
+    course.originalPrice && course.price
+      ? Math.round(((course.originalPrice - course.price) / course.originalPrice) * 100)
+      : 0;
+
   return (
-    <div className="min-h-screen bg-dark-900 flex flex-col justify-between">
-      <Navbar />
+    <div className="min-h-screen bg-slate-50 text-[#111827] flex flex-col justify-between selection:bg-[#FACC15] selection:text-[#111827]">
+      <FloatingNavbar />
 
-      <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-28 pb-20 w-full flex-1">
-        {/* ── COURSE HEADER HERO ── */}
-        <div className="relative glass rounded-3xl border border-white/10 p-6 sm:p-10 mb-10 overflow-hidden">
-          <div className="absolute top-0 right-0 w-96 h-96 bg-primary-600/15 blur-3xl rounded-full pointer-events-none" />
+      {/* ── HERO BANNER HEADER ── */}
+      <section className="bg-gradient-to-b from-[#FACC15] via-[#FACC15] to-[#EAB308] pt-32 lg:pt-36 pb-12 px-4 sm:px-6 lg:px-8 text-[#111827]">
+        <div className="max-w-7xl mx-auto space-y-4">
+          <div>
+            <Link
+              href="/courses"
+              className="inline-flex items-center gap-2 text-xs font-extrabold text-[#111827]/80 hover:text-[#111827] transition-colors bg-black/5 px-3 py-1.5 rounded-full"
+            >
+              <ArrowLeft className="w-4 h-4" />
+              <span>Back to All English Capsules</span>
+            </Link>
+          </div>
 
-          <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 items-start relative z-10">
-            {/* Left 2 Cols: Main Info & Video Player */}
-            <div className="lg:col-span-2 space-y-6">
-              {/* Category & Badges */}
-              <div className="flex flex-wrap items-center gap-2">
-                <span className="badge bg-violet-500/20 text-violet-300 border border-violet-500/30">
-                  {course.category || 'Web Development'}
-                </span>
-                <span className="badge bg-emerald-500/20 text-emerald-300 border border-emerald-500/30">
-                  {course.level || 'Beginner'}
-                </span>
-                {isEnrolled && (
-                  <span className="badge bg-accent-500/20 text-accent-300 border border-accent-500/30 flex items-center gap-1">
-                    <CheckCircle className="w-3 h-3" /> Enrolled
-                  </span>
-                )}
-              </div>
+          <div className="flex flex-wrap items-center gap-2.5 pt-2">
+            <span className="bg-[#111827] text-white text-xs font-extrabold px-3 py-1 rounded-full uppercase tracking-wider">
+              {course.category || 'English Capsule'}
+            </span>
+            <span className="bg-white/80 text-[#111827] text-xs font-bold px-3 py-1 rounded-full border border-black/10">
+              {course.level || 'Intermediate'}
+            </span>
+            <span className="bg-black/10 text-[#111827] text-xs font-extrabold px-3 py-1 rounded-full flex items-center gap-1">
+              <CheckCircle className="w-3.5 h-3.5" /> Certified Diploma Included
+            </span>
+          </div>
 
-              {/* Title */}
-              <h1 className="font-display font-extrabold text-3xl sm:text-4xl text-white leading-tight">
-                {course.title}
-              </h1>
+          <h1 className="font-display font-extrabold text-2xl sm:text-4xl lg:text-5xl text-[#111827] tracking-tight leading-tight max-w-4xl">
+            {course.title}
+          </h1>
 
-              {/* Sub-description */}
-              <p className="text-slate-300 text-base leading-relaxed">
-                {course.description}
-              </p>
+          <p className="text-sm sm:text-base text-[#111827]/90 leading-relaxed max-w-3xl font-medium">
+            {course.description}
+          </p>
 
-              {/* Meta row */}
-              <div className="flex flex-wrap items-center gap-4 text-xs text-slate-400">
-                <div className="flex items-center gap-1 text-amber-400 font-semibold">
-                  <Star className="w-4 h-4 fill-amber-400" />
-                  <span>{course.rating || 4.8}</span>
-                  <span className="text-slate-500">({(course.reviewCount || 1200).toLocaleString()} reviews)</span>
-                </div>
-                <span>·</span>
-                <div className="flex items-center gap-1">
-                  <Users className="w-4 h-4 text-slate-400" />
-                  <span>{(course.studentCount || 15000).toLocaleString()} students</span>
-                </div>
-                <span>·</span>
-                <div className="flex items-center gap-1">
-                  <Clock className="w-4 h-4 text-slate-400" />
-                  <span>{course.duration || '24h 30m'}</span>
-                </div>
-              </div>
-
-              {/* Instructor snippet */}
-              <div className="flex items-center gap-3 pt-2">
-                <div className="w-10 h-10 rounded-full bg-primary-gradient flex items-center justify-center text-white font-bold border border-white/10">
-                  {course.instructorName ? course.instructorName.charAt(0) : 'I'}
-                </div>
-                <div>
-                  <div className="text-xs text-slate-400">Created by</div>
-                  <div className="text-sm font-semibold text-white">{course.instructorName || 'Lead Instructor'}</div>
-                </div>
-              </div>
-
-              {/* ── VIDEO PLAYER COMPONENT ── */}
-              <div className="pt-4">
-                <h3 className="text-xs font-semibold text-slate-400 uppercase tracking-wider mb-2">
-                  Video Preview & Player
-                </h3>
-                <VideoPlayer
-                  videoUrl={activeVideoUrl}
-                  poster={course.thumbnail}
-                  title={activeLessonTitle}
-                  isEnrolled={isEnrolled}
-                  onEnrollClick={handleOpenCheckout}
-                />
-              </div>
+          <div className="flex flex-wrap items-center gap-6 pt-2 text-xs text-[#111827]/80 font-semibold">
+            <div className="flex items-center gap-1.5 text-[#111827] font-bold">
+              <Star className="w-4 h-4 fill-[#111827]" />
+              <span className="text-sm">{course.rating || 4.9}</span>
+              <span className="text-[#111827]/70 font-normal">
+                ({(course.reviewCount || 12400).toLocaleString()} reviews)
+              </span>
             </div>
 
-            {/* Right 1 Col: Sticky Enrollment Card */}
-            <div className="lg:col-span-1 lg:sticky lg:top-28">
-              <div className="glass rounded-3xl border border-white/10 p-6 shadow-2xl space-y-6">
-                {/* Thumbnail */}
-                <div className="relative aspect-video rounded-2xl overflow-hidden bg-dark-800 border border-white/10">
-                  <Image
-                    src={course.thumbnail}
-                    alt={course.title}
-                    fill
-                    className="object-cover"
-                  />
-                  <div className="absolute inset-0 bg-dark-900/30 flex items-center justify-center">
-                    <div className="w-12 h-12 rounded-full bg-primary-600/90 text-white flex items-center justify-center shadow-lg">
-                      <PlayCircle className="w-6 h-6" />
-                    </div>
-                  </div>
-                </div>
+            <div className="flex items-center gap-1.5">
+              <Users className="w-4 h-4" />
+              <span>{(course.studentCount || 85000).toLocaleString()} Students Enrolled</span>
+            </div>
 
-                {/* Price Display */}
-                <div className="flex items-baseline gap-3">
-                  <span className="font-display font-extrabold text-3xl text-white">
-                    {course.price === 0 ? 'Free' : `$${course.price}`}
-                  </span>
-                  {course.originalPrice && course.originalPrice > course.price && (
-                    <span className="text-slate-500 line-through text-lg">
-                      ${course.originalPrice}
-                    </span>
-                  )}
-                </div>
-
-                {/* Main Action Button */}
-                {isEnrolled ? (
-                  <div className="p-4 rounded-2xl bg-emerald-500/10 border border-emerald-500/30 text-emerald-300 text-center font-semibold text-sm flex items-center justify-center gap-2">
-                    <CheckCircle className="w-5 h-5 text-emerald-400" />
-                    You are Enrolled in this Course!
-                  </div>
-                ) : (
-                  <Button
-                    variant="primary"
-                    size="xl"
-                    fullWidth
-                    onClick={handleOpenCheckout}
-                    id="course-enroll-now-btn"
-                    rightIcon={<Zap className="w-5 h-5" />}
-                  >
-                    Enroll Now
-                  </Button>
-                )}
-
-                {/* Included Highlights */}
-                <div className="space-y-3 pt-2 text-xs text-slate-300">
-                  <div className="font-semibold text-white text-sm mb-2">This course includes:</div>
-                  <div className="flex items-center gap-2">
-                    <Clock className="w-4 h-4 text-primary-400" /> {course.duration || '24 hours'} on-demand video
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <BookOpen className="w-4 h-4 text-primary-400" /> {course.lessonCount || 24} downloadable lessons
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <Award className="w-4 h-4 text-primary-400" /> Certificate of completion
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <ShieldCheck className="w-4 h-4 text-primary-400" /> Full lifetime access
-                  </div>
-                </div>
-
-                <div className="border-t border-white/8 pt-4 flex items-center justify-between text-xs text-slate-400">
-                  <span>30-Day Money-Back Guarantee</span>
-                  <button className="text-slate-400 hover:text-white flex items-center gap-1">
-                    <Share2 className="w-3.5 h-3.5" /> Share
-                  </button>
-                </div>
-              </div>
+            <div className="flex items-center gap-1.5">
+              <Globe className="w-4 h-4" />
+              <span>English (Native Audio + Practice Drills)</span>
             </div>
           </div>
         </div>
+      </section>
 
-        {/* ── TABBED NAVIGATION (OVERVIEW vs CURRICULUM) ── */}
-        <div className="glass rounded-3xl border border-white/10 p-6 sm:p-8">
-          {/* Tab Buttons */}
-          <div className="flex items-center gap-4 border-b border-white/10 pb-4 mb-6">
-            <button
-              onClick={() => setActiveTab('overview')}
-              className={`font-display font-semibold text-lg pb-2 transition-all ${
-                activeTab === 'overview'
-                  ? 'text-white border-b-2 border-primary-500'
-                  : 'text-slate-400 hover:text-slate-200'
-              }`}
-            >
-              Overview
-            </button>
-            <button
-              onClick={() => setActiveTab('curriculum')}
-              className={`font-display font-semibold text-lg pb-2 transition-all ${
-                activeTab === 'curriculum'
-                  ? 'text-white border-b-2 border-primary-500'
-                  : 'text-slate-400 hover:text-slate-200'
-              }`}
-            >
-              Curriculum & Lessons ({course.modules?.length || 2} Modules)
-            </button>
-          </div>
-
-          {/* ── TAB 1: OVERVIEW ── */}
-          {activeTab === 'overview' && (
-            <div className="space-y-8 text-slate-300 text-sm leading-relaxed">
-              <div>
-                <h3 className="font-display font-bold text-lg text-white mb-3">About This Course</h3>
-                <p>{course.description}</p>
+      {/* ── MAIN 2-COLUMN CONTENT ── */}
+      <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10 w-full flex-1 space-y-10">
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
+          {/* Left Column (7 Cols): Tabs & Curriculum */}
+          <div className="lg:col-span-7 space-y-6">
+            {/* Instructor Details Card */}
+            <div className="bg-white rounded-3xl border border-slate-200/80 p-6 flex items-center gap-4 shadow-sm">
+              <div className="w-12 h-12 rounded-2xl bg-[#FACC15] text-[#111827] font-extrabold flex items-center justify-center text-lg shadow-md flex-shrink-0">
+                {course.instructorName ? course.instructorName.charAt(0) : 'S'}
               </div>
-
               <div>
-                <h3 className="font-display font-bold text-lg text-white mb-3">What You Will Learn</h3>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-                  {[
-                    'Build production-ready web applications from scratch',
-                    'Master modern TypeScript, Next.js 14 App Router, and Tailwind CSS',
-                    'Integrate cloud backend databases and authentication flows',
-                    'Deploy scalable web apps to production with zero downtime',
-                  ].map((item, idx) => (
-                    <div key={idx} className="flex items-start gap-2.5 bg-white/5 p-3.5 rounded-xl border border-white/5">
-                      <CheckCircle className="w-4 h-4 text-emerald-400 flex-shrink-0 mt-0.5" />
-                      <span>{item}</span>
-                    </div>
-                  ))}
-                </div>
-              </div>
-
-              <div>
-                <h3 className="font-display font-bold text-lg text-white mb-3">Instructor Bio</h3>
-                <div className="flex items-center gap-4 bg-white/5 p-4 rounded-2xl border border-white/5">
-                  <div className="w-14 h-14 rounded-2xl bg-primary-gradient flex items-center justify-center text-white font-bold text-xl flex-shrink-0">
-                    {course.instructorName ? course.instructorName.charAt(0) : 'I'}
-                  </div>
-                  <div>
-                    <h4 className="font-semibold text-white text-base">{course.instructorName || 'Senior Software Engineer'}</h4>
-                    <p className="text-xs text-slate-400 mt-0.5">Industry expert with over 10+ years of building software at scale.</p>
-                  </div>
-                </div>
+                <div className="text-xs text-slate-500 font-semibold uppercase tracking-wider">Master Instructor</div>
+                <div className="font-display font-bold text-base text-[#111827]">{course.instructorName || 'Lead Academic Faculty'}</div>
+                <div className="text-xs text-slate-500">English Capsules Senior Language Faculty</div>
               </div>
             </div>
-          )}
 
-          {/* ── TAB 2: CURRICULUM ── */}
-          {activeTab === 'curriculum' && (
-            <div className="space-y-4">
-              <p className="text-xs text-slate-400 mb-4">
-                Click on any video lesson to load it in the player above. {isEnrolled ? 'You are enrolled and have full access.' : 'Enroll to play video content.'}
-              </p>
+            {/* Tabs */}
+            <div className="bg-white rounded-3xl border border-slate-200/80 p-6 sm:p-8 space-y-8 shadow-sm">
+              <div className="flex items-center gap-2 border-b border-slate-100 pb-4 overflow-x-auto scrollbar-none">
+                {[
+                  { key: 'overview', label: 'Overview & Outcomes', icon: BookOpen },
+                  { key: 'curriculum', label: `Curriculum (${modules.length} Modules)`, icon: FileCheck },
+                  { key: 'reviews', label: 'Reviews', icon: Star },
+                ].map(({ key, label, icon: Icon }) => (
+                  <button
+                    key={key}
+                    onClick={() => setActiveTab(key as any)}
+                    className={`flex items-center gap-2 px-4 py-2.5 rounded-full text-xs font-bold transition-all whitespace-nowrap ${
+                      activeTab === key
+                        ? 'bg-[#FACC15] text-[#111827] shadow-md shadow-[#FACC15]/20'
+                        : 'text-slate-600 hover:text-[#111827] bg-slate-100'
+                    }`}
+                  >
+                    <Icon className="w-4 h-4" />
+                    <span>{label}</span>
+                  </button>
+                ))}
+              </div>
 
-              {course.modules && course.modules.length > 0 ? (
-                course.modules.map((mod, modIdx) => {
-                  const isOpen = !!openModules[mod.id || `mod-${modIdx}`];
-                  return (
-                    <div
-                      key={mod.id || modIdx}
-                      className="glass rounded-2xl border border-white/8 overflow-hidden"
-                    >
-                      {/* Module Accordion Header */}
-                      <button
-                        onClick={() => toggleModule(mod.id || `mod-${modIdx}`)}
-                        className="w-full flex items-center justify-between p-4 bg-white/5 hover:bg-white/10 text-left transition-colors"
-                      >
-                        <div className="flex items-center gap-3">
-                          <BookOpen className="w-5 h-5 text-primary-400" />
-                          <span className="font-semibold text-white text-sm sm:text-base">
-                            {mod.title}
-                          </span>
+              {/* TAB 1: OVERVIEW */}
+              {activeTab === 'overview' && (
+                <div className="space-y-8">
+                  <div className="space-y-4">
+                    <h3 className="font-display font-bold text-xl text-[#111827] flex items-center gap-2">
+                      <Sparkles className="w-5 h-5 text-amber-500" />
+                      <span>What You Will Master in This Capsule</span>
+                    </h3>
+
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      {[
+                        'Speak fluently without translating word-for-word from your native language',
+                        'Master sentence chunking, stress rhythms, and natural British/American intonation',
+                        'Expand your active vocabulary with 1,000+ practical phrases and idioms',
+                        'Overcome speech hesitation and nervousness in meetings and interviews',
+                        'Construct sophisticated compound and complex sentences with correct grammar',
+                        'Pass formal English evaluations and earn an accredited completion diploma',
+                      ].map((item, idx) => (
+                        <div
+                          key={idx}
+                          className="bg-slate-50 border border-slate-200/80 rounded-2xl p-4 flex items-start gap-3 text-xs sm:text-sm text-slate-700 font-medium"
+                        >
+                          <CheckCircle className="w-5 h-5 text-amber-500 flex-shrink-0 mt-0.5" />
+                          <span>{item}</span>
                         </div>
-                        <div className="flex items-center gap-3 text-xs text-slate-400">
-                          <span>{mod.lessons?.length || 0} lessons</span>
-                          {isOpen ? <ChevronUp className="w-4 h-4" /> : <ChevronDown className="w-4 h-4" />}
-                        </div>
-                      </button>
+                      ))}
+                    </div>
+                  </div>
 
-                      {/* Module Lessons List */}
-                      {isOpen && (
-                        <div className="divide-y divide-white/5 bg-dark-900/60 p-2">
-                          {mod.lessons && mod.lessons.length > 0 ? (
-                            mod.lessons.map((lesson) => (
-                              <button
-                                key={lesson.id}
-                                onClick={() => handleSelectLesson(lesson)}
-                                className="w-full flex items-center justify-between p-3 rounded-xl hover:bg-primary-500/10 text-left transition-colors group"
-                              >
-                                <div className="flex items-center gap-3">
-                                  <PlayCircle className="w-4 h-4 text-slate-500 group-hover:text-primary-400 flex-shrink-0" />
-                                  <span className="text-xs sm:text-sm text-slate-300 group-hover:text-white font-medium">
-                                    {lesson.title}
+                  {/* Prerequisites */}
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6 pt-4 border-t border-slate-100 text-xs sm:text-sm">
+                    <div className="space-y-3 bg-slate-50 p-6 rounded-2xl border border-slate-200/80">
+                      <h4 className="font-display font-bold text-[#111827] text-base">Course Prerequisites</h4>
+                      <ul className="space-y-2 text-slate-600 list-disc list-inside">
+                        <li>Basic understanding of simple English words.</li>
+                        <li>Smartphone or computer with internet access.</li>
+                        <li>20–30 minutes of vocal practice each day.</li>
+                      </ul>
+                    </div>
+
+                    <div className="space-y-3 bg-slate-50 p-6 rounded-2xl border border-slate-200/80">
+                      <h4 className="font-display font-bold text-[#111827] text-base">Who is This Capsule For?</h4>
+                      <ul className="space-y-2 text-slate-600 list-disc list-inside">
+                        <li>Working professionals aiming for career advancement.</li>
+                        <li>Students preparing for IELTS, TOEFL, or study abroad.</li>
+                        <li>Anyone looking to speak naturally and confidently.</li>
+                      </ul>
+                    </div>
+                  </div>
+                </div>
+              )}
+
+              {/* TAB 2: CURRICULUM */}
+              {activeTab === 'curriculum' && (
+                <div className="space-y-4">
+                  <div className="pb-2">
+                    <h3 className="font-display font-bold text-lg text-[#111827]">Curriculum Breakdown</h3>
+                    <p className="text-xs text-slate-500">
+                      {modules.length} Modules • {totalLessons} Lectures • Total Duration: {course.duration || '24h'}
+                    </p>
+                  </div>
+
+                  <div className="space-y-3">
+                    {modules.map((mod) => {
+                      const isOpen = openModules[mod.id] !== false;
+
+                      return (
+                        <div
+                          key={mod.id}
+                          className="bg-slate-50 border border-slate-200 rounded-2xl overflow-hidden shadow-sm"
+                        >
+                          <button
+                            onClick={() => toggleModule(mod.id)}
+                            className="w-full p-4 sm:p-5 flex items-center justify-between text-left hover:bg-slate-100 transition-colors gap-4"
+                          >
+                            <div className="space-y-1">
+                              <div className="font-display font-bold text-[#111827] text-sm sm:text-base">
+                                {mod.title}
+                              </div>
+                              <div className="text-xs text-slate-500">
+                                {mod.lessons?.length || 0} Lectures
+                              </div>
+                            </div>
+
+                            <div className="p-1.5 rounded-lg text-slate-500 bg-white border border-slate-200">
+                              {isOpen ? <ChevronUp className="w-4 h-4" /> : <ChevronDown className="w-4 h-4" />}
+                            </div>
+                          </button>
+
+                          {isOpen && (
+                            <div className="border-t border-slate-200 bg-white divide-y divide-slate-100">
+                              {mod.lessons?.map((les) => (
+                                <div
+                                  key={les.id}
+                                  onClick={() => handleSelectLesson(les)}
+                                  className="p-4 flex items-center justify-between gap-4 text-xs sm:text-sm hover:bg-amber-50/50 transition-colors cursor-pointer text-slate-700"
+                                >
+                                  <div className="flex items-center gap-3">
+                                    <PlayCircle className="w-4 h-4 text-amber-500 flex-shrink-0" />
+                                    <span className="font-medium text-[#111827]">{les.title}</span>
+                                  </div>
+                                  <span className="text-xs text-slate-400 font-mono">
+                                    {les.duration || '10:00'}
                                   </span>
                                 </div>
-                                <span className="text-xs text-slate-500 flex-shrink-0">
-                                  {lesson.duration || '10:00'}
-                                </span>
-                              </button>
-                            ))
-                          ) : (
-                            <div className="p-3 text-xs text-slate-500">No lessons available in this module yet.</div>
+                              ))}
+                            </div>
                           )}
                         </div>
-                      )}
+                      );
+                    })}
+                  </div>
+                </div>
+              )}
+
+              {/* TAB 3: REVIEWS */}
+              {activeTab === 'reviews' && (
+                <div className="space-y-6">
+                  <div className="flex items-center justify-between border-b border-slate-100 pb-4">
+                    <div>
+                      <h3 className="font-display font-bold text-xl text-[#111827]">Student Reviews & Ratings</h3>
+                      <div className="flex items-center gap-2 mt-1">
+                        <div className="flex items-center text-amber-500 text-sm">
+                          <Star className="w-4 h-4 fill-current" />
+                          <span className="ml-1 font-bold text-[#111827]">{course.rating || 4.9} out of 5</span>
+                        </div>
+                        <span className="text-xs text-slate-500">• 98% Positive Feedback</span>
+                      </div>
                     </div>
-                  );
-                })
-              ) : (
-                <div className="p-6 text-center text-slate-400 text-sm">
-                  Curriculum details are being updated for this course.
+                  </div>
+
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    {[
+                      {
+                        name: 'Nusaiba Rahaman',
+                        rating: 5,
+                        date: '2 days ago',
+                        review: 'The practice dialogues in this capsule are top tier. I was terrified of speaking during client calls, but after Module 2 my confidence skyrocketed!',
+                      },
+                      {
+                        name: 'Tanvir Ahmed',
+                        rating: 5,
+                        date: '1 week ago',
+                        review: 'Clear pronunciation drills and actionable explanations. The instructor makes even complex grammatical rules feel natural and effortless.',
+                      },
+                    ].map((rev, idx) => (
+                      <div key={idx} className="bg-slate-50 border border-slate-200/80 rounded-2xl p-5 space-y-3">
+                        <div className="flex items-center justify-between">
+                          <div className="font-bold text-[#111827] text-sm">{rev.name}</div>
+                          <div className="text-[10px] text-slate-400">{rev.date}</div>
+                        </div>
+                        <div className="flex items-center text-amber-500 text-xs">
+                          {[...Array(rev.rating)].map((_, i) => (
+                            <Star key={i} className="w-3.5 h-3.5 fill-current" />
+                          ))}
+                        </div>
+                        <p className="text-xs text-slate-600 leading-relaxed font-medium">{rev.review}</p>
+                      </div>
+                    ))}
+                  </div>
                 </div>
               )}
             </div>
-          )}
+          </div>
+
+          {/* Right Video Preview & Sticky Enrollment Card (5 Cols) */}
+          <div className="lg:col-span-5 bg-white rounded-3xl border border-slate-200/80 p-6 sm:p-7 shadow-xl space-y-6 lg:sticky lg:top-28">
+            {/* Trailer Video Player */}
+            <div className="relative aspect-video rounded-2xl overflow-hidden bg-black border border-slate-200 shadow-inner">
+              <VideoPlayer
+                videoUrl={activeVideoUrl}
+                poster={course.thumbnail}
+                title={activeLessonTitle}
+                isEnrolled={true}
+              />
+            </div>
+
+            {/* Price & CTA */}
+            <div className="space-y-4">
+              <div className="flex items-baseline justify-between">
+                <div>
+                  <div className="text-[10px] uppercase font-bold text-slate-500 tracking-wider">Enrollment Fee</div>
+                  {course.price === 0 ? (
+                    <span className="font-display font-black text-3xl text-emerald-600">FREE</span>
+                  ) : (
+                    <div className="flex items-baseline gap-2">
+                      <span className="font-display font-black text-3xl text-[#111827]">${course.price}</span>
+                      {course.originalPrice && (
+                        <span className="text-sm text-slate-400 line-through">${course.originalPrice}</span>
+                      )}
+                    </div>
+                  )}
+                </div>
+
+                {discount > 0 && (
+                  <span className="bg-rose-50 text-rose-600 border border-rose-200 text-xs font-extrabold px-3 py-1 rounded-full">
+                    Save {discount}% Today
+                  </span>
+                )}
+              </div>
+
+              <div className="space-y-2">
+                <button
+                  onClick={handleOpenCheckout}
+                  className="w-full bg-[#FACC15] hover:bg-[#eab308] text-[#111827] font-extrabold text-sm py-4 px-6 rounded-2xl flex items-center justify-center gap-2 transition-all shadow-lg shadow-[#FACC15]/25"
+                >
+                  <PlayCircle className="w-5 h-5 fill-current" />
+                  <span>Enroll in Capsule Now</span>
+                </button>
+
+                <Link
+                  href={`/student/learn/${course.id}`}
+                  className="w-full bg-slate-100 hover:bg-slate-200 text-[#111827] font-bold text-xs py-3 px-4 rounded-xl flex items-center justify-center gap-2 border border-slate-200 transition-colors"
+                >
+                  <span>Preview Classroom Environment</span>
+                </Link>
+              </div>
+
+              {/* Perks Checklist */}
+              <div className="space-y-2.5 pt-3 border-t border-slate-100 text-xs text-slate-700 font-medium">
+                <div className="flex items-center gap-2">
+                  <Check className="w-4 h-4 text-amber-500 stroke-[3]" />
+                  <span>Instant Lifetime Access to All {totalLessons || 24} Lectures</span>
+                </div>
+                <div className="flex items-center gap-2">
+                  <Check className="w-4 h-4 text-amber-500 stroke-[3]" />
+                  <span>Downloadable Study Notes & Practice Audio</span>
+                </div>
+                <div className="flex items-center gap-2">
+                  <Check className="w-4 h-4 text-amber-500 stroke-[3]" />
+                  <span>Official English Capsules Diploma</span>
+                </div>
+                <div className="flex items-center gap-2">
+                  <Check className="w-4 h-4 text-amber-500 stroke-[3]" />
+                  <span>30-Day Money-Back Guarantee</span>
+                </div>
+              </div>
+            </div>
+          </div>
         </div>
       </main>
 
-      {/* ── CHECKOUT MODAL COMPONENT ── */}
-      <CheckoutModal
-        course={course}
-        isOpen={showCheckoutModal}
-        onClose={() => setShowCheckoutModal(false)}
-        onSuccess={handleCheckoutSuccess}
-      />
+      {/* ── CHECKOUT MODAL ── */}
+      {showCheckoutModal && (
+        <CheckoutModal
+          isOpen={showCheckoutModal}
+          onClose={() => setShowCheckoutModal(false)}
+          course={course}
+        />
+      )}
 
-      <Footer />
+      <EnglishFooter />
     </div>
   );
 }

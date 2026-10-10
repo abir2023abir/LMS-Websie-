@@ -1,0 +1,58 @@
+{
+  "EC-2026-8921": {
+    "certificateId": "EC-2026-8921",
+    "studentName": "Md. Saiful Islam",
+    "studentEmail": "saiful.islam@example.com",
+    "courseTitle": "General English Foundation Capsule: Zero to Confident Speaker",
+    "courseId": "1",
+    "issueDate": "August 18, 2026",
+    "grade": "A+ (Distinction - 96%)",
+    "instructorName": "English Capsules Global Academic Council",
+    "verificationUrl": "http://localhost:3000/verify-certificate?id=EC-2026-8921",
+    "createdAt": "2026-08-18T00:00:00.000Z",
+    "status": "VALID",
+    "verified": true
+  },
+  "EC-2026-5542": {
+    "certificateId": "EC-2026-5542",
+    "studentName": "Tanvir Ahmed",
+    "studentEmail": "tanvir.ahmed@example.com",
+    "courseTitle": "Business English & Corporate Communication Masterclass",
+    "courseId": "3",
+    "issueDate": "July 24, 2026",
+    "grade": "A (Excellence - 92%)",
+    "instructorName": "Corporate Faculty Board",
+    "verificationUrl": "http://localhost:3000/verify-certificate?id=EC-2026-5542",
+    "createdAt": "2026-07-24T00:00:00.000Z",
+    "status": "VALID",
+    "verified": true
+  },
+  "EC-2026-7731": {
+    "certificateId": "EC-2026-7731",
+    "studentName": "Nusaiba Rahaman",
+    "studentEmail": "nusaiba@example.com",
+    "courseTitle": "IELTS Academic & General Band 8+ Ultimate Masterclass",
+    "courseId": "4",
+    "issueDate": "August 10, 2026",
+    "grade": "Band 8.5 (Distinction)",
+    "instructorName": "British & Australian Council Faculty",
+    "verificationUrl": "http://localhost:3000/verify-certificate?id=EC-2026-7731",
+    "createdAt": "2026-08-10T00:00:00.000Z",
+    "status": "VALID",
+    "verified": true
+  },
+  "EC-2026-BLU7A4": {
+    "certificateId": "EC-2026-BLU7A4",
+    "studentName": "Tasnim Jahan",
+    "studentEmail": "tasnim@example.com",
+    "courseTitle": "Spoken English & Accent Perfection: Sound Like a Native",
+    "courseId": "2",
+    "issueDate": "August 19, 2026",
+    "grade": "A+ (Distinction - 98%)",
+    "instructorName": "English Capsules Global Academic Council",
+    "verificationUrl": "http://localhost:3000/verify-certificate?id=EC-2026-BLU7A4",
+    "createdAt": "2026-08-19T13:00:43.895Z",
+    "status": "VALID",
+    "verified": true
+  }
+}

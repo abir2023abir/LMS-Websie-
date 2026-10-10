@@ -22,7 +22,7 @@ export default function AuthGuard({ children, allowedRole }: AuthGuardProps) {
       } else if (allowedRole && role && role !== allowedRole) {
         // Authenticated but wrong role -> Redirect to correct role dashboard
         if (role === 'Student') {
-          router.replace('/dashboard/student');
+          router.replace('/student');
         } else if (role === 'Instructor') {
           router.replace('/dashboard/instructor');
         }

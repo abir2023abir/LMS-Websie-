@@ -3,6 +3,7 @@ import HeroSection from '@/components/english/HeroSection';
 import StatsSection from '@/components/english/StatsSection';
 import CollageSection from '@/components/english/CollageSection';
 import ProgramsSection from '@/components/english/ProgramsSection';
+import KidsSection from '@/components/english/KidsSection';
 import WhyUsSection from '@/components/english/WhyUsSection';
 import ReviewsSection from '@/components/english/ReviewsSection';
 import LearningMethodsSection from '@/components/english/LearningMethodsSection';
@@ -18,6 +19,7 @@ export default function HomePage() {
       <StatsSection />
       <CollageSection />
       <ProgramsSection />
+      <KidsSection />
       <WhyUsSection />
       <ReviewsSection />
       <LearningMethodsSection />

@@ -29,7 +29,7 @@ const features = [
 
 export default function WhyUsSection() {
   return (
-    <section className="bg-white py-20 text-[#111827]">
+    <section id="why-us" className="bg-white py-20 text-[#111827]">
       <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 space-y-12">
         {/* Header */}
         <div className="text-center space-y-3 max-w-3xl mx-auto">

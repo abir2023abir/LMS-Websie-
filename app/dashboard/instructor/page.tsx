@@ -38,7 +38,7 @@ export default function InstructorDashboard() {
   const [title, setTitle] = useState('');
   const [description, setDescription] = useState('');
   const [price, setPrice] = useState('49');
-  const [category, setCategory] = useState('Web Development');
+  const [category, setCategory] = useState('General English');
   const [level, setLevel] = useState<'Beginner' | 'Intermediate' | 'Advanced'>('Beginner');
   const [thumbnailUrl, setThumbnailUrl] = useState('');
   const [thumbnailPreview, setThumbnailPreview] = useState<string | null>(null);
@@ -47,11 +47,11 @@ export default function InstructorDashboard() {
   const [modules, setModules] = useState<ModuleSchema[]>([
     {
       id: 'mod-1',
-      title: 'Module 1: Introduction & Environment Setup',
+      title: 'Module 1: Foundations of Spoken Fluency',
       lessons: [
         {
           id: 'les-1',
-          title: 'Welcome to the Course',
+          title: 'Welcome to English Capsules',
           videoUrl: 'https://www.youtube.com/watch?v=dQw4w9WgXcQ',
           duration: '05:30',
         },
@@ -395,7 +395,7 @@ export default function InstructorDashboard() {
                         </td>
                         <td className="py-4 px-4">
                           <span className="badge bg-violet-500/20 text-violet-300 border border-violet-500/30">
-                            {c.category || 'Web Dev'}
+                            {c.category || 'General English'}
                           </span>
                         </td>
                         <td className="py-4 px-4 font-semibold text-white">
@@ -474,7 +474,7 @@ export default function InstructorDashboard() {
                       required
                       value={title}
                       onChange={(e) => setTitle(e.target.value)}
-                      placeholder="e.g. Master Full-Stack Web Development with Next.js 14"
+                      placeholder="e.g. Spoken English & Accent Perfection Masterclass"
                       className="w-full bg-dark-800 border border-white/10 rounded-xl px-4 py-3 text-sm text-white placeholder-slate-500 focus:outline-none focus:border-accent-500"
                     />
                   </div>
@@ -488,12 +488,14 @@ export default function InstructorDashboard() {
                       onChange={(e) => setCategory(e.target.value)}
                       className="w-full bg-dark-800 border border-white/10 rounded-xl px-4 py-3 text-sm text-white focus:outline-none focus:border-accent-500"
                     >
-                      <option value="Web Development">Web Development</option>
-                      <option value="Data Science">Data Science</option>
-                      <option value="UI/UX Design">UI/UX Design</option>
-                      <option value="Digital Marketing">Digital Marketing</option>
-                      <option value="Cloud & DevOps">Cloud & DevOps</option>
-                      <option value="Business">Business</option>
+                      <option value="Spoken English">Spoken English</option>
+                      <option value="General English">General English</option>
+                      <option value="IELTS Prep">IELTS Prep</option>
+                      <option value="Business English">Business English</option>
+                      <option value="Grammar & Writing">Grammar &amp; Writing</option>
+                      <option value="Career English">Career English</option>
+                      <option value="Kids English">Kids English</option>
+                      <option value="TOEFL & Exams">TOEFL &amp; Exams</option>
                     </select>
                   </div>
 

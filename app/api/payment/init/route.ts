@@ -5,10 +5,12 @@ import SSLCommerzPayment from 'sslcommerz-lts';
 const STORE_ID = process.env.SSLCOMMERZ_STORE_ID || 'your_sslcommerz_store_id';
 const STORE_PASSWORD = process.env.SSLCOMMERZ_STORE_PASSWORD || 'your_sslcommerz_store_password';
 const IS_LIVE = process.env.SSLCOMMERZ_IS_LIVE === 'true';
-const BASE_URL = process.env.NEXT_PUBLIC_SITE_URL || 'http://localhost:3000';
-
 export async function POST(request: Request) {
   try {
+    const host = request.headers.get('host') || 'localhost:3002';
+    const protocol = request.headers.get('x-forwarded-proto') || 'http';
+    const BASE_URL = process.env.NEXT_PUBLIC_SITE_URL || `${protocol}://${host}`;
+
     const body = await request.json();
     const { courseId, courseTitle, price, name, email, phone, paymentMethod } = body;
 

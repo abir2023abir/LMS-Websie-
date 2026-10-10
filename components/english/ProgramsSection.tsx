@@ -3,69 +3,40 @@
 import { useState } from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
-import { ArrowRight, ChevronsRight, Sparkles, Clock, BookOpen } from 'lucide-react';
+import { ArrowRight, ChevronsRight, Sparkles, Clock, BookOpen, Star, ChevronRight } from 'lucide-react';
 import { motion } from 'framer-motion';
 import CheckoutModal from '@/components/checkout/CheckoutModal';
+import { featuredCourses } from '@/lib/data';
 import type { CourseSchema } from '@/types/course';
 
-const programCategories = ['All', 'Conversation', 'Business English', 'IELTS', 'For children'];
-
-const programCourses: CourseSchema[] = [
-  {
-    id: 'prog-1',
-    title: 'Comprehensive Conversation',
-    description: 'A comprehensive program that lets you master the four skills step-by-step from scratch to advanced fluency.',
-    price: 49,
-    originalPrice: 120,
-    instructorId: 'inst-1',
-    instructorName: 'English Capsules Team',
-    thumbnail: 'https://images.unsplash.com/photo-1529156069898-49953e39b3ac?w=600&h=340&fit=crop',
-    category: 'Conversation',
-    level: 'Beginner',
-    duration: '24h 00m',
-    lessonCount: 28,
-  },
-  {
-    id: 'prog-2',
-    title: 'Business English Masterclass',
-    description: 'Master the language of business from beginner to upper-intermediate with hands-on corporate communication practice.',
-    price: 59,
-    originalPrice: 149,
-    instructorId: 'inst-2',
-    instructorName: 'Corporate Faculty',
-    thumbnail: 'https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?w=600&h=340&fit=crop',
-    category: 'Business English',
-    level: 'Intermediate',
-    duration: '30h 00m',
-    lessonCount: 35,
-  },
-  {
-    id: 'prog-3',
-    title: 'Spoken Conversation Course',
-    description: 'A comprehensive program that makes you fluent, building confidence in real-life English conversation scenarios.',
-    price: 39,
-    originalPrice: 99,
-    instructorId: 'inst-3',
-    instructorName: 'Native Instructors',
-    thumbnail: 'https://images.unsplash.com/photo-1517245386807-bb43f82c33c4?w=600&h=340&fit=crop',
-    category: 'Conversation',
-    level: 'Beginner',
-    duration: '18h 00m',
-    lessonCount: 20,
-  },
-];
+const programCategories = ['All', 'Spoken English', 'IELTS Prep', 'Business English', 'General English'];
 
 export default function ProgramsSection() {
   const [activeCategory, setActiveCategory] = useState('All');
   const [selectedCourse, setSelectedCourse] = useState<CourseSchema | null>(null);
   const [checkoutOpen, setCheckoutOpen] = useState(false);
 
-  const filtered = activeCategory === 'All'
-    ? programCourses
-    : programCourses.filter((c) => c.category === activeCategory);
+  const filtered = (
+    activeCategory === 'All'
+      ? featuredCourses
+      : featuredCourses.filter((c) => c.category === activeCategory)
+  ).slice(0, 3);
 
-  const handleJoinNow = (course: CourseSchema) => {
-    setSelectedCourse(course);
+  const handleJoinNow = (course: any) => {
+    setSelectedCourse({
+      id: course.id,
+      title: course.title,
+      description: course.description,
+      price: course.price,
+      originalPrice: course.originalPrice,
+      thumbnail: course.thumbnail,
+      instructorId: course.instructor.name,
+      instructorName: course.instructor.name,
+      category: course.category,
+      level: course.level,
+      duration: course.duration,
+      lessonCount: course.lessonCount,
+    });
     setCheckoutOpen(true);
   };
 
@@ -90,12 +61,16 @@ export default function ProgramsSection() {
             <div className="bg-[#FACC15] text-[#111827] p-1 rounded-full flex items-center justify-center">
               <ChevronsRight className="w-3.5 h-3.5" />
             </div>
-            <span className="text-xs font-bold tracking-wide">Our Programs</span>
+            <span className="text-xs font-bold tracking-wide">Featured Capsules</span>
           </div>
 
           <h2 className="font-display font-extrabold text-3xl sm:text-4xl text-white tracking-tight leading-tight">
-            Programs Designed To Support Your English Learning Journey
+            Programs Designed To Accelerate Your English Fluency
           </h2>
+
+          <p className="text-slate-400 text-xs sm:text-sm max-w-xl mx-auto">
+            Practical, capsule-sized lessons engineered for real-life conversations, global job interviews, and IELTS mastery.
+          </p>
         </div>
 
         {/* Category Filters */}
@@ -128,50 +103,70 @@ export default function ProgramsSection() {
               viewport={{ once: true }}
               transition={{ duration: 0.5, delay: idx * 0.1 }}
               whileHover={{ y: -6 }}
-              className="bg-dark-800/80 rounded-3xl overflow-hidden border border-white/10 hover:border-[#FACC15]/50 transition-all flex flex-col justify-between"
+              className="bg-[#1a2234] rounded-3xl overflow-hidden border border-white/10 hover:border-[#FACC15]/50 transition-all flex flex-col justify-between shadow-xl group"
             >
-              <div className="relative aspect-[16/10] bg-dark-900">
+              <div className="relative aspect-[16/10] bg-dark-900 overflow-hidden">
                 <Image
                   src={course.thumbnail}
                   alt={course.title}
                   fill
-                  className="object-cover"
+                  className="object-cover group-hover:scale-105 transition-transform duration-500"
                 />
+                <span className="absolute top-3 left-3 bg-[#111827]/90 text-[#FACC15] text-[10px] font-extrabold px-2.5 py-1 rounded-full backdrop-blur-md border border-white/10">
+                  {course.category}
+                </span>
               </div>
 
               <div className="p-6 flex-1 flex flex-col justify-between space-y-4">
                 <div className="space-y-2">
-                  <div className="flex items-center gap-3 text-xs text-slate-400">
-                    <span className="flex items-center gap-1"><Clock className="w-3.5 h-3.5 text-[#FACC15]" /> {course.duration}</span>
-                    <span>·</span>
-                    <span className="flex items-center gap-1"><BookOpen className="w-3.5 h-3.5 text-[#FACC15]" /> {course.lessonCount} Lectures</span>
+                  <div className="flex items-center justify-between text-xs text-slate-400">
+                    <span className="flex items-center gap-1">
+                      <Clock className="w-3.5 h-3.5 text-[#FACC15]" /> {course.duration}
+                    </span>
+                    <span className="flex items-center gap-1 text-amber-400 font-bold">
+                      <Star className="w-3.5 h-3.5 fill-current" /> {course.rating}
+                    </span>
                   </div>
 
-                  <h3 className="font-display font-bold text-lg text-white">
-                    {course.title}
-                  </h3>
-                  <p className="text-xs text-slate-400 line-clamp-3 leading-relaxed">
+                  <Link href={`/courses/${course.id}`}>
+                    <h3 className="font-display font-bold text-base text-white group-hover:text-[#FACC15] transition-colors line-clamp-2">
+                      {course.title}
+                    </h3>
+                  </Link>
+
+                  <p className="text-xs text-slate-400 line-clamp-2 leading-relaxed">
                     {course.description}
                   </p>
                 </div>
 
-                <div className="pt-2 border-t border-white/10 flex items-center justify-between">
+                <div className="pt-3 border-t border-white/10 flex items-center justify-between">
                   <span className="font-display font-extrabold text-2xl text-[#FACC15]">
                     ${course.price}
                   </span>
-                  <Link
-                    href={`/checkout/${course.id}`}
-                    className="group flex items-center gap-2 bg-[#FACC15] hover:bg-[#eab308] text-[#111827] rounded-full pl-4 pr-1 py-1.5 text-xs font-extrabold transition-all"
+                  <button
+                    onClick={() => handleJoinNow(course)}
+                    className="group flex items-center gap-2 bg-[#FACC15] hover:bg-[#eab308] text-[#111827] rounded-full pl-4 pr-1 py-1.5 text-xs font-extrabold transition-all shadow-md shadow-[#FACC15]/20"
                   >
                     <span>Join Now</span>
                     <div className="w-6 h-6 rounded-full bg-[#111827] flex items-center justify-center">
                       <ArrowRight className="w-3.5 h-3.5 text-[#FACC15]" />
                     </div>
-                  </Link>
+                  </button>
                 </div>
               </div>
             </motion.div>
           ))}
+        </div>
+
+        {/* Explore All CTA */}
+        <div className="text-center pt-4">
+          <Link
+            href="/courses"
+            className="inline-flex items-center gap-2 bg-white/5 hover:bg-white/10 border border-white/15 text-white text-xs sm:text-sm font-extrabold px-6 py-3.5 rounded-2xl transition-all hover:border-[#FACC15]"
+          >
+            <span>Explore All 1,200+ English Capsules</span>
+            <ChevronRight className="w-4 h-4 text-[#FACC15]" />
+          </Link>
         </div>
       </div>
 
