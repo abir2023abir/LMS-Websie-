@@ -10,6 +10,7 @@ import {
   User,
   BookOpen,
   ArrowRight,
+  ArrowLeft,
   AlertCircle,
   Sparkles,
 } from 'lucide-react';
@@ -29,7 +30,7 @@ export default function SignUpPage() {
   // Redirect if user is already logged in
   if (!authLoading && user && role) {
     if (role === 'Instructor') {
-      router.replace('/dashboard/instructor');
+      router.replace('/teacher');
     } else {
       router.replace('/student');
     }
@@ -56,7 +57,7 @@ export default function SignUpPage() {
     try {
       await signUpWithEmail(email, password, name, selectedRole);
       if (selectedRole === 'Instructor') {
-        router.push('/dashboard/instructor');
+        router.push('/teacher');
       } else {
         router.push('/student');
       }
@@ -93,6 +94,15 @@ export default function SignUpPage() {
 
   return (
     <div className="min-h-screen bg-slate-50 text-[#111827] flex flex-col justify-center py-12 sm:px-6 lg:px-8 relative overflow-hidden selection:bg-[#FACC15] selection:text-[#111827]">
+      {/* Back to Home */}
+      <Link
+        href="/"
+        className="absolute top-6 left-6 sm:top-8 sm:left-8 z-20 inline-flex items-center gap-2 bg-white/90 backdrop-blur border border-slate-200 hover:border-[#111827] hover:bg-[#FACC15] text-[#111827] text-xs font-bold px-4 py-2.5 rounded-full shadow-sm transition-all"
+      >
+        <ArrowLeft className="w-4 h-4" />
+        Back to Home
+      </Link>
+
       {/* Background Soft Glow */}
       <div className="absolute top-[-100px] left-[-100px] w-96 h-96 bg-[#FACC15]/20 rounded-full blur-3xl pointer-events-none" />
       <div className="absolute bottom-[-100px] right-[-100px] w-96 h-96 bg-amber-400/10 rounded-full blur-3xl pointer-events-none" />

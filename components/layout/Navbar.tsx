@@ -14,7 +14,7 @@ export default function Navbar() {
   const scrolled = useScrolled(20);
   const { user, role, userProfile, logout } = useAuth();
 
-  const dashboardLink = role === 'Instructor' ? '/dashboard/instructor' : '/student';
+  const dashboardLink = role === 'Instructor' ? '/teacher' : '/student';
 
   return (
     <header

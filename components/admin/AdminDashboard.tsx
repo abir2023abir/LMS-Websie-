@@ -164,7 +164,7 @@ export default function AdminDashboard() {
 
             {/* + Add Course Button */}
             <Link
-              href="/dashboard/instructor"
+              href="/teacher"
               className="flex items-center gap-2 bg-[#FACC15] hover:bg-[#eab308] text-[#111827] font-extrabold text-xs px-5 py-2.5 rounded-full shadow-lg shadow-[#FACC15]/20 transition-all hover:scale-105"
             >
               <Plus className="w-4 h-4 stroke-[3]" />
@@ -229,7 +229,7 @@ export default function AdminDashboard() {
                 <p className="text-xs text-slate-500">Live database inventory of all published English Capsules.</p>
               </div>
               <Link
-                href="/dashboard/instructor"
+                href="/teacher"
                 className="flex items-center gap-2 bg-[#FACC15] hover:bg-[#eab308] text-[#111827] font-bold text-xs px-4 py-2 rounded-full"
               >
                 <Plus className="w-3.5 h-3.5" />

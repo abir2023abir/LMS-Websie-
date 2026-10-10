@@ -97,7 +97,7 @@ export default function StudentDashboardPage() {
               </div>
               <div className="space-y-1">
                 <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-[#111827] text-white text-xs font-bold shadow-sm">
-                  <GraduationCap className="w-3.5 h-3.5 text-[#FACC15]" /> Student Portal
+                  <GraduationCap className="w-3.5 h-3.5 text-[#FACC15]" /> Student Panel
                 </div>
                 <h1 className="font-display font-extrabold text-2xl sm:text-4xl text-[#111827] tracking-tight">
                   Welcome back, {userProfile?.name || user?.displayName || 'Learner'}!

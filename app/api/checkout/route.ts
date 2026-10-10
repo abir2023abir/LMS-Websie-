@@ -75,7 +75,7 @@ export async function POST(request: Request) {
           message: 'Payment completed successfully via mock gateway',
           transactionId,
           gatewayPayload,
-          redirectUrl: '/dashboard/student',
+          redirectUrl: '/student',
         },
         { status: 200 }
       );

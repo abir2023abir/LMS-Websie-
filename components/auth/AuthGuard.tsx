@@ -24,7 +24,7 @@ export default function AuthGuard({ children, allowedRole }: AuthGuardProps) {
         if (role === 'Student') {
           router.replace('/student');
         } else if (role === 'Instructor') {
-          router.replace('/dashboard/instructor');
+          router.replace('/teacher');
         }
       }
     }

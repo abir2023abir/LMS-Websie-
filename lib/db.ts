@@ -15,10 +15,45 @@ import { featuredCourses } from '@/lib/data';
 
 const COURSES_COLLECTION = 'courses';
 
+// With the demo Firebase key, Firestore reads fail fast but writes hang forever,
+// so demo-created courses are kept in this in-memory store instead of Firestore.
+const isDemoMode = () => {
+  const apiKey = process.env.NEXT_PUBLIC_FIREBASE_API_KEY || 'AIzaSyDemoKeyForLearnVerseLMSApp123';
+  return apiKey.startsWith('AIzaSyDemo');
+};
+
+const demoCourses: CourseSchema[] = [];
+
+const mapFallbackCourse = (c: (typeof featuredCourses)[number]): CourseSchema => ({
+  id: c.id,
+  title: c.title,
+  description: c.description,
+  instructorId: c.instructor.name,
+  instructorName: c.instructor.name,
+  price: c.price,
+  originalPrice: c.originalPrice,
+  thumbnail: c.thumbnail,
+  category: c.category,
+  level: c.level,
+  rating: c.rating,
+  reviewCount: c.reviewCount,
+  studentCount: c.studentCount,
+  duration: c.duration,
+  lessonCount: c.lessonCount,
+});
+
+const fallbackCourses = (): CourseSchema[] => featuredCourses.map(mapFallbackCourse);
+
 /**
- * Creates a new course document in Firestore.
+ * Creates a new course. Stored in memory in demo mode, in Firestore otherwise.
  */
 export async function createCourse(courseData: Omit<CourseSchema, 'id' | 'createdAt' | 'updatedAt'>): Promise<string> {
+  if (isDemoMode()) {
+    const demoId = `demo-${Date.now()}`;
+    demoCourses.unshift({ ...courseData, id: demoId } as CourseSchema);
+    return demoId;
+  }
+
   try {
     const docRef = await addDoc(collection(db, COURSES_COLLECTION), {
       ...courseData,
@@ -40,29 +75,17 @@ export async function createCourse(courseData: Omit<CourseSchema, 'id' | 'create
  * Fallbacks to featured mock data if Firestore returns no documents or encounters a connection issue.
  */
 export async function getAllCourses(): Promise<CourseSchema[]> {
+  if (isDemoMode()) {
+    return [...demoCourses, ...fallbackCourses()];
+  }
+
   try {
     const q = query(collection(db, COURSES_COLLECTION), orderBy('createdAt', 'desc'));
     const querySnapshot = await getDocs(q);
 
     if (querySnapshot.empty) {
       // Return static seed courses if Firestore collection is empty
-      return featuredCourses.map((c) => ({
-        id: c.id,
-        title: c.title,
-        description: c.description,
-        instructorId: c.instructor.name,
-        instructorName: c.instructor.name,
-        price: c.price,
-        originalPrice: c.originalPrice,
-        thumbnail: c.thumbnail,
-        category: c.category,
-        level: c.level,
-        rating: c.rating,
-        reviewCount: c.reviewCount,
-        studentCount: c.studentCount,
-        duration: c.duration,
-        lessonCount: c.lessonCount,
-      }));
+      return fallbackCourses();
     }
 
     const courses: CourseSchema[] = [];
@@ -76,23 +99,7 @@ export async function getAllCourses(): Promise<CourseSchema[]> {
     return courses;
   } catch (error) {
     console.warn('Firestore fetch failed, returning fallback courses:', error);
-    return featuredCourses.map((c) => ({
-      id: c.id,
-      title: c.title,
-      description: c.description,
-      instructorId: c.instructor.name,
-      instructorName: c.instructor.name,
-      price: c.price,
-      originalPrice: c.originalPrice,
-      thumbnail: c.thumbnail,
-      category: c.category,
-      level: c.level,
-      rating: c.rating,
-      reviewCount: c.reviewCount,
-      studentCount: c.studentCount,
-      duration: c.duration,
-      lessonCount: c.lessonCount,
-    }));
+    return fallbackCourses();
   }
 }
 
@@ -100,6 +107,14 @@ export async function getAllCourses(): Promise<CourseSchema[]> {
  * Fetches a single course by its Firestore document ID.
  */
 export async function getCourseById(courseId: string): Promise<CourseSchema | null> {
+  if (isDemoMode()) {
+    return (
+      demoCourses.find((c) => c.id === courseId) ||
+      fallbackCourses().find((c) => c.id === courseId) ||
+      null
+    );
+  }
+
   try {
     const docRef = doc(db, COURSES_COLLECTION, courseId);
     const docSnap = await getDoc(docRef);
@@ -121,6 +136,10 @@ export async function getCourseById(courseId: string): Promise<CourseSchema | nu
  * Fetches all courses created by a specific instructor.
  */
 export async function getCoursesByInstructor(instructorId: string): Promise<CourseSchema[]> {
+  if (isDemoMode()) {
+    return [...demoCourses, ...fallbackCourses()].filter((c) => c.instructorId === instructorId);
+  }
+
   try {
     const q = query(
       collection(db, COURSES_COLLECTION),
@@ -147,6 +166,14 @@ export async function getCoursesByInstructor(instructorId: string): Promise<Cour
  * Deletes a course document from Firestore by document ID.
  */
 export async function deleteCourse(courseId: string): Promise<boolean> {
+  if (isDemoMode()) {
+    const index = demoCourses.findIndex((c) => c.id === courseId);
+    if (index !== -1) {
+      demoCourses.splice(index, 1);
+    }
+    return true;
+  }
+
   try {
     const { deleteDoc, doc: firestoreDoc } = await import('firebase/firestore');
     const docRef = firestoreDoc(db, COURSES_COLLECTION, courseId);
