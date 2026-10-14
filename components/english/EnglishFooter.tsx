@@ -33,7 +33,8 @@ export default function EnglishFooter() {
             </h4>
             <ul className="space-y-2 text-xs text-slate-300">
               <li><a href="#" className="hover:text-[#FACC15] transition-colors">Home</a></li>
-              <li><a href="#courses" className="hover:text-[#FACC15] transition-colors">Price Offers & Courses</a></li>
+              <li><Link href="/courses" className="hover:text-[#FACC15] transition-colors">Price Offers & Courses</Link></li>
+              <li><Link href="/services" className="hover:text-[#FACC15] transition-colors">Live Coaching Plans</Link></li>
               <li><a href="#about" className="hover:text-[#FACC15] transition-colors">Who We Are</a></li>
               <li><a href="#contact" className="hover:text-[#FACC15] transition-colors">Branch Locations</a></li>
             </ul>

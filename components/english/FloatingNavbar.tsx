@@ -13,6 +13,7 @@ export default function FloatingNavbar() {
   const navItems = [
     { name: 'Home', href: '/' },
     { name: 'All Courses', href: '/courses' },
+    { name: 'Services', href: '/services' },
     { name: 'Kids English', href: '/#kids-english' },
     { name: 'Blog', href: '/blog' },
     { name: 'Certificate Verification', href: '/verify-certificate' },
@@ -35,7 +36,7 @@ export default function FloatingNavbar() {
         </Link>
 
         {/* ── Center: Nav Links ── */}
-        <nav className="hidden lg:flex items-center gap-5">
+        <nav className="hidden lg:flex items-center gap-3.5">
           {navItems.map((item) => (
             <Link
               key={item.name}
