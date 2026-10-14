@@ -29,6 +29,9 @@ yarn-error.log*
 # Vercel deployment cache
 .vercel
 
+# Local service request inbox (admin reads this in demo mode)
+/data/service-requests.json
+
 # TypeScript
 *.tsbuildinfo
 next-env.d.ts

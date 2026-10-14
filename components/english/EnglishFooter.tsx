@@ -35,6 +35,7 @@ export default function EnglishFooter() {
               <li><a href="#" className="hover:text-[#FACC15] transition-colors">Home</a></li>
               <li><Link href="/courses" className="hover:text-[#FACC15] transition-colors">Price Offers & Courses</Link></li>
               <li><Link href="/services" className="hover:text-[#FACC15] transition-colors">Live Coaching Plans</Link></li>
+              <li><Link href="/contact" className="hover:text-[#FACC15] transition-colors">Contact Us</Link></li>
               <li><a href="#about" className="hover:text-[#FACC15] transition-colors">Who We Are</a></li>
               <li><a href="#contact" className="hover:text-[#FACC15] transition-colors">Branch Locations</a></li>
             </ul>

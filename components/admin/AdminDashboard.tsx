@@ -8,7 +8,7 @@ import useSWR from 'swr';
 import {
   Plus, LogOut, Shield, LayoutDashboard, BookOpen, Award, HelpCircle,
   DollarSign, Users, FileText, Search, Trash2, CheckCircle, RefreshCw, Eye,
-  Sparkles, ArrowRight, TrendingUp
+  Sparkles, Inbox
 } from 'lucide-react';
 import StatsCards from './StatsCards';
 import RevenueAreaChart from './RevenueAreaChart';
@@ -21,6 +21,7 @@ const navTabs = [
   { name: 'Quizzes', icon: HelpCircle },
   { name: 'Earnings', icon: DollarSign },
   { name: 'Students', icon: Users },
+  { name: 'Requests', icon: Inbox },
   { name: 'Assignments', icon: FileText },
 ];
 
@@ -36,6 +37,11 @@ export default function AdminDashboard() {
     refreshInterval: 4000,
     revalidateOnFocus: true,
   });
+  const { data: requestData } = useSWR('/api/admin/service-requests', fetcher, {
+    refreshInterval: 4000,
+    revalidateOnFocus: true,
+  });
+  const serviceRequests = requestData?.requests || [];
 
   const stats = data?.stats || {};
   const coursesList = stats?.courses || [];
@@ -157,6 +163,13 @@ export default function AdminDashboard() {
                   >
                     <Icon className="w-3.5 h-3.5" />
                     <span>{tab.name}</span>
+                    {tab.name === 'Requests' && serviceRequests.length > 0 && (
+                      <span className={`ml-0.5 min-w-[16px] h-4 px-1 rounded-full text-[10px] font-extrabold inline-flex items-center justify-center ${
+                        isActive ? 'bg-[#111827] text-[#FACC15]' : 'bg-[#FACC15] text-[#111827]'
+                      }`}>
+                        {serviceRequests.length}
+                      </span>
+                    )}
                   </button>
                 );
               })}
@@ -386,6 +399,55 @@ export default function AdminDashboard() {
                 ))}
               </div>
             </div>
+          </div>
+        )}
+
+        {activeTab === 'Requests' && (
+          <div className="bg-white rounded-3xl p-6 shadow-sm border border-slate-100 space-y-6">
+            <div>
+              <h2 className="font-display font-extrabold text-xl text-slate-900">
+                Service requests ({serviceRequests.length})
+              </h2>
+              <p className="text-xs text-slate-500">People who clicked Get Speaking, Get Fluency, Get IELTS Private, or a one-time booking.</p>
+            </div>
+            {serviceRequests.length === 0 ? (
+              <div className="rounded-2xl bg-slate-50 border border-slate-100 px-4 py-10 text-center text-sm text-slate-500">
+                No requests yet.
+              </div>
+            ) : (
+              <div className="overflow-x-auto">
+                <table className="w-full text-left text-xs border-collapse">
+                  <thead>
+                    <tr className="border-b border-slate-100 text-slate-400 font-bold uppercase tracking-wider">
+                      <th className="py-3 px-4">When</th>
+                      <th className="py-3 px-4">Name</th>
+                      <th className="py-3 px-4">Phone</th>
+                      <th className="py-3 px-4">Email</th>
+                      <th className="py-3 px-4">Service</th>
+                      <th className="py-3 px-4">Message</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-slate-100">
+                    {serviceRequests.map((item: any) => (
+                      <tr key={item.id} className="hover:bg-slate-50/80 align-top">
+                        <td className="py-3.5 px-4 text-slate-400 whitespace-nowrap">
+                          {item.createdAt ? new Date(item.createdAt).toLocaleString() : '—'}
+                        </td>
+                        <td className="py-3.5 px-4 font-bold text-slate-900">{item.name}</td>
+                        <td className="py-3.5 px-4">{item.phone}</td>
+                        <td className="py-3.5 px-4">{item.email}</td>
+                        <td className="py-3.5 px-4">
+                          <span className="bg-[#FEF9C3] text-[#111827] px-2.5 py-0.5 rounded-full text-[10px] font-extrabold whitespace-nowrap">
+                            {item.planName} · ${item.price}{item.period === 'month' ? '/mo' : ''}
+                          </span>
+                        </td>
+                        <td className="py-3.5 px-4 text-slate-600 max-w-xs">{item.message}</td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            )}
           </div>
         )}
 

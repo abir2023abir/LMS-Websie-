@@ -14,6 +14,7 @@ export default function FloatingNavbar() {
     { name: 'Home', href: '/' },
     { name: 'All Courses', href: '/courses' },
     { name: 'Services', href: '/services' },
+    { name: 'Contact', href: '/contact' },
     { name: 'Kids English', href: '/#kids-english' },
     { name: 'Blog', href: '/blog' },
     { name: 'Certificate Verification', href: '/verify-certificate' },
