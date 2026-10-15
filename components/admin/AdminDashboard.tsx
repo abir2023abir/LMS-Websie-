@@ -438,7 +438,7 @@ export default function AdminDashboard() {
                         <td className="py-3.5 px-4">{item.email}</td>
                         <td className="py-3.5 px-4">
                           <span className="bg-[#FEF9C3] text-[#111827] px-2.5 py-0.5 rounded-full text-[10px] font-extrabold whitespace-nowrap">
-                            {item.planName} · ${item.price}{item.period === 'month' ? '/mo' : ''}
+                            {item.planName} · ${item.price}{item.period === 'month' ? '/mo' : item.period === 'year' ? '/yr' : ''}
                           </span>
                         </td>
                         <td className="py-3.5 px-4 text-slate-600 max-w-xs">{item.message}</td>

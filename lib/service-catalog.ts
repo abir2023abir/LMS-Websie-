@@ -2,12 +2,16 @@ export type ServiceOffer = {
   id: string;
   name: string;
   price: number;
-  period: 'month' | 'once';
+  period: 'month' | 'year' | 'once';
   tagline: string;
   features: string[];
   popular?: boolean;
   time?: string;
 };
+
+export type Billing = 'month' | 'year' | 'once';
+
+export const YEARLY_DISCOUNT = 0.2;
 
 export const monthlyPlans: ServiceOffer[] = [
   {
@@ -87,6 +91,30 @@ export function getOffer(id: string): ServiceOffer | undefined {
   return allOffers.find((offer) => offer.id === id);
 }
 
-export function priceLabel(offer: ServiceOffer): string {
-  return offer.period === 'month' ? `$${offer.price}/month` : `$${offer.price}`;
+export function money(amount: number): string {
+  return `$${Math.round(amount).toLocaleString('en-US')}`;
+}
+
+export function yearlyFull(monthly: number): number {
+  return monthly * 12;
+}
+
+export function yearlySale(monthly: number): number {
+  return Math.round(monthly * 12 * (1 - YEARLY_DISCOUNT));
+}
+
+export function priceLabel(offer: ServiceOffer, billing: Billing = offer.period === 'once' ? 'once' : 'month'): string {
+  if (billing === 'year' && offer.period === 'month') return `${money(yearlySale(offer.price))}/yr`;
+  if (offer.period === 'month') return `${money(offer.price)}/mo`;
+  return money(offer.price);
+}
+
+export function billedAmount(offer: ServiceOffer, billing: Billing): { price: number; period: ServiceOffer['period'] } {
+  if (offer.period === 'once' || billing === 'once') {
+    return { price: offer.price, period: 'once' };
+  }
+  if (billing === 'year') {
+    return { price: yearlySale(offer.price), period: 'year' };
+  }
+  return { price: offer.price, period: 'month' };
 }

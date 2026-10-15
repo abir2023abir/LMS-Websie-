@@ -10,6 +10,7 @@ export async function POST(request: Request) {
     const phone = String(body.phone || '').trim();
     const email = String(body.email || '').trim();
     const message = String(body.message || '').trim();
+    const billing = body.billing === 'year' ? 'year' : body.billing === 'once' ? 'once' : 'month';
 
     if (!getOffer(planId)) {
       return NextResponse.json({ success: false, message: 'Pick a service first.' }, { status: 400 });
@@ -21,7 +22,7 @@ export async function POST(request: Request) {
       return NextResponse.json({ success: false, message: 'Enter a valid email.' }, { status: 400 });
     }
 
-    const saved = await createServiceRequest({ planId, name, phone, email, message });
+    const saved = await createServiceRequest({ planId, billing, name, phone, email, message });
     return NextResponse.json({ success: true, request: saved });
   } catch (error) {
     console.error('[Service request]', error);

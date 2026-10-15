@@ -1,122 +1,129 @@
 import Link from 'next/link';
-import { ArrowRight, Check, ChevronsRight, Clock } from 'lucide-react';
+import { Check } from 'lucide-react';
 import FloatingNavbar from '@/components/english/FloatingNavbar';
 import EnglishFooter from '@/components/english/EnglishFooter';
-import { monthlyPlans, singleSessions, priceLabel } from '@/lib/service-catalog';
+import {
+  money,
+  monthlyPlans,
+  singleSessions,
+  yearlyFull,
+  yearlySale,
+  type ServiceOffer,
+} from '@/lib/service-catalog';
+
+function GetStarted({ href, popular = false }: { href: string; popular?: boolean }) {
+  return (
+    <Link
+      href={href}
+      className={`mt-6 flex items-center justify-center rounded-lg border-2 py-2.5 text-sm font-semibold transition-colors ${
+        popular
+          ? 'border-[#1c6b57] text-[#16324f] hover:bg-[#1c6b57] hover:text-white'
+          : 'border-[#16324f] text-[#16324f] hover:bg-[#16324f] hover:text-white'
+      }`}
+    >
+      Get started
+    </Link>
+  );
+}
+
+function Included({ features }: { features: string[] }) {
+  return (
+    <div className="mt-6">
+      <div className="text-sm font-bold text-[#16324f]">What&apos;s included</div>
+      <ul className="mt-3 space-y-2.5">
+        {features.map((feature) => (
+          <li key={feature} className="flex items-start gap-2 text-sm text-[#3d4d5c] leading-snug">
+            <Check className="w-4 h-4 mt-0.5 text-[#1f9d55] flex-shrink-0" strokeWidth={2.5} />
+            <span>{feature}</span>
+          </li>
+        ))}
+      </ul>
+    </div>
+  );
+}
+
+function MonthlyCard({ plan }: { plan: ServiceOffer }) {
+  return (
+    <article
+      className={`relative flex h-full flex-col bg-white rounded-2xl px-6 py-7 sm:px-7 ${
+        plan.popular
+          ? 'border-2 border-[#2f9d78] shadow-sm'
+          : 'border border-[#e4ebf1]'
+      }`}
+    >
+      {plan.popular && (
+        <div className="absolute -top-3 left-1/2 -translate-x-1/2 bg-[#2f9d78] text-white text-[11px] font-bold tracking-wide uppercase px-3 py-1 rounded-full">
+          Most popular
+        </div>
+      )}
+      <h2 className="font-display font-bold text-xl text-[#16324f]">{plan.name}</h2>
+      <p className="mt-1 text-sm text-[#6b7c8a] leading-relaxed">{plan.tagline}</p>
+      <div className="mt-8 font-display font-bold text-[#16324f] text-[2.6rem] leading-none tracking-tight">
+        {money(plan.price)}
+        <span className="text-lg font-semibold text-[#16324f]">/mo</span>
+      </div>
+      <GetStarted href={`/services/apply/${plan.id}?billing=month`} popular={plan.popular} />
+      <Included features={plan.features} />
+    </article>
+  );
+}
+
+function YearlyCard({ plan }: { plan: ServiceOffer }) {
+  return (
+    <article className="flex h-full flex-col bg-white rounded-2xl border border-[#e4ebf1] px-6 py-7 sm:px-7">
+      <h2 className="font-display font-bold text-xl text-[#16324f]">{plan.name}</h2>
+      <div className="mt-4 flex items-end gap-2">
+        <span className="text-slate-400 line-through text-base">{money(yearlyFull(plan.price))}</span>
+        <span className="font-display font-bold text-[#16324f] text-[2rem] leading-none">
+          {money(yearlySale(plan.price))}
+          <span className="text-lg">/yr</span>
+        </span>
+      </div>
+      <div className="mt-2 text-sm font-semibold text-[#1f9d55]">20% off a 12-month plan</div>
+      <GetStarted href={`/services/apply/${plan.id}?billing=year`} />
+    </article>
+  );
+}
 
 export default function ServicesView() {
   return (
-    <div className="min-h-screen bg-white text-[#111827] selection:bg-[#FACC15] selection:text-[#111827]">
+    <div className="min-h-screen bg-[#eef3f6] text-[#16324f] selection:bg-[#FACC15] selection:text-[#111827]">
       <FloatingNavbar />
 
-      <section className="bg-gradient-to-b from-[#FACC15] via-[#FACC15] to-[#EAB308] pt-28 lg:pt-32 pb-16">
-        <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 grid grid-cols-1 lg:grid-cols-12 gap-10 items-end">
-          <div className="lg:col-span-7">
-            <div className="inline-flex items-center gap-2 bg-[#111827] text-white rounded-full px-3.5 py-1.5 shadow-md">
-              <span className="bg-[#FACC15] text-[#111827] p-1 rounded-full">
-                <ChevronsRight className="w-3.5 h-3.5" />
-              </span>
-              <span className="text-xs font-semibold tracking-wide">Live coaching</span>
-            </div>
-            <h1 className="mt-4 font-display font-extrabold text-4xl sm:text-5xl leading-[1.05] tracking-tight">
-              Pick a plan. A teacher takes it from there.
-            </h1>
-            <p className="mt-3 max-w-lg text-base font-medium text-[#111827]/80">
-              Courses stay in your dashboard. These are live classes, billed by the month or booked once.
-            </p>
-          </div>
-          <div className="lg:col-span-5 grid grid-cols-3 gap-2">
-            {monthlyPlans.map((plan) => (
-              <Link
-                key={plan.id}
-                href={`/services/apply/${plan.id}`}
-                className={`rounded-2xl px-3 py-3 text-center ${
-                  plan.popular ? 'bg-[#111827] text-white' : 'bg-white/50 border border-black/10'
-                }`}
-              >
-                <div className="text-[10px] font-bold uppercase tracking-wide opacity-70">{plan.name}</div>
-                <div className="font-display font-extrabold text-xl">${plan.price}</div>
-                <div className="text-[10px] font-semibold opacity-70">/ month</div>
-              </Link>
-            ))}
-          </div>
+      <main className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 pt-32 pb-20">
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-5 items-stretch">
+          {monthlyPlans.map((plan) => (
+            <MonthlyCard key={plan.id} plan={plan} />
+          ))}
         </div>
-      </section>
 
-      <section id="plans" className="bg-[#111827] text-white py-16">
-        <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
-          <h2 className="font-display font-extrabold text-3xl tracking-tight text-center">
-            Monthly plans
-          </h2>
-          <div className="mt-8 grid grid-cols-1 lg:grid-cols-3 gap-4 items-stretch">
-            {monthlyPlans.map((plan) => (
-              <article
-                key={plan.id}
-                className={`relative rounded-3xl p-6 flex flex-col ${
-                  plan.popular
-                    ? 'bg-[#FACC15] text-[#111827] lg:-translate-y-2'
-                    : 'bg-white/5 border border-white/10'
-                }`}
-              >
-                {plan.popular && (
-                  <div className="absolute -top-3 left-6 bg-[#111827] text-[#FACC15] text-[11px] font-extrabold uppercase tracking-wider px-3 py-1 rounded-full">
-                    Most popular
-                  </div>
-                )}
-                <h3 className="font-display font-extrabold text-2xl">{plan.name}</h3>
-                <p className={`mt-1 text-sm ${plan.popular ? 'text-[#111827]/70' : 'text-slate-400'}`}>{plan.tagline}</p>
-                <div className="mt-4 font-display font-extrabold text-5xl leading-none">
-                  ${plan.price}
-                  <span className="text-sm font-semibold ml-1">/ month</span>
-                </div>
-                <ul className="mt-5 space-y-2.5 flex-1">
-                  {plan.features.map((feature) => (
-                    <li key={feature} className="flex items-start gap-2 text-sm font-medium">
-                      <Check className={`w-4 h-4 mt-0.5 flex-shrink-0 ${plan.popular ? '' : 'text-[#FACC15]'}`} />
-                      <span>{feature}</span>
-                    </li>
-                  ))}
-                </ul>
-                <Link
-                  href={`/services/apply/${plan.id}`}
-                  className={`mt-6 inline-flex items-center justify-center rounded-full py-3 text-sm font-extrabold ${
-                    plan.popular ? 'bg-[#111827] text-white hover:bg-black' : 'bg-[#FACC15] text-[#111827] hover:bg-[#eab308]'
-                  }`}
-                >
-                  Get {plan.name}
-                  <ArrowRight className="w-4 h-4 ml-2" />
-                </Link>
-              </article>
-            ))}
-          </div>
-        </div>
-      </section>
+        <h2 className="mt-14 text-center font-display font-bold text-xl sm:text-2xl text-[#16324f]">
+          Prefer to pay for the year? Save 20%.
+        </h2>
 
-      <section className="bg-white py-16">
-        <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
-          <h2 className="font-display font-extrabold text-3xl tracking-tight">One session, no month</h2>
-          <div className="mt-6 grid grid-cols-1 md:grid-cols-3 gap-4">
-            {singleSessions.map((item) => (
-              <article key={item.id} className="rounded-3xl border border-slate-200 p-5 flex flex-col">
-                <div className="text-xs font-bold text-slate-500 flex items-center gap-1">
-                  <Clock className="w-3.5 h-3.5" /> {item.time}
-                </div>
-                <h3 className="mt-2 font-display font-extrabold text-xl">{item.name}</h3>
-                <p className="mt-1 text-sm text-slate-600 flex-1">{item.tagline}</p>
-                <div className="mt-4 flex items-center justify-between">
-                  <div className="font-display font-extrabold text-2xl">{priceLabel(item)}</div>
-                  <Link
-                    href={`/services/apply/${item.id}`}
-                    className="rounded-full bg-[#111827] text-white text-xs font-bold px-4 py-2.5 hover:bg-black"
-                  >
-                    Book
-                  </Link>
-                </div>
-              </article>
-            ))}
-          </div>
+        <div className="mt-6 grid grid-cols-1 lg:grid-cols-3 gap-5">
+          {monthlyPlans.map((plan) => (
+            <YearlyCard key={plan.id} plan={plan} />
+          ))}
         </div>
-      </section>
+
+        <h2 className="mt-14 text-center font-display font-bold text-xl text-[#16324f]">
+          Or book one session
+        </h2>
+        <div className="mt-6 grid grid-cols-1 lg:grid-cols-3 gap-5">
+          {singleSessions.map((item) => (
+            <article key={item.id} className="flex h-full flex-col bg-white rounded-2xl border border-[#e4ebf1] px-6 py-7">
+              <h3 className="font-display font-bold text-xl text-[#16324f]">{item.name}</h3>
+              <p className="mt-1 text-sm text-[#6b7c8a]">{item.tagline}</p>
+              <div className="mt-6 font-display font-bold text-3xl text-[#16324f]">
+                {money(item.price)}
+                <span className="text-sm font-semibold text-[#6b7c8a] ml-2">{item.time}</span>
+              </div>
+              <GetStarted href={`/services/apply/${item.id}`} />
+            </article>
+          ))}
+        </div>
+      </main>
 
       <EnglishFooter />
     </div>

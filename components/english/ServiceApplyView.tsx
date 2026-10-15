@@ -5,9 +5,9 @@ import Link from 'next/link';
 import { ArrowLeft, Check } from 'lucide-react';
 import FloatingNavbar from '@/components/english/FloatingNavbar';
 import EnglishFooter from '@/components/english/EnglishFooter';
-import { priceLabel, type ServiceOffer } from '@/lib/service-catalog';
+import { priceLabel, type Billing, type ServiceOffer } from '@/lib/service-catalog';
 
-export default function ServiceApplyView({ offer }: { offer: ServiceOffer }) {
+export default function ServiceApplyView({ offer, billing }: { offer: ServiceOffer; billing: Billing }) {
   const [name, setName] = useState('');
   const [phone, setPhone] = useState('');
   const [email, setEmail] = useState('');
@@ -26,6 +26,7 @@ export default function ServiceApplyView({ offer }: { offer: ServiceOffer }) {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           planId: offer.id,
+          billing,
           name,
           phone,
           email,
@@ -59,7 +60,10 @@ export default function ServiceApplyView({ offer }: { offer: ServiceOffer }) {
             <div className="text-[11px] font-bold uppercase tracking-wider text-[#FACC15]">Selected service</div>
             <h1 className="mt-2 font-display font-extrabold text-3xl">{offer.name}</h1>
             <p className="mt-2 text-sm text-slate-300">{offer.tagline}</p>
-            <div className="mt-5 font-display font-extrabold text-4xl">{priceLabel(offer)}</div>
+            <div className="mt-5 font-display font-extrabold text-4xl">{priceLabel(offer, billing)}</div>
+            {billing === 'year' && (
+              <p className="mt-1 text-xs text-[#FACC15] font-semibold">12 months, 20% off</p>
+            )}
             <ul className="mt-6 space-y-2.5">
               {offer.features.map((feature) => (
                 <li key={feature} className="flex items-start gap-2 text-sm">

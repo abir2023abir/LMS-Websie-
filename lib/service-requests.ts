@@ -57,6 +57,7 @@ function toIso(value: unknown): string {
 
 export async function createServiceRequest(input: {
   planId: string;
+  billing?: 'month' | 'year' | 'once';
   name: string;
   phone: string;
   email: string;
@@ -67,12 +68,15 @@ export async function createServiceRequest(input: {
     throw new Error('Unknown service');
   }
 
+  const billing = offer.period === 'once' ? 'once' : input.billing === 'year' ? 'year' : 'month';
+  const price = billing === 'year' ? Math.round(offer.price * 12 * 0.8) : offer.price;
+
   const record: ServiceRequest = {
     id: `req-${Date.now()}`,
     planId: offer.id,
     planName: offer.name,
-    price: offer.price,
-    period: offer.period,
+    price,
+    period: billing,
     name: input.name.trim(),
     phone: input.phone.trim(),
     email: input.email.trim(),
@@ -121,7 +125,7 @@ export async function listServiceRequests(): Promise<ServiceRequest[]> {
       planId: String(data.planId || ''),
       planName: String(data.planName || ''),
       price: Number(data.price || 0),
-      period: data.period === 'once' ? 'once' : 'month',
+      period: data.period === 'once' ? 'once' : data.period === 'year' ? 'year' : 'month',
       name: String(data.name || ''),
       phone: String(data.phone || ''),
       email: String(data.email || ''),
