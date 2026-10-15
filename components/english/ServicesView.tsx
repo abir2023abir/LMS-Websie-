@@ -1,5 +1,5 @@
 import Link from 'next/link';
-import { Check } from 'lucide-react';
+import { Check, ChevronsRight } from 'lucide-react';
 import FloatingNavbar from '@/components/english/FloatingNavbar';
 import EnglishFooter from '@/components/english/EnglishFooter';
 import {
@@ -90,7 +90,24 @@ export default function ServicesView() {
     <div className="min-h-screen bg-[#eef3f6] text-[#16324f] selection:bg-[#FACC15] selection:text-[#111827]">
       <FloatingNavbar />
 
-      <main className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 pt-32 pb-20">
+      <section className="bg-gradient-to-b from-[#FACC15] via-[#FACC15] to-[#EAB308] pt-28 lg:pt-32 pb-14">
+        <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="inline-flex items-center gap-2 bg-[#111827] text-white rounded-full px-3.5 py-1.5 shadow-md">
+            <span className="bg-[#FACC15] text-[#111827] p-1 rounded-full">
+              <ChevronsRight className="w-3.5 h-3.5" />
+            </span>
+            <span className="text-xs font-semibold tracking-wide">Services</span>
+          </div>
+          <h1 className="mt-4 font-display font-extrabold text-4xl sm:text-5xl tracking-tight text-[#111827] max-w-3xl leading-[1.08]">
+            Live classes with a teacher. Not a recorded course.
+          </h1>
+          <p className="mt-3 max-w-xl text-base font-medium text-[#111827]/80">
+            Speaking, Fluency, and IELTS Private are monthly services. Pay for the year and save 20%. The plans are below.
+          </p>
+        </div>
+      </section>
+
+      <main className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 pt-12 pb-20">
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-5 items-stretch">
           {monthlyPlans.map((plan) => (
             <MonthlyCard key={plan.id} plan={plan} />
