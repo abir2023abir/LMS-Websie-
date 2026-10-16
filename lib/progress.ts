@@ -1,7 +1,12 @@
-import { doc, getDoc, setDoc, collection, getDocs, query, where, serverTimestamp } from 'firebase/firestore';
-import { db } from '@/lib/firebase';
 import type { CourseSchema, ModuleSchema } from '@/types/course';
 import { featuredCourses } from '@/lib/data';
+import { isFirebaseDemo } from '@/lib/utils';
+
+async function firestore() {
+  if (isFirebaseDemo()) return null;
+  const [{ db }, fs] = await Promise.all([import('@/lib/firebase'), import('firebase/firestore')]);
+  return { db, ...fs };
+}
 
 export interface CourseProgressRecord {
   courseId: string;
@@ -50,6 +55,21 @@ function saveLocalProgressStore(store: Record<string, CourseProgressRecord>) {
   }
 }
 
+/** Rank inside one course. Higher progress is a better rank. */
+export function rankInCourse(courseId: string, userId: string, currentPercent = 0) {
+  const rows = Object.values(getLocalProgressStore()).filter((item) => String(item.courseId) === String(courseId));
+  const mine = rows.find((item) => item.userId === userId);
+  const progress = Math.round(mine?.progressPercentage ?? currentPercent);
+  const board = rows.some((item) => item.userId === userId)
+    ? rows
+    : [...rows, { userId, courseId, progressPercentage: progress } as CourseProgressRecord];
+  const sorted = [...board].sort(
+    (a, b) => (b.progressPercentage || 0) - (a.progressPercentage || 0) || String(a.userId).localeCompare(String(b.userId)),
+  );
+  const rank = Math.max(1, sorted.findIndex((item) => item.userId === userId) + 1);
+  return { rank, total: sorted.length, progress };
+}
+
 /**
  * Retrieves the current student's progress for a specific course.
  */
@@ -63,10 +83,14 @@ export async function getUserCourseProgress(
   const localStore = getLocalProgressStore();
   const localRecord = localStore[storeKey];
 
-  // 2. Query Firestore if available
+  // 2. Query Firestore if available. A dead demo project must not keep the classroom on the loading screen.
   try {
-    const docRef = doc(db, 'user_progress', storeKey);
-    const docSnap = await getDoc(docRef);
+    const fb = await firestore();
+    if (!fb) return localRecord || null;
+    const docSnap = await Promise.race([
+      fb.getDoc(fb.doc(fb.db, 'user_progress', storeKey)),
+      new Promise<never>((_, reject) => setTimeout(() => reject(new Error('progress timeout')), 2500)),
+    ]);
     if (docSnap.exists()) {
       const data = docSnap.data() as CourseProgressRecord;
       // Sync local cache with Firestore data
@@ -176,16 +200,12 @@ export async function saveLessonCompletion(
   localStore[storeKey] = updatedRecord;
   saveLocalProgressStore(localStore);
 
-  // 2. Asynchronously sync to Firestore
-  try {
-    const docRef = doc(db, 'user_progress', storeKey);
-    await setDoc(docRef, {
-      ...updatedRecord,
-      updatedAt: serverTimestamp(),
-    }, { merge: true });
-  } catch (err) {
-    console.warn('Firestore progress sync failed, saved locally:', err);
-  }
+  // 2. Sync to Firestore in the background; the lesson UI must not wait on the network.
+  firestore()
+    .then((fb) =>
+      fb?.setDoc(fb.doc(fb.db, 'user_progress', storeKey), { ...updatedRecord, updatedAt: fb.serverTimestamp() }, { merge: true }),
+    )
+    .catch((err) => console.warn('Firestore progress sync failed, saved locally:', err));
 
   return updatedRecord;
 }

@@ -6,11 +6,15 @@ import AuthGuard from '@/components/auth/AuthGuard';
 import { useAuth } from '@/context/AuthContext';
 import FloatingNavbar from '@/components/english/FloatingNavbar';
 import EnglishFooter from '@/components/english/EnglishFooter';
+import DashboardCalendar from '@/components/dashboard/DashboardCalendar';
+import InboxButton from '@/components/inbox/InboxButton';
+import AdminMessages from '@/components/admin/AdminMessages';
+import { takaFromUsd, usdToBdt, USD_TO_BDT } from '@/lib/utils';
 import type { CourseSchema, ModuleSchema, LessonSchema } from '@/types/course';
 import {
   BookOpen,
   Users,
-  DollarSign,
+  Banknote,
   Star,
   Plus,
   LogOut,
@@ -35,7 +39,7 @@ export default function TeacherPanelPage() {
   // Form State
   const [title, setTitle] = useState('');
   const [description, setDescription] = useState('');
-  const [price, setPrice] = useState('49');
+  const [price, setPrice] = useState(String(usdToBdt(49)));
   const [category, setCategory] = useState('General English');
   const [level, setLevel] = useState<'Beginner' | 'Intermediate' | 'Advanced'>('Beginner');
   const [thumbnailUrl, setThumbnailUrl] = useState('');
@@ -200,7 +204,7 @@ export default function TeacherPanelPage() {
         description,
         instructorId: user?.uid || 'instructor-demo',
         instructorName: userProfile?.name || user?.displayName || 'Teacher',
-        price: Number(price),
+        price: Math.round(Number(price) / USD_TO_BDT) || 0,
         thumbnail: finalThumbnail,
         category,
         level,
@@ -269,6 +273,7 @@ export default function TeacherPanelPage() {
             </div>
 
             <div className="flex items-center gap-3">
+              <InboxButton scope="student" />
               <button
                 onClick={() => setShowUploadModal(true)}
                 className="bg-[#111827] hover:bg-black text-white font-extrabold text-xs sm:text-sm px-6 py-3.5 rounded-full transition-all shadow-lg shadow-black/20 flex items-center gap-2"
@@ -289,6 +294,13 @@ export default function TeacherPanelPage() {
 
         {/* ── MAIN PANEL CONTENT ── */}
         <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10 w-full flex-1 space-y-10">
+          <AdminMessages
+            listUrl="/api/messages?board=1"
+            replyUrl="/api/messages"
+            replyBody={(id, text) => ({ action: 'reply', id, text })}
+            title="Course messages"
+            intro="Messages sent from inside a course show the course name and the student’s rank by progress. Customer care and the admin panel see the same thread."
+          />
           {/* ── QUICK METRICS ── */}
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
             <div className="bg-white rounded-3xl border border-slate-200/80 p-6 space-y-2 shadow-sm">
@@ -305,11 +317,11 @@ export default function TeacherPanelPage() {
             <div className="bg-white rounded-3xl border border-slate-200/80 p-6 space-y-2 shadow-sm">
               <div className="flex items-center justify-between">
                 <div className="w-10 h-10 rounded-xl bg-emerald-50 text-emerald-600 flex items-center justify-center">
-                  <DollarSign className="w-5 h-5" />
+                  <Banknote className="w-5 h-5" />
                 </div>
                 <span className="text-xs font-bold text-slate-500 uppercase">Earnings</span>
               </div>
-              <div className="font-display font-extrabold text-3xl text-[#111827]">$4,850</div>
+              <div className="font-display font-extrabold text-3xl text-[#111827]">{takaFromUsd(4850)}</div>
               <div className="text-xs text-slate-500">Total Revenue</div>
             </div>
 
@@ -337,6 +349,8 @@ export default function TeacherPanelPage() {
               <div className="text-xs text-slate-500">Average Course Rating</div>
             </div>
           </div>
+
+          <DashboardCalendar />
 
           {/* ── UPLOADED COURSES TABLE ── */}
           <div className="bg-white rounded-3xl border border-slate-200/80 p-6 sm:p-8 shadow-sm">
@@ -414,7 +428,7 @@ export default function TeacherPanelPage() {
                             {c.category || 'General English'}
                           </span>
                         </td>
-                        <td className="py-4 px-4 font-bold text-[#111827]">${c.price}</td>
+                        <td className="py-4 px-4 font-bold text-[#111827]">{takaFromUsd(c.price)}</td>
                         <td className="py-4 px-4 text-slate-500">
                           {c.lessonCount || 0} lessons
                         </td>
@@ -519,7 +533,7 @@ export default function TeacherPanelPage() {
 
                   <div>
                     <label className="block text-xs font-bold text-slate-700 mb-1.5 uppercase tracking-wider">
-                      Price ($ USD) *
+                      Price (টাকা) *
                     </label>
                     <input
                       type="number"
@@ -527,7 +541,7 @@ export default function TeacherPanelPage() {
                       min="0"
                       value={price}
                       onChange={(e) => setPrice(e.target.value)}
-                      placeholder="49"
+                      placeholder="5880"
                       className="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-3 text-sm text-[#111827] placeholder-slate-400 focus:outline-none focus:border-[#111827] transition-colors"
                     />
                   </div>

@@ -18,6 +18,7 @@ import {
   PlayCircle,
 } from 'lucide-react';
 import { motion } from 'framer-motion';
+import { takaFromUsd } from '@/lib/utils';
 import CheckoutModal from '@/components/checkout/CheckoutModal';
 import type { CourseSchema } from '@/types/course';
 
@@ -237,10 +238,10 @@ export default function KidsSection() {
                     <div className="text-[10px] font-bold text-slate-400 uppercase">Child Enrollment</div>
                     <div className="flex items-baseline gap-2">
                       <span className="font-display font-black text-2xl text-[#111827]">
-                        ${course.price}
+                        {takaFromUsd(course.price)}
                       </span>
                       <span className="text-xs text-slate-400 line-through font-semibold">
-                        ${course.originalPrice}
+                        {takaFromUsd(course.originalPrice)}
                       </span>
                     </div>
                   </div>

@@ -1,7 +1,7 @@
 'use client';
 
 import Image from 'next/image';
-import { ChevronsRight, Award, Users, ShieldCheck, DollarSign } from 'lucide-react';
+import { ChevronsRight, Award, Users, ShieldCheck, Banknote } from 'lucide-react';
 import { motion } from 'framer-motion';
 
 const features = [
@@ -16,7 +16,7 @@ const features = [
     description: 'Our experienced instructors use proven methods to help you learn effectively and reach your goals faster.',
   },
   {
-    icon: DollarSign,
+    icon: Banknote,
     title: 'Flexible Plans For Every Budget',
     description: 'Learn and grow without overspending — our pricing is designed to fit your goals and your wallet.',
   },

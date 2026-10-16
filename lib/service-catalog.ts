@@ -1,3 +1,5 @@
+import { takaFromUsd } from '@/lib/utils';
+
 export type ServiceOffer = {
   id: string;
   name: string;
@@ -92,7 +94,7 @@ export function getOffer(id: string): ServiceOffer | undefined {
 }
 
 export function money(amount: number): string {
-  return `$${Math.round(amount).toLocaleString('en-US')}`;
+  return takaFromUsd(amount);
 }
 
 export function yearlyFull(monthly: number): number {

@@ -8,6 +8,9 @@ import { useAuth } from '@/context/AuthContext';
 import FloatingNavbar from '@/components/english/FloatingNavbar';
 import EnglishFooter from '@/components/english/EnglishFooter';
 import CertificateModal from '@/components/student/CertificateModal';
+import DashboardCalendar from '@/components/dashboard/DashboardCalendar';
+import InboxButton from '@/components/inbox/InboxButton';
+import CampusMessageForm from '@/components/messages/CampusMessageForm';
 import {
   getEnrolledCoursesWithProgress,
   type EnrolledCourseWithProgress,
@@ -109,6 +112,7 @@ export default function StudentDashboardPage() {
             </div>
 
             <div className="flex items-center gap-3">
+              <InboxButton scope="own" />
               <Link
                 href="/courses"
                 className="bg-[#111827] hover:bg-black text-white font-extrabold text-xs sm:text-sm px-6 py-3.5 rounded-full transition-all shadow-lg shadow-black/20 flex items-center gap-2"
@@ -129,7 +133,6 @@ export default function StudentDashboardPage() {
 
         {/* ── MAIN DASHBOARD CONTENT ── */}
         <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10 w-full flex-1 space-y-10">
-          {/* ── METRICS OVERVIEW STATS (WHITE CARDS) ── */}
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
             <div className="bg-white rounded-3xl border border-slate-200/80 p-6 space-y-2 shadow-sm">
               <div className="flex items-center justify-between">
@@ -185,6 +188,17 @@ export default function StudentDashboardPage() {
               <div className="text-xs text-slate-500">Verified Credentials Issued</div>
             </div>
           </div>
+
+          <div className="flex flex-wrap gap-3">
+            <Link href="/student/assignments" className="rounded-full bg-[#111827] text-white text-xs font-bold px-4 py-2">Assignments</Link>
+            <Link href="/student/quizzes" className="rounded-full bg-[#FACC15] text-[#111827] text-xs font-bold px-4 py-2">Quizzes</Link>
+          </div>
+
+          <section className="bg-white border border-slate-200 rounded-3xl p-6 max-w-xl">
+            <CampusMessageForm kind="student" lockedKind defaultName={userProfile?.name || user?.displayName || ''} defaultEmail={user?.email || ''} />
+          </section>
+
+          <DashboardCalendar />
 
           {/* ── QUICK RESUME HERO CARD ── */}
           {resumeCourse && (

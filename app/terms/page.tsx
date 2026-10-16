@@ -21,7 +21,7 @@ const sections = [
   },
   {
     heading: '5. Payments',
-    body: 'Payments are processed through our payment partners (including SSLCommerz, bKash, and Nagad). Prices are shown in USD or local currency at checkout. We reserve the right to correct pricing errors and to modify or discontinue courses.',
+    body: 'Payments are processed through our payment partners (including SSLCommerz, bKash, and Nagad). Prices are shown in Bangladeshi Taka. We reserve the right to correct pricing errors and to modify or discontinue courses.',
   },
   {
     heading: '6. Acceptable Use',

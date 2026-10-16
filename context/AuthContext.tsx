@@ -1,25 +1,27 @@
 'use client';
 
 import React, { createContext, useContext, useEffect, useState } from 'react';
-import {
-  User,
-  onAuthStateChanged,
-  signInWithEmailAndPassword,
-  createUserWithEmailAndPassword,
-  signInWithPopup,
-  signOut,
-  updateProfile,
-} from 'firebase/auth';
-import { doc, getDoc, setDoc, serverTimestamp } from 'firebase/firestore';
-import { auth, db, googleProvider } from '@/lib/firebase';
+import type { User } from 'firebase/auth';
+import { audit, isDeactivated, recordSession } from '@/lib/workspace';
 
-export type UserRole = 'Student' | 'Instructor';
+async function firebase() {
+  const [base, fbAuth, fbStore] = await Promise.all([
+    import('@/lib/firebase'),
+    import('firebase/auth'),
+    import('firebase/firestore'),
+  ]);
+  return { ...fbStore, ...fbAuth, ...base };
+}
+
+export type UserRole = 'Student' | 'Instructor' | 'Guardian' | 'ServiceCustomer';
 
 export interface UserProfile {
   uid: string;
   name: string;
   email: string;
   role: UserRole;
+  roles?: UserRole[];
+  linkedStudentEmail?: string;
   avatarUrl?: string;
   createdAt?: any;
 }
@@ -34,8 +36,12 @@ interface AuthContextType {
     email: string,
     password: string,
     name: string,
-    role: UserRole
+    role: UserRole,
+    extras?: { linkedStudentEmail?: string }
   ) => Promise<void>;
+  linkGuardianToStudent: (studentEmail: string) => Promise<void>;
+  addRole: (role: UserRole) => void;
+  switchRole: (role: UserRole) => void;
   loginWithEmail: (email: string, password: string) => Promise<void>;
   loginWithGoogle: (preferredRole?: UserRole) => Promise<void>;
   logout: () => Promise<void>;
@@ -79,8 +85,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   // Fetch or create user Firestore profile
   const fetchUserProfile = async (uid: string): Promise<UserProfile | null> => {
     try {
-      const docRef = doc(db, 'users', uid);
-      const docSnap = await getDoc(docRef);
+      const fb = await firebase();
+      const docSnap = await fb.getDoc(fb.doc(fb.db, 'users', uid));
       if (docSnap.exists()) {
         const data = docSnap.data() as UserProfile;
         setUserProfile(data);
@@ -118,27 +124,35 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
     // 2. If not demo key, attempt Firebase Auth listener
     if (!demo) {
-      try {
-        const unsubscribe = onAuthStateChanged(auth, async (currentUser) => {
-          setUser(currentUser);
-          if (currentUser) {
-            const profile = await fetchUserProfile(currentUser.uid);
-            if (!profile) {
-              const fallbackRole: UserRole = 'Student';
-              setRole(fallbackRole);
+      let unsubscribe: (() => void) | undefined;
+      let cancelled = false;
+      firebase()
+        .then((fb) => {
+          if (cancelled) return;
+          unsubscribe = fb.onAuthStateChanged(fb.auth, async (currentUser) => {
+            setUser(currentUser);
+            if (currentUser) {
+              const profile = await fetchUserProfile(currentUser.uid);
+              if (!profile) {
+                const fallbackRole: UserRole = 'Student';
+                setRole(fallbackRole);
+              }
+            } else {
+              setRole(null);
+              setUserProfile(null);
             }
-          } else {
-            setRole(null);
-            setUserProfile(null);
-          }
+            setLoading(false);
+          });
+        })
+        .catch((err) => {
+          console.warn('Firebase onAuthStateChanged failed, falling back to offline mode:', err);
           setLoading(false);
         });
 
-        return () => unsubscribe();
-      } catch (err) {
-        console.warn('Firebase onAuthStateChanged failed, falling back to offline mode:', err);
-        setLoading(false);
-      }
+      return () => {
+        cancelled = true;
+        unsubscribe?.();
+      };
     } else {
       setLoading(false);
     }
@@ -149,7 +163,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     email: string,
     password: string,
     name: string,
-    selectedRole: UserRole
+    selectedRole: UserRole,
+    extras?: { linkedStudentEmail?: string }
   ) => {
     const existingUsers = JSON.parse(localStorage.getItem(LOCAL_USERS_KEY) || '[]');
     const alreadyExists = existingUsers.some(
@@ -172,6 +187,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       name,
       email,
       role: selectedRole,
+      roles: [selectedRole],
+      linkedStudentEmail: extras?.linkedStudentEmail?.trim().toLowerCase() || undefined,
       avatarUrl,
       createdAt: new Date().toISOString(),
     };
@@ -202,14 +219,15 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     email: string,
     password: string,
     name: string,
-    selectedRole: UserRole
+    selectedRole: UserRole,
+    extras?: { linkedStudentEmail?: string }
   ) => {
     setLoading(true);
 
     // If demo key is detected, use local mock sign up directly
     if (checkIsDemoKey()) {
       try {
-        await mockSignUp(email, password, name, selectedRole);
+        await mockSignUp(email, password, name, selectedRole, extras);
         return;
       } finally {
         setLoading(false);
@@ -217,24 +235,27 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     }
 
     try {
-      const userCredential = await createUserWithEmailAndPassword(auth, email, password);
+      const fb = await firebase();
+      const userCredential = await fb.createUserWithEmailAndPassword(fb.auth, email, password);
       const newUser = userCredential.user;
 
-      await updateProfile(newUser, { displayName: name });
+      await fb.updateProfile(newUser, { displayName: name });
 
       const profileData: UserProfile = {
         uid: newUser.uid,
         name: name,
         email: email,
         role: selectedRole,
+        roles: [selectedRole],
+        linkedStudentEmail: extras?.linkedStudentEmail?.trim().toLowerCase() || undefined,
         avatarUrl:
           newUser.photoURL ||
           `https://ui-avatars.com/api/?name=${encodeURIComponent(name)}&background=7c3aed&color=fff`,
-        createdAt: serverTimestamp(),
+        createdAt: fb.serverTimestamp(),
       };
 
       try {
-        await setDoc(doc(db, 'users', newUser.uid), profileData);
+        await fb.setDoc(fb.doc(fb.db, 'users', newUser.uid), profileData);
       } catch (dbErr) {
         console.warn('Firestore setDoc failed, proceeding with local profile:', dbErr);
       }
@@ -249,7 +270,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         err.message?.includes('api-key-not-valid')
       ) {
         console.info('Firebase API key not valid. Switching to local mock signup.');
-        await mockSignUp(email, password, name, selectedRole);
+        await mockSignUp(email, password, name, selectedRole, extras);
         return;
       }
       throw err;
@@ -260,6 +281,11 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   // Mock Login
   const mockLogin = async (email: string, password: string) => {
+    if (isDeactivated(email)) {
+      const err: any = new Error('This account is turned off.');
+      err.code = 'auth/user-disabled';
+      throw err;
+    }
     const existingUsers = JSON.parse(localStorage.getItem(LOCAL_USERS_KEY) || '[]');
     const foundUser = existingUsers.find(
       (u: any) => u.email.toLowerCase() === email.toLowerCase()
@@ -284,6 +310,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         name: foundUser.name,
         email: foundUser.email,
         role: foundUser.role || 'Student',
+        roles: foundUser.roles || [foundUser.role || 'Student'],
+        linkedStudentEmail: foundUser.linkedStudentEmail,
         avatarUrl: foundUser.avatarUrl,
         createdAt: foundUser.createdAt,
       };
@@ -293,6 +321,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       setUserProfile(profileData);
       setRole(foundUser.role || 'Student');
       setIsDemoMode(true);
+      recordSession(foundUser.email);
       return;
     }
 
@@ -327,6 +356,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     setUserProfile(profileData);
     setRole('Student');
     setIsDemoMode(true);
+    recordSession(email);
   };
 
   // Email & Password Login
@@ -343,7 +373,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     }
 
     try {
-      const userCredential = await signInWithEmailAndPassword(auth, email, password);
+      const fb = await firebase();
+      const userCredential = await fb.signInWithEmailAndPassword(fb.auth, email, password);
       await fetchUserProfile(userCredential.user.uid);
     } catch (err: any) {
       if (
@@ -401,11 +432,12 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     }
 
     try {
-      const result = await signInWithPopup(auth, googleProvider);
+      const fb = await firebase();
+      const result = await fb.signInWithPopup(fb.auth, fb.googleProvider);
       const gUser = result.user;
 
-      const userDocRef = doc(db, 'users', gUser.uid);
-      const userDocSnap = await getDoc(userDocRef);
+      const userDocRef = fb.doc(fb.db, 'users', gUser.uid);
+      const userDocSnap = await fb.getDoc(userDocRef);
 
       if (!userDocSnap.exists()) {
         const profileData: UserProfile = {
@@ -418,9 +450,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
             `https://ui-avatars.com/api/?name=${encodeURIComponent(
               gUser.displayName || 'Learner'
             )}`,
-          createdAt: serverTimestamp(),
+          createdAt: fb.serverTimestamp(),
         };
-        await setDoc(userDocRef, profileData);
+        await fb.setDoc(userDocRef, profileData);
         setUserProfile(profileData);
         setRole(preferredRole);
       } else {
@@ -450,7 +482,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     clearLocalSession();
     try {
       if (!checkIsDemoKey()) {
-        await signOut(auth);
+        const fb = await firebase();
+        await fb.signOut(fb.auth);
       }
     } catch (e) {
       console.warn('Sign out error:', e);
@@ -460,6 +493,49 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       setUserProfile(null);
       setLoading(false);
     }
+  };
+
+  const linkGuardianToStudent = async (studentEmail: string) => {
+    const email = studentEmail.trim().toLowerCase();
+    if (!email || !userProfile) return;
+    const nextProfile: UserProfile = { ...userProfile, linkedStudentEmail: email };
+    setUserProfile(nextProfile);
+    if (user && role) saveLocalSession(user, nextProfile, role);
+    if (typeof window !== 'undefined') {
+      const existingUsers = JSON.parse(localStorage.getItem(LOCAL_USERS_KEY) || '[]');
+      const updated = existingUsers.map((u: any) =>
+        u.uid === nextProfile.uid ? { ...u, linkedStudentEmail: email } : u
+      );
+      localStorage.setItem(LOCAL_USERS_KEY, JSON.stringify(updated));
+    }
+    if (!checkIsDemoKey()) {
+      try {
+        const fb = await firebase();
+        await fb.setDoc(fb.doc(fb.db, 'users', nextProfile.uid), { linkedStudentEmail: email }, { merge: true });
+      } catch (err) {
+        console.warn('Could not save guardian link:', err);
+      }
+    }
+  };
+
+  const addRole = (nextRole: UserRole) => {
+    if (!userProfile || !user) return;
+    const roles = Array.from(new Set([...(userProfile.roles || [userProfile.role]), nextRole]));
+    const nextProfile: UserProfile = { ...userProfile, roles, role: nextRole };
+    setUserProfile(nextProfile);
+    setRole(nextRole);
+    saveLocalSession(user, nextProfile, nextRole);
+    audit(`Role added: ${nextRole} for ${userProfile.email}`);
+  };
+
+  const switchRole = (nextRole: UserRole) => {
+    if (!userProfile || !user) return;
+    const roles = userProfile.roles || [userProfile.role];
+    if (!roles.includes(nextRole)) return;
+    const nextProfile: UserProfile = { ...userProfile, role: nextRole };
+    setUserProfile(nextProfile);
+    setRole(nextRole);
+    saveLocalSession(user, nextProfile, nextRole);
   };
 
   return (
@@ -475,6 +551,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         loginWithGoogle,
         logout,
         fetchUserProfile,
+        linkGuardianToStudent,
+        addRole,
+        switchRole,
       }}
     >
       {children}

@@ -5,6 +5,7 @@ import Link from 'next/link';
 import { ArrowRight, Menu, X, LayoutDashboard } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useAuth } from '@/context/AuthContext';
+import { homeForRole } from '@/lib/roles';
 
 export default function FloatingNavbar() {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
@@ -15,10 +16,7 @@ export default function FloatingNavbar() {
     { name: 'All Courses', href: '/courses' },
     { name: 'Services', href: '/services' },
     { name: 'Contact', href: '/contact' },
-    { name: 'Kids English', href: '/#kids-english' },
-    { name: 'Blog', href: '/blog' },
-    { name: 'Certificate Verification', href: '/verify-certificate' },
-    { name: 'About Us', href: '/#about' },
+    { name: 'About Us', href: '/about' },
   ];
 
   return (
@@ -49,12 +47,12 @@ export default function FloatingNavbar() {
           ))}
         </nav>
 
-        {/* ── Right: Action Pill Buttons ── */}
+        {/* ── Right: Inbox after login, then Dashboard ── */}
         <div className="hidden sm:flex items-center gap-3">
           {/* User Auth / Dashboard Button */}
           {user ? (
             <Link
-              href={role === 'Instructor' ? '/teacher' : '/student'}
+              href={homeForRole(role)}
               className="group flex items-center bg-[#FACC15] hover:bg-[#eab308] text-[#111827] rounded-full pl-4 pr-1 py-1 text-xs font-bold transition-all shadow-lg shadow-[#FACC15]/20"
             >
               <span>Dashboard</span>
@@ -106,7 +104,7 @@ export default function FloatingNavbar() {
             ))}
             <div className="pt-2 border-t border-white/10 flex flex-col gap-2">
               <Link
-                href={user ? (role === 'Instructor' ? '/teacher' : '/student') : '/login'}
+                href={user ? homeForRole(role) : '/login'}
                 onClick={() => setMobileMenuOpen(false)}
               >
                 <div className="w-full flex items-center justify-between bg-[#FACC15] text-[#111827] font-bold text-xs py-2.5 px-4 rounded-full">

@@ -3,6 +3,7 @@
 import {
   AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer,
 } from 'recharts';
+import { taka, usdToBdt } from '@/lib/utils';
 
 interface ChartDataItem {
   month: string;
@@ -36,7 +37,7 @@ function CustomTooltip({ active, payload, label }: { active?: boolean; payload?:
             <span className="text-slate-300 font-medium">{item.name}</span>
           </span>
           <span className="font-bold text-white">
-            {item.dataKey === 'revenue' ? `$${item.value?.toLocaleString()}` : item.value}
+            {item.dataKey === 'revenue' ? taka(item.value || 0) : item.value}
           </span>
         </div>
       ))}
@@ -45,7 +46,8 @@ function CustomTooltip({ active, payload, label }: { active?: boolean; payload?:
 }
 
 export default function RevenueAreaChart({ data }: RevenueAreaChartProps) {
-  const chartData = data && data.length > 0 ? data : defaultChartData;
+  const source = data && data.length > 0 ? data : defaultChartData;
+  const chartData = source.map((item) => ({ ...item, revenue: usdToBdt(item.revenue) }));
 
   return (
     <div className="bg-white rounded-3xl shadow-sm border border-slate-100 p-6 space-y-4">
@@ -60,7 +62,7 @@ export default function RevenueAreaChart({ data }: RevenueAreaChartProps) {
         </div>
         <div className="flex items-center gap-4 text-xs font-semibold">
           <span className="flex items-center gap-1.5 text-purple-600">
-            <span className="w-3 h-1 rounded-full bg-purple-500 inline-block" /> Revenue ($)
+            <span className="w-3 h-1 rounded-full bg-purple-500 inline-block" /> Revenue (৳)
           </span>
           <span className="flex items-center gap-1.5 text-amber-600">
             <span className="w-3 h-1 rounded-full bg-amber-400 inline-block" /> Enrolled Sales

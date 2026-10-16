@@ -1,10 +1,7 @@
 import { NextResponse } from 'next/server';
 // @ts-ignore
 import SSLCommerzPayment from 'sslcommerz-lts';
-
-const STORE_ID = process.env.SSLCOMMERZ_STORE_ID || 'your_sslcommerz_store_id';
-const STORE_PASSWORD = process.env.SSLCOMMERZ_STORE_PASSWORD || 'your_sslcommerz_store_password';
-const IS_LIVE = process.env.SSLCOMMERZ_IS_LIVE === 'true';
+import { readPaymentConfig } from '@/lib/payment-config';
 export async function POST(request: Request) {
   try {
     const host = request.headers.get('host') || 'localhost:3002';
@@ -22,6 +19,10 @@ export async function POST(request: Request) {
     }
 
     const tran_id = `TXN_SSL_${Date.now()}_${Math.random().toString(36).substring(2, 7).toUpperCase()}`;
+    const config = readPaymentConfig();
+    const STORE_ID = config.storeId;
+    const STORE_PASSWORD = config.storePassword;
+    const wallet = paymentMethod === 'bkash' ? 'bkash' : paymentMethod === 'nagad' ? 'nagad' : paymentMethod === 'card' ? 'visa,master' : '';
 
     const data = {
       total_amount: price,
@@ -52,10 +53,10 @@ export async function POST(request: Request) {
       ship_state: 'Dhaka',
       ship_postcode: '1000',
       ship_country: 'Bangladesh',
+      ...(wallet ? { multi_card_name: wallet } : {}),
     };
 
-    // If store credentials are not configured or are placeholders, return sandbox/mock gateway URL
-    if (STORE_ID === 'your_sslcommerz_store_id' || !STORE_ID) {
+    if (!STORE_ID || STORE_ID === 'your_sslcommerz_store_id') {
       return NextResponse.json({
         success: true,
         gatewayUrl: `${BASE_URL}/api/payment/success?courseId=${courseId}&email=${encodeURIComponent(email)}&tranId=${tran_id}`,
@@ -65,7 +66,7 @@ export async function POST(request: Request) {
     }
 
     // Initialize SSLCommerz SDK
-    const sslcz = new SSLCommerzPayment(STORE_ID, STORE_PASSWORD, IS_LIVE);
+    const sslcz = new SSLCommerzPayment(STORE_ID, STORE_PASSWORD, config.live);
     const apiResponse = await sslcz.init(data);
 
     if (apiResponse?.GatewayPageURL) {

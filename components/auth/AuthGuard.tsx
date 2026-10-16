@@ -3,6 +3,7 @@
 import { useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { useAuth, type UserRole } from '@/context/AuthContext';
+import { homeForRole } from '@/lib/roles';
 import { Loader2 } from 'lucide-react';
 
 interface AuthGuardProps {
@@ -20,12 +21,7 @@ export default function AuthGuard({ children, allowedRole }: AuthGuardProps) {
         // Unauthenticated -> Redirect to Login
         router.replace('/login');
       } else if (allowedRole && role && role !== allowedRole) {
-        // Authenticated but wrong role -> Redirect to correct role dashboard
-        if (role === 'Student') {
-          router.replace('/student');
-        } else if (role === 'Instructor') {
-          router.replace('/teacher');
-        }
+        router.replace(homeForRole(role));
       }
     }
   }, [user, role, loading, allowedRole, router]);

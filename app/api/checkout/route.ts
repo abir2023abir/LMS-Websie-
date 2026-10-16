@@ -5,7 +5,7 @@ import { db } from '@/lib/firebase';
 /**
  * POST /api/checkout
  * Processes course enrollment & payment transactions.
- * Structurally ready for SSLCommerz / aamarPay gateway integration.
+ * Checkout is handled by the SSLCommerz payment route.
  * Body requirements: userId, courseId, amount, paymentMethod
  */
 export async function POST(request: Request) {
@@ -23,7 +23,7 @@ export async function POST(request: Request) {
     // Generate unique transaction ID
     const transactionId = `TXN_${Date.now()}_${Math.random().toString(36).substring(2, 7).toUpperCase()}`;
 
-    // Structure gateway payload (ready for SSLCommerz / aamarPay post requests)
+    // Structure gateway payload for SSLCommerz.
     const gatewayPayload = {
       store_id: process.env.SSLCOMMERZ_STORE_ID || 'demo_store',
       store_passwd: process.env.SSLCOMMERZ_STORE_PASSWORD || 'demo_pass',
@@ -36,7 +36,7 @@ export async function POST(request: Request) {
     };
 
     // SIMULATED MOCK TRANSACTION SUCCESS
-    // In production, SSLCommerz/aamarPay returns a redirect URL to gateway host
+    // In production, SSLCommerz returns a redirect URL to the gateway host.
     const isMockPayment = true;
 
     if (isMockPayment) {

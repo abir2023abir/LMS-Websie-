@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, type FormEvent } from 'react';
+import { useEffect, useState, type FormEvent } from 'react';
 import Link from 'next/link';
 import { ArrowLeft, Check } from 'lucide-react';
 import FloatingNavbar from '@/components/english/FloatingNavbar';
@@ -15,6 +15,22 @@ export default function ServiceApplyView({ offer, billing }: { offer: ServiceOff
   const [error, setError] = useState('');
   const [sending, setSending] = useState(false);
   const [sent, setSent] = useState(false);
+  const [requestId, setRequestId] = useState('');
+  const [thread, setThread] = useState<{ id: string; from: 'customer' | 'admin'; text: string }[]>([]);
+  const [reply, setReply] = useState('');
+
+  const refreshThread = async (id: string, mail: string) => {
+    const res = await fetch(`/api/service-requests?id=${encodeURIComponent(id)}&email=${encodeURIComponent(mail)}`);
+    const data = await res.json();
+    if (res.ok && data.request?.thread) setThread(data.request.thread);
+  };
+
+  useEffect(() => {
+    if (!sent || !requestId) return;
+    refreshThread(requestId, email);
+    const timer = window.setInterval(() => refreshThread(requestId, email), 5000);
+    return () => window.clearInterval(timer);
+  }, [sent, requestId, email]);
 
   const handleSubmit = async (e: FormEvent) => {
     e.preventDefault();
@@ -38,6 +54,8 @@ export default function ServiceApplyView({ offer, billing }: { offer: ServiceOff
         setError(data.message || 'Could not send. Try again.');
         return;
       }
+      setRequestId(data.request?.id || '');
+      setThread(data.request?.thread || []);
       setSent(true);
     } catch {
       setError('Could not send. Try again.');
@@ -76,17 +94,36 @@ export default function ServiceApplyView({ offer, billing }: { offer: ServiceOff
 
           <section className="lg:col-span-7 bg-white border border-slate-200 rounded-3xl p-6 sm:p-8 shadow-sm">
             {sent ? (
-              <div className="py-8 text-center">
-                <div className="mx-auto w-12 h-12 rounded-2xl bg-[#FACC15] text-[#111827] flex items-center justify-center">
-                  <Check className="w-6 h-6" />
+              <div className="space-y-4">
+                <div>
+                  <h2 className="font-display font-extrabold text-2xl">Request sent</h2>
+                  <p className="mt-1 text-sm text-slate-600">{offer.name} is booked under {name}. Replies from the campus show here.</p>
                 </div>
-                <h2 className="mt-4 font-display font-extrabold text-2xl">Request sent</h2>
-                <p className="mt-2 text-sm text-slate-600 max-w-sm mx-auto">
-                  {offer.name} is booked under {name}. We will call {phone}.
-                </p>
-                <Link href="/services" className="mt-6 inline-flex rounded-full bg-[#111827] text-white text-sm font-bold px-5 py-2.5">
-                  Back to services
-                </Link>
+                <div className="space-y-2 max-h-80 overflow-y-auto">
+                  {thread.map((item) => (
+                    <div key={item.id} className={`max-w-[85%] rounded-2xl px-3 py-2 text-sm ${item.from === 'admin' ? 'bg-[#111827] text-white' : 'ml-auto bg-[#FEF9C3]'}`}>
+                      <div className="text-[10px] opacity-70 mb-1">{item.from === 'admin' ? 'Campus' : 'You'}</div>
+                      {item.text}
+                    </div>
+                  ))}
+                </div>
+                <form className="flex gap-2" onSubmit={async (event) => {
+                  event.preventDefault();
+                  if (!reply.trim() || !requestId) return;
+                  const res = await fetch('/api/service-requests', {
+                    method: 'PUT',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ id: requestId, email, text: reply }),
+                  });
+                  const data = await res.json();
+                  if (res.ok) {
+                    setThread(data.request?.thread || []);
+                    setReply('');
+                  }
+                }}>
+                  <input value={reply} onChange={(e) => setReply(e.target.value)} placeholder="Write a follow-up" className="flex-1 rounded-2xl border border-slate-200 px-4 py-3 text-sm" />
+                  <button className="rounded-full bg-[#111827] text-white text-sm font-bold px-4">Send</button>
+                </form>
               </div>
             ) : (
               <form onSubmit={handleSubmit} className="space-y-4">

@@ -3,7 +3,8 @@
 import {
   BarChart, Bar, LineChart, Line, ResponsiveContainer, RadialBarChart, RadialBar, PolarAngleAxis
 } from 'recharts';
-import { Users, DollarSign, BookOpen, TrendingUp } from 'lucide-react';
+import { Users, Banknote, BookOpen, TrendingUp } from 'lucide-react';
+import { takaFromUsd } from '@/lib/utils';
 
 interface StatsCardsProps {
   stats?: {
@@ -76,12 +77,12 @@ export default function StatsCards({ stats }: StatsCardsProps) {
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-3">
             <div className="w-10 h-10 rounded-2xl bg-yellow-50 text-yellow-600 flex items-center justify-center font-bold">
-              <DollarSign className="w-5 h-5" />
+              <Banknote className="w-5 h-5" />
             </div>
             <div>
               <p className="text-xs font-semibold text-slate-500">Total Course Earnings</p>
               <h3 className="font-display font-extrabold text-2xl text-slate-900">
-                ${formatNumber(totalRevenue)}
+                {takaFromUsd(totalRevenue)}
               </h3>
             </div>
           </div>

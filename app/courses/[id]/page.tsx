@@ -10,6 +10,8 @@ import VideoPlayer from '@/components/player/VideoPlayer';
 import CheckoutModal from '@/components/checkout/CheckoutModal';
 import { getCourseById } from '@/lib/db';
 import { getFallbackCourseData } from '@/lib/progress';
+import { courseEdit, lessonVideo } from '@/lib/workspace';
+import { takaFromUsd } from '@/lib/utils';
 import type { CourseSchema, LessonSchema } from '@/types/course';
 import {
   Star,
@@ -51,10 +53,17 @@ export default function CourseDetailsPage() {
       }
 
       if (fetched) {
-        setCourse(fetched);
-        if (fetched.modules?.[0]?.lessons?.[0]?.videoUrl) {
-          setActiveVideoUrl(fetched.modules[0].lessons[0].videoUrl);
-          setActiveLessonTitle(fetched.modules[0].lessons[0].title);
+        const edit = courseEdit(courseId);
+        const priced = {
+          ...fetched,
+          title: edit.title || fetched.title,
+          price: typeof edit.price === 'number' ? edit.price : fetched.price,
+        };
+        setCourse(priced);
+        const first = priced.modules?.[0]?.lessons?.[0];
+        if (first) {
+          setActiveVideoUrl(lessonVideo(courseId, first.id) || first.videoUrl);
+          setActiveLessonTitle(first.title);
         }
       }
 
@@ -70,9 +79,8 @@ export default function CourseDetailsPage() {
 
   const handleSelectLesson = (lesson: LessonSchema) => {
     setActiveLessonTitle(lesson.title);
-    if (lesson.videoUrl) {
-      setActiveVideoUrl(lesson.videoUrl);
-    }
+    const saved = lessonVideo(courseId, lesson.id) || lesson.videoUrl;
+    if (saved) setActiveVideoUrl(saved);
   };
 
   const handleOpenCheckout = () => {
@@ -405,9 +413,9 @@ export default function CourseDetailsPage() {
                     <span className="font-display font-black text-3xl text-emerald-600">FREE</span>
                   ) : (
                     <div className="flex items-baseline gap-2">
-                      <span className="font-display font-black text-3xl text-[#111827]">${course.price}</span>
+                      <span className="font-display font-black text-3xl text-[#111827]">{takaFromUsd(course.price)}</span>
                       {course.originalPrice && (
-                        <span className="text-sm text-slate-400 line-through">${course.originalPrice}</span>
+                        <span className="text-sm text-slate-400 line-through">{takaFromUsd(course.originalPrice)}</span>
                       )}
                     </div>
                   )}

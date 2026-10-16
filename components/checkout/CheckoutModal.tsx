@@ -9,14 +9,13 @@ import type { CourseSchema } from '@/types/course';
 import {
   X,
   ShieldCheck,
-  CreditCard,
-  Smartphone,
   CheckCircle,
   AlertCircle,
-  Zap,
   Lock,
   ArrowRight,
 } from 'lucide-react';
+import { BkashMark, CardMark, NagadMark, SslMark } from '@/components/checkout/PayMarks';
+import { taka, usdToBdt } from '@/lib/utils';
 
 interface CheckoutModalProps {
   course: CourseSchema;
@@ -34,15 +33,16 @@ export default function CheckoutModal({
   const router = useRouter();
   const { user } = useAuth();
 
-  const [paymentMethod, setPaymentMethod] = useState<'sslcommerz' | 'aamarpay' | 'bkash' | 'nagad' | 'card'>('sslcommerz');
+  const [paymentMethod, setPaymentMethod] = useState<'sslcommerz' | 'bkash' | 'nagad' | 'card'>('bkash');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const [successTxn, setSuccessTxn] = useState<string | null>(null);
 
   if (!isOpen) return null;
 
-  const finalPrice = course.price ?? 49;
-  const originalPrice = course.originalPrice ?? finalPrice * 2;
+  const usdPrice = course.price ?? 49;
+  const finalPrice = usdToBdt(usdPrice);
+  const originalPrice = usdToBdt(course.originalPrice ?? usdPrice * 2);
   const discountAmount = originalPrice - finalPrice;
 
   const handleProcessPayment = async () => {
@@ -145,9 +145,9 @@ export default function CheckoutModal({
                 <h3 className="font-semibold text-white text-sm line-clamp-1">{course.title}</h3>
                 <p className="text-xs text-slate-400 mt-0.5">Instructor: {course.instructorName || 'Lead Educator'}</p>
                 <div className="flex items-center gap-2 mt-1">
-                  <span className="font-bold text-white text-sm">${finalPrice}</span>
+                  <span className="font-bold text-white text-sm">{taka(finalPrice)}</span>
                   {discountAmount > 0 && (
-                    <span className="text-xs text-slate-500 line-through">${originalPrice}</span>
+                    <span className="text-xs text-slate-500 line-through">{taka(originalPrice)}</span>
                   )}
                 </div>
               </div>
@@ -158,76 +158,27 @@ export default function CheckoutModal({
               <label className="block text-xs font-semibold text-slate-400 uppercase tracking-wider mb-3">
                 Select Payment Method
               </label>
-              <div className="grid grid-cols-2 sm:grid-cols-3 gap-2.5">
-                <button
-                  type="button"
-                  onClick={() => setPaymentMethod('sslcommerz')}
-                  className={`p-3 rounded-2xl border flex flex-col items-center justify-center gap-1.5 transition-all text-xs font-semibold ${
-                    paymentMethod === 'sslcommerz'
-                      ? 'bg-primary-600/20 border-primary-500 text-white shadow-lg shadow-primary-600/20'
-                      : 'bg-white/5 border-white/8 text-slate-400 hover:text-white'
-                  }`}
-                >
-                  <CreditCard className="w-5 h-5 text-primary-400" />
-                  <span>SSLCommerz</span>
-                  <span className="text-[9px] text-slate-500">Cards & Banking</span>
-                </button>
-
-                <button
-                  type="button"
-                  onClick={() => setPaymentMethod('aamarpay')}
-                  className={`p-3 rounded-2xl border flex flex-col items-center justify-center gap-1.5 transition-all text-xs font-semibold ${
-                    paymentMethod === 'aamarpay'
-                      ? 'bg-accent-500/20 border-accent-500 text-white shadow-lg shadow-accent-500/20'
-                      : 'bg-white/5 border-white/8 text-slate-400 hover:text-white'
-                  }`}
-                >
-                  <Zap className="w-5 h-5 text-accent-400" />
-                  <span>aamarPay</span>
-                  <span className="text-[9px] text-slate-500">Local Gateway</span>
-                </button>
-
-                <button
-                  type="button"
-                  onClick={() => setPaymentMethod('bkash')}
-                  className={`p-3 rounded-2xl border flex flex-col items-center justify-center gap-1.5 transition-all text-xs font-semibold ${
-                    paymentMethod === 'bkash'
-                      ? 'bg-pink-500/20 border-pink-500 text-white shadow-lg shadow-pink-500/20'
-                      : 'bg-white/5 border-white/8 text-slate-400 hover:text-white'
-                  }`}
-                >
-                  <Smartphone className="w-5 h-5 text-pink-400" />
-                  <span>bKash</span>
-                  <span className="text-[9px] text-slate-500">Mobile Wallet</span>
-                </button>
-
-                <button
-                  type="button"
-                  onClick={() => setPaymentMethod('nagad')}
-                  className={`p-3 rounded-2xl border flex flex-col items-center justify-center gap-1.5 transition-all text-xs font-semibold ${
-                    paymentMethod === 'nagad'
-                      ? 'bg-amber-500/20 border-amber-500 text-white shadow-lg shadow-amber-500/20'
-                      : 'bg-white/5 border-white/8 text-slate-400 hover:text-white'
-                  }`}
-                >
-                  <Smartphone className="w-5 h-5 text-amber-400" />
-                  <span>Nagad</span>
-                  <span className="text-[9px] text-slate-500">Mobile Wallet</span>
-                </button>
-
-                <button
-                  type="button"
-                  onClick={() => setPaymentMethod('card')}
-                  className={`p-3 rounded-2xl border flex flex-col items-center justify-center gap-1.5 transition-all text-xs font-semibold ${
-                    paymentMethod === 'card'
-                      ? 'bg-emerald-500/20 border-emerald-500 text-white shadow-lg shadow-emerald-500/20'
-                      : 'bg-white/5 border-white/8 text-slate-400 hover:text-white'
-                  }`}
-                >
-                  <CreditCard className="w-5 h-5 text-emerald-400" />
-                  <span>Debit/Credit Card</span>
-                  <span className="text-[9px] text-slate-500">Visa / Mastercard</span>
-                </button>
+              <div className="grid grid-cols-2 gap-2.5">
+                {([
+                  ['bkash', <BkashMark key="b" />, 'bKash'],
+                  ['nagad', <NagadMark key="n" />, 'Nagad'],
+                  ['card', <CardMark key="c" />, 'Debit / Credit card'],
+                  ['sslcommerz', <SslMark key="s" />, 'SSLCommerz'],
+                ] as const).map(([id, mark, label]) => (
+                  <button
+                    key={id}
+                    type="button"
+                    onClick={() => setPaymentMethod(id)}
+                    className={`p-3 rounded-2xl border flex flex-col items-center justify-center gap-1.5 transition-all text-xs font-semibold ${
+                      paymentMethod === id
+                        ? 'bg-white/10 border-[#FACC15] text-white'
+                        : 'bg-white/5 border-white/10 text-slate-300'
+                    }`}
+                  >
+                    {mark}
+                    <span>{label}</span>
+                  </button>
+                ))}
               </div>
             </div>
 
@@ -235,17 +186,17 @@ export default function CheckoutModal({
             <div className="space-y-2 border-t border-white/10 pt-4 text-xs text-slate-300">
               <div className="flex justify-between">
                 <span>Course Price</span>
-                <span>${originalPrice}</span>
+                <span>{taka(originalPrice)}</span>
               </div>
               {discountAmount > 0 && (
                 <div className="flex justify-between text-emerald-400 font-semibold">
                   <span>Special Discount</span>
-                  <span>-${discountAmount}</span>
+                  <span>-{taka(discountAmount)}</span>
                 </div>
               )}
               <div className="flex justify-between font-display font-bold text-base text-white pt-2 border-t border-white/8">
                 <span>Total Amount</span>
-                <span className="text-primary-300">${finalPrice}</span>
+                <span className="text-primary-300">{taka(finalPrice)}</span>
               </div>
             </div>
 
@@ -260,7 +211,7 @@ export default function CheckoutModal({
                 leftIcon={<Lock className="w-4 h-4" />}
                 rightIcon={<ArrowRight className="w-4 h-4" />}
               >
-                Complete Enrollment (${finalPrice})
+                Complete Enrollment ({taka(finalPrice)})
               </Button>
               <p className="text-[11px] text-slate-500 text-center mt-3">
                 Includes 30-day full refund guarantee. By clicking Complete Enrollment you agree to LearnVerse Terms of Service.

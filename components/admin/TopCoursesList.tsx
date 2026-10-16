@@ -1,6 +1,7 @@
 'use client';
 
 import Image from 'next/image';
+import { takaFromUsd } from '@/lib/utils';
 import { Award, Star } from 'lucide-react';
 
 interface TopCourseItem {
@@ -24,7 +25,7 @@ const defaultTopCourses: TopCourseItem[] = [
     category: 'General English',
     sales: 1420,
     rating: 4.9,
-    price: '$39',
+    price: takaFromUsd(39),
     thumbnail: 'https://images.unsplash.com/photo-1522202176988-66273c2fd55f?w=200&h=150&fit=crop',
   },
   {
@@ -33,7 +34,7 @@ const defaultTopCourses: TopCourseItem[] = [
     category: 'Spoken English',
     sales: 1150,
     rating: 4.8,
-    price: '$49',
+    price: takaFromUsd(49),
     thumbnail: 'https://images.unsplash.com/photo-1543269865-cbf427effbad?w=200&h=150&fit=crop',
   },
   {
@@ -42,7 +43,7 @@ const defaultTopCourses: TopCourseItem[] = [
     category: 'IELTS Prep',
     sales: 980,
     rating: 4.95,
-    price: '$69',
+    price: takaFromUsd(69),
     thumbnail: 'https://images.unsplash.com/photo-1434030216411-0b793f4b4173?w=200&h=150&fit=crop',
   },
   {
@@ -51,7 +52,7 @@ const defaultTopCourses: TopCourseItem[] = [
     category: 'Business English',
     sales: 840,
     rating: 4.9,
-    price: '$59',
+    price: takaFromUsd(59),
     thumbnail: 'https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?w=200&h=150&fit=crop',
   },
 ];

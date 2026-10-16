@@ -4,6 +4,7 @@ import { Clock, Mail, MapPin, MessageCircle, Phone } from 'lucide-react';
 import FloatingNavbar from '@/components/english/FloatingNavbar';
 import EnglishFooter from '@/components/english/EnglishFooter';
 import { contactInfo } from '@/lib/contact';
+import CampusMessageForm from '@/components/messages/CampusMessageForm';
 
 export const metadata: Metadata = {
   title: 'Contact Us — English Capsules',
@@ -121,6 +122,12 @@ export default function ContactPage() {
           >
             Open the map
           </a>
+        </div>
+      </section>
+
+      <section className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 pb-16">
+        <div className="max-w-xl rounded-3xl border border-slate-200 p-6">
+          <CampusMessageForm />
         </div>
       </section>
 

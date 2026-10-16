@@ -7,22 +7,36 @@ import Image from 'next/image';
 import useSWR from 'swr';
 import {
   Plus, LogOut, Shield, LayoutDashboard, BookOpen, Award, HelpCircle,
-  DollarSign, Users, FileText, Search, Trash2, CheckCircle, RefreshCw, Eye,
-  Sparkles, Inbox
+  Banknote, Users, FileText, Search, Trash2, RefreshCw, Eye,
+  Sparkles, Inbox, MessageSquare
 } from 'lucide-react';
 import StatsCards from './StatsCards';
 import RevenueAreaChart from './RevenueAreaChart';
 import TopCoursesList from './TopCoursesList';
+import InboxButton from '@/components/inbox/InboxButton';
+import AdminCourseEditor from './AdminCourseEditor';
+import AdminPaymentSetup from './AdminPaymentSetup';
+import AdminQuizzes from './AdminQuizzes';
+import AdminStudents from './AdminStudents';
+import AdminRequests from './AdminRequests';
+import AdminAssignments from './AdminAssignments';
+import AdminCertificates from './AdminCertificates';
+import AdminEarnings from './AdminEarnings';
+import AdminPaymentsBoard from './AdminPaymentsBoard';
+import AdminMessages from './AdminMessages';
+import { takaFromUsd } from '@/lib/utils';
 
 const navTabs = [
   { name: 'Overview', icon: LayoutDashboard },
   { name: 'Courses', icon: BookOpen },
   { name: 'Certificate', icon: Award },
   { name: 'Quizzes', icon: HelpCircle },
-  { name: 'Earnings', icon: DollarSign },
+  { name: 'Earnings', icon: Banknote },
   { name: 'Students', icon: Users },
   { name: 'Requests', icon: Inbox },
+  { name: 'Messages', icon: MessageSquare },
   { name: 'Assignments', icon: FileText },
+  { name: 'Payments', icon: Banknote },
 ];
 
 const fetcher = (url: string) => fetch(url).then((res) => res.json());
@@ -45,8 +59,6 @@ export default function AdminDashboard() {
 
   const stats = data?.stats || {};
   const coursesList = stats?.courses || [];
-  const studentsList = stats?.studentsList || [];
-  const transactionsList = stats?.transactions || [];
   const categoryDistribution = stats?.categoryDistribution || [];
 
   const handleLogout = async () => {
@@ -134,6 +146,7 @@ export default function AdminDashboard() {
                 </div>
               </div>
 
+              <InboxButton scope="all" onDark />
               {/* Logout Button */}
               <button
                 onClick={handleLogout}
@@ -285,7 +298,7 @@ export default function AdminDashboard() {
                           {course.category}
                         </span>
                       </td>
-                      <td className="py-3.5 px-4 font-bold text-slate-900">${course.price}</td>
+                      <td className="py-3.5 px-4 font-bold text-slate-900">{takaFromUsd(course.price)}</td>
                       <td className="py-3.5 px-4 text-slate-500">{course.duration}</td>
                       <td className="py-3.5 px-4 font-semibold text-amber-600">{course.studentCount || 0}</td>
                       <td className="py-3.5 px-4 text-right">
@@ -315,157 +328,27 @@ export default function AdminDashboard() {
         )}
 
         {/* ── TAB 3: STUDENTS DIRECTORY ── */}
-        {activeTab === 'Students' && (
-          <div className="bg-white rounded-3xl p-6 shadow-sm border border-slate-100 space-y-6">
-            <div>
-              <h2 className="font-display font-extrabold text-xl text-slate-900">Enrolled Students ({studentsList.length})</h2>
-              <p className="text-xs text-slate-500">Live directory of active English Capsules learners.</p>
-            </div>
-
-            <div className="overflow-x-auto">
-              <table className="w-full text-left text-xs border-collapse">
-                <thead>
-                  <tr className="border-b border-slate-100 text-slate-400 font-bold uppercase tracking-wider">
-                    <th className="py-3 px-4">Student Name</th>
-                    <th className="py-3 px-4">Email</th>
-                    <th className="py-3 px-4">Enrolled Program</th>
-                    <th className="py-3 px-4">Status</th>
-                    <th className="py-3 px-4">Joined Date</th>
-                  </tr>
-                </thead>
-                <tbody className="divide-y divide-slate-100">
-                  {studentsList.map((std: any) => (
-                    <tr key={std.id} className="hover:bg-slate-50/80 transition-colors">
-                      <td className="py-3.5 px-4 font-bold text-slate-900">{std.name}</td>
-                      <td className="py-3.5 px-4 text-slate-600">{std.email}</td>
-                      <td className="py-3.5 px-4 font-semibold text-[#111827]">{std.enrolledCourse}</td>
-                      <td className="py-3.5 px-4">
-                        <span className="inline-flex items-center gap-1 bg-green-50 text-green-700 px-2.5 py-0.5 rounded-full text-[10px] font-extrabold">
-                          <CheckCircle className="w-3 h-3" /> {std.status}
-                        </span>
-                      </td>
-                      <td className="py-3.5 px-4 text-slate-400">{std.joinedDate}</td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
-          </div>
-        )}
+        {activeTab === 'Students' && <AdminStudents />}
 
         {/* ── TAB 4: EARNINGS & TRANSACTIONS ── */}
-        {activeTab === 'Earnings' && (
-          <div className="space-y-6">
-            <div className="grid grid-cols-1 sm:grid-cols-3 gap-6">
-              <div className="bg-white p-6 rounded-3xl border border-slate-100 shadow-sm">
-                <div className="text-xs text-slate-500 font-bold uppercase">Total Aggregated Revenue</div>
-                <div className="font-display font-extrabold text-3xl text-slate-900 mt-2">
-                  ${(stats.totalRevenue || 7280).toLocaleString()}
-                </div>
-              </div>
-              <div className="bg-white p-6 rounded-3xl border border-slate-100 shadow-sm">
-                <div className="text-xs text-slate-500 font-bold uppercase">SSLCommerz Gateway Payouts</div>
-                <div className="font-display font-extrabold text-3xl text-green-600 mt-2">
-                  ${Math.round((stats.totalRevenue || 7280) * 0.94).toLocaleString()}
-                </div>
-              </div>
-              <div className="bg-white p-6 rounded-3xl border border-slate-100 shadow-sm">
-                <div className="text-xs text-slate-500 font-bold uppercase">Active Learners</div>
-                <div className="font-display font-extrabold text-3xl text-amber-500 mt-2">
-                  {(stats.totalStudents || 3240).toLocaleString()}
-                </div>
-              </div>
-            </div>
+        {activeTab === 'Earnings' && <AdminEarnings />}
 
-            <div className="bg-white rounded-3xl p-6 shadow-sm border border-slate-100 space-y-4">
-              <h3 className="font-display font-bold text-base text-slate-900">
-                Recent SSLCommerz Transactions ({transactionsList.length})
-              </h3>
-              <div className="space-y-3 text-xs">
-                {transactionsList.map((item: any) => (
-                  <div key={item.id} className="flex items-center justify-between p-3.5 rounded-2xl bg-slate-50 border border-slate-100">
-                    <div>
-                      <div className="font-bold text-slate-900">
-                        {item.studentName || item.studentEmail} <span className="font-mono text-slate-400 text-[10px]">({item.id})</span>
-                      </div>
-                      <div className="text-[10px] text-slate-500">
-                        {item.courseTitle || 'English Capsule'} • {item.paymentMethod || 'SSLCommerz'} • {item.date || 'Live Verified'}
-                      </div>
-                    </div>
-                    <div className="font-extrabold text-green-600 text-sm">
-                      ${item.amount}
-                    </div>
-                  </div>
-                ))}
-              </div>
-            </div>
-          </div>
-        )}
-
-        {activeTab === 'Requests' && (
-          <div className="bg-white rounded-3xl p-6 shadow-sm border border-slate-100 space-y-6">
-            <div>
-              <h2 className="font-display font-extrabold text-xl text-slate-900">
-                Service requests ({serviceRequests.length})
-              </h2>
-              <p className="text-xs text-slate-500">People who clicked Get Speaking, Get Fluency, Get IELTS Private, or a one-time booking.</p>
-            </div>
-            {serviceRequests.length === 0 ? (
-              <div className="rounded-2xl bg-slate-50 border border-slate-100 px-4 py-10 text-center text-sm text-slate-500">
-                No requests yet.
-              </div>
-            ) : (
-              <div className="overflow-x-auto">
-                <table className="w-full text-left text-xs border-collapse">
-                  <thead>
-                    <tr className="border-b border-slate-100 text-slate-400 font-bold uppercase tracking-wider">
-                      <th className="py-3 px-4">When</th>
-                      <th className="py-3 px-4">Name</th>
-                      <th className="py-3 px-4">Phone</th>
-                      <th className="py-3 px-4">Email</th>
-                      <th className="py-3 px-4">Service</th>
-                      <th className="py-3 px-4">Message</th>
-                    </tr>
-                  </thead>
-                  <tbody className="divide-y divide-slate-100">
-                    {serviceRequests.map((item: any) => (
-                      <tr key={item.id} className="hover:bg-slate-50/80 align-top">
-                        <td className="py-3.5 px-4 text-slate-400 whitespace-nowrap">
-                          {item.createdAt ? new Date(item.createdAt).toLocaleString() : '—'}
-                        </td>
-                        <td className="py-3.5 px-4 font-bold text-slate-900">{item.name}</td>
-                        <td className="py-3.5 px-4">{item.phone}</td>
-                        <td className="py-3.5 px-4">{item.email}</td>
-                        <td className="py-3.5 px-4">
-                          <span className="bg-[#FEF9C3] text-[#111827] px-2.5 py-0.5 rounded-full text-[10px] font-extrabold whitespace-nowrap">
-                            {item.planName} · ${item.price}{item.period === 'month' ? '/mo' : item.period === 'year' ? '/yr' : ''}
-                          </span>
-                        </td>
-                        <td className="py-3.5 px-4 text-slate-600 max-w-xs">{item.message}</td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
-            )}
-          </div>
-        )}
+        {activeTab === 'Requests' && <AdminRequests />}
+        {activeTab === 'Messages' && <AdminMessages />}
 
         {/* ── TAB 5, 6, 7: CERTIFICATE, QUIZZES, ASSIGNMENTS ── */}
-        {['Certificate', 'Quizzes', 'Assignments'].includes(activeTab) && (
-          <div className="bg-white rounded-3xl p-10 shadow-sm border border-slate-100 text-center space-y-4">
-            <div className="w-16 h-16 rounded-3xl bg-amber-50 text-amber-600 flex items-center justify-center mx-auto">
-              <Award className="w-8 h-8" />
-            </div>
-            <h2 className="font-display font-extrabold text-2xl text-slate-900">{activeTab} Manager</h2>
-            <p className="text-xs text-slate-500 max-w-md mx-auto">
-              Manage student {activeTab.toLowerCase()} evaluations, issue certificates, and review submissions in real-time.
-            </p>
-            <div className="inline-flex items-center gap-2 bg-green-50 text-green-700 px-4 py-2 rounded-full text-xs font-bold">
-              <CheckCircle className="w-4 h-4" /> Active & Operational
-            </div>
+        {activeTab === 'Courses' && <AdminCourseEditor />}
+
+        {activeTab === 'Payments' && (
+          <div className="space-y-6">
+            <AdminPaymentSetup />
+            <AdminPaymentsBoard />
           </div>
         )}
+
+        {activeTab === 'Quizzes' && <AdminQuizzes />}
+        {activeTab === 'Certificate' && <AdminCertificates />}
+        {activeTab === 'Assignments' && <AdminAssignments />}
 
       </main>
     </div>

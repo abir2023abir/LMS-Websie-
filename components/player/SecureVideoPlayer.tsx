@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useRef, useEffect, useCallback } from 'react';
+import YoutubeLesson, { youtubeId } from '@/components/player/YoutubeLesson';
 import {
   Play,
   Pause,
@@ -34,6 +35,7 @@ interface SecureVideoPlayerProps {
   hasPrevLesson?: boolean;
   isCompleted?: boolean;
   onToggleComplete?: () => void;
+  onProgress?: (percent: number) => void;
 }
 
 export default function SecureVideoPlayer({
@@ -50,6 +52,7 @@ export default function SecureVideoPlayer({
   hasPrevLesson = false,
   isCompleted = false,
   onToggleComplete,
+  onProgress,
 }: SecureVideoPlayerProps) {
   const videoRef = useRef<HTMLVideoElement>(null);
   const containerRef = useRef<HTMLDivElement>(null);
@@ -96,7 +99,12 @@ export default function SecureVideoPlayer({
     const video = videoRef.current;
     if (!video) return;
 
-    const handleTimeUpdate = () => setCurrentTime(video.currentTime);
+    const handleTimeUpdate = () => {
+      setCurrentTime(video.currentTime);
+      if (onProgress && video.duration) {
+        onProgress(Math.round((video.currentTime / video.duration) * 100));
+      }
+    };
     const handleLoadedMetadata = () => {
       setDuration(video.duration || 0);
     };
@@ -122,7 +130,7 @@ export default function SecureVideoPlayer({
       video.removeEventListener('pause', handlePause);
       video.removeEventListener('ended', handleVideoEnded);
     };
-  }, [onEnded]);
+  }, [onEnded, onProgress]);
 
   // Fullscreen change detection
   useEffect(() => {
@@ -254,6 +262,23 @@ export default function SecureVideoPlayer({
   };
 
   const progressPercent = duration > 0 ? (currentTime / duration) * 100 : 0;
+  const yt = youtubeId(videoUrl);
+  if (yt) {
+    return (
+      <div className="relative w-full aspect-video rounded-3xl overflow-hidden bg-black border border-white/10 shadow-2xl">
+        <YoutubeLesson id={yt} title={title} onProgress={onProgress} />
+        <div
+          className="absolute pointer-events-none z-10 select-none opacity-25"
+          style={{ top: watermarkPos.top, left: watermarkPos.left }}
+        >
+          <div className="flex items-center gap-1.5 bg-black/40 px-2.5 py-1 rounded-md text-[10px] text-white/70 font-mono">
+            <ShieldCheck className="w-3 h-3 text-[#FACC15]" />
+            <span>{studentName} • {studentEmail}</span>
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div

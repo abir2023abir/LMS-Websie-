@@ -12,12 +12,13 @@ import {
   Clock,
   ShieldCheck,
   Lock,
-  CreditCard,
   Sparkles,
   CheckCircle2,
   Check,
   Award,
 } from 'lucide-react';
+import { BkashMark, CardMark, NagadMark, SslMark } from '@/components/checkout/PayMarks';
+import { takaFromUsd, usdToBdt } from '@/lib/utils';
 import { useAuth } from '@/context/AuthContext';
 import type { CourseSchema } from '@/types/course';
 
@@ -32,7 +33,7 @@ export default function CheckoutPageClient({ course }: Props) {
   const [name, setName] = useState(user?.displayName || '');
   const [email, setEmail] = useState(user?.email || '');
   const [phone, setPhone] = useState('');
-  const [paymentMethod, setPaymentMethod] = useState<'sslcommerz' | 'bkash' | 'nagad'>('sslcommerz');
+  const [paymentMethod, setPaymentMethod] = useState<'sslcommerz' | 'bkash' | 'nagad' | 'card'>('bkash');
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState('');
 
@@ -48,7 +49,7 @@ export default function CheckoutPageClient({ course }: Props) {
         body: JSON.stringify({
           courseId: course.id,
           courseTitle: course.title,
-          price: course.price,
+          price: usdToBdt(course.price),
           name,
           email,
           phone,
@@ -150,16 +151,16 @@ export default function CheckoutPageClient({ course }: Props) {
             <div className="pt-4 border-t border-white/10 space-y-3">
               <div className="flex items-center justify-between text-xs text-slate-400">
                 <span>Original Price</span>
-                <span className="line-through">${course.originalPrice || (course.price * 2)}</span>
+                <span className="line-through">{takaFromUsd(course.originalPrice || (course.price * 2))}</span>
               </div>
               <div className="flex items-center justify-between text-xs text-emerald-400 font-semibold">
                 <span>Scholarship Discount</span>
-                <span>-${(course.originalPrice || course.price * 2) - course.price}</span>
+                <span>-{takaFromUsd((course.originalPrice || course.price * 2) - course.price)}</span>
               </div>
               <div className="flex items-center justify-between pt-2 border-t border-white/10">
                 <span className="font-display font-bold text-base text-white">Total Amount Due</span>
                 <span className="font-display font-extrabold text-2xl text-[#FACC15]">
-                  ${course.price}
+                  {takaFromUsd(course.price)}
                 </span>
               </div>
             </div>
@@ -229,24 +230,25 @@ export default function CheckoutPageClient({ course }: Props) {
                   Select Payment Gateway
                 </label>
 
-                <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-                  {[
-                    { id: 'sslcommerz', label: 'SSLCommerz', desc: 'Cards & NetBanking' },
-                    { id: 'bkash', label: 'bKash', desc: 'Instant Mobile Pay' },
-                    { id: 'nagad', label: 'Nagad', desc: 'Instant Mobile Pay' },
-                  ].map((method) => (
+                <div className="grid grid-cols-2 gap-3">
+                  {([
+                    ['bkash', <BkashMark key="b" />, 'bKash'],
+                    ['nagad', <NagadMark key="n" />, 'Nagad'],
+                    ['card', <CardMark key="c" />, 'Debit / Credit card'],
+                    ['sslcommerz', <SslMark key="s" />, 'SSLCommerz'],
+                  ] as const).map(([id, mark, label]) => (
                     <button
-                      key={method.id}
+                      key={id}
                       type="button"
-                      onClick={() => setPaymentMethod(method.id as any)}
-                      className={`p-3.5 rounded-2xl border text-left flex flex-col justify-between gap-1 transition-all ${
-                        paymentMethod === method.id
+                      onClick={() => setPaymentMethod(id)}
+                      className={`p-3.5 rounded-2xl border flex flex-col items-center gap-2 transition-all ${
+                        paymentMethod === id
                           ? 'bg-[#FACC15] text-[#111827] border-[#FACC15] shadow-lg shadow-[#FACC15]/20 font-bold'
                           : 'bg-[#1a2234] border-white/10 text-slate-300 hover:bg-white/5'
                       }`}
                     >
-                      <div className="font-bold text-xs">{method.label}</div>
-                      <div className="text-[10px] opacity-80">{method.desc}</div>
+                      {mark}
+                      <span className="text-xs font-bold">{label}</span>
                     </button>
                   ))}
                 </div>
@@ -263,7 +265,7 @@ export default function CheckoutPageClient({ course }: Props) {
                 ) : (
                   <>
                     <Lock className="w-4 h-4" />
-                    <span>Pay ${course.price} & Unlock Capsule</span>
+                    <span>Pay {takaFromUsd(course.price)} & Unlock Capsule</span>
                   </>
                 )}
               </button>

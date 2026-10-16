@@ -8,6 +8,7 @@ import { motion } from 'framer-motion';
 import CheckoutModal from '@/components/checkout/CheckoutModal';
 import { featuredCourses } from '@/lib/data';
 import type { CourseSchema } from '@/types/course';
+import { takaFromUsd } from '@/lib/utils';
 
 const programCategories = ['All', 'Spoken English', 'IELTS Prep', 'Business English', 'General English'];
 
@@ -141,7 +142,7 @@ export default function ProgramsSection() {
 
                 <div className="pt-3 border-t border-white/10 flex items-center justify-between">
                   <span className="font-display font-extrabold text-2xl text-[#FACC15]">
-                    ${course.price}
+                    {takaFromUsd(course.price)}
                   </span>
                   <button
                     onClick={() => handleJoinNow(course)}

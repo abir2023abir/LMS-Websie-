@@ -13,6 +13,7 @@ import {
   Settings,
 } from 'lucide-react';
 import Button from '@/components/ui/Button';
+import YoutubeLesson, { youtubeId } from '@/components/player/YoutubeLesson';
 
 interface VideoPlayerProps {
   videoUrl?: string;
@@ -130,6 +131,15 @@ export default function VideoPlayer({
     const seconds = Math.floor(timeInSeconds % 60);
     return `${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
   };
+
+  const yt = youtubeId(videoUrl);
+  if (yt && isEnrolled) {
+    return (
+      <div className="relative aspect-video rounded-3xl overflow-hidden bg-black border border-white/10 shadow-2xl">
+        <YoutubeLesson id={yt} title={title} />
+      </div>
+    );
+  }
 
   return (
     <div

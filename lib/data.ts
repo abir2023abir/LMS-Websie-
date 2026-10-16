@@ -393,7 +393,7 @@ export const footerLinks = {
     { label: 'Kids English', href: '/courses?category=Kids+English' },
   ],
   company: [
-    { label: 'About English Capsules', href: '/#why-us' },
+    { label: 'About English Capsules', href: '/about' },
     { label: 'Our Learning Method', href: '/#methods' },
     { label: 'Learning Blog & Guides', href: '/blog' },
     { label: 'Student Reviews', href: '/#reviews' },

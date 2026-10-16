@@ -5,6 +5,7 @@ import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { Mail, Lock, ArrowRight, ArrowLeft, AlertCircle, Sparkles, ChevronsRight } from 'lucide-react';
 import { useAuth } from '@/context/AuthContext';
+import { homeForRole } from '@/lib/roles';
 
 export default function LoginPage() {
   const router = useRouter();
@@ -17,11 +18,7 @@ export default function LoginPage() {
 
   // If user is already authenticated, redirect to their role dashboard
   if (!authLoading && user && role) {
-    if (role === 'Instructor') {
-      router.replace('/teacher');
-    } else {
-      router.replace('/student');
-    }
+    router.replace(homeForRole(role));
   }
 
   const handleEmailLogin = async (e: FormEvent) => {

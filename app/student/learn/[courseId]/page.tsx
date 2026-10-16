@@ -12,9 +12,11 @@ import {
   getCourseProgress,
   saveLessonCompletion,
   getFallbackCourseData,
+  rankInCourse,
   type CourseProgressRecord,
 } from '@/lib/progress';
 import { getCourseById } from '@/lib/db';
+import { addQuestion, lessonNote, lessonVideo, recordWatch, saveLessonNote, sendMessage, submitAssignment, watchPercent } from '@/lib/workspace';
 import type { CourseSchema, ModuleSchema, LessonSchema } from '@/types/course';
 import {
   BookOpen,
@@ -150,6 +152,12 @@ export default function StudentLearnPage() {
 
   const [activeModuleIndex, setActiveModuleIndex] = useState(0);
   const [activeLessonIndex, setActiveLessonIndex] = useState(0);
+  const [noteText, setNoteText] = useState('');
+  const [assignmentText, setAssignmentText] = useState('');
+  const [shortText, setShortText] = useState('');
+  const [discussion, setDiscussion] = useState('');
+  const [messageNote, setMessageNote] = useState('');
+  const [watchTick, setWatchTick] = useState(0);
   const [expandedModules, setExpandedModules] = useState<Record<string, boolean>>({
     'mod-1': true,
     'mod-0': true,
@@ -228,6 +236,19 @@ export default function StudentLearnPage() {
     });
     return list;
   }, [course]);
+
+  useEffect(() => {
+    if (currentLesson) setNoteText(lessonNote(currentLesson.id));
+  }, [currentLesson?.id]);
+
+  const lessonIsOpen = (mIdx: number, lIdx: number) => {
+    void watchTick;
+    const idx = flattenedLessons.findIndex((item) => item.moduleIndex === mIdx && item.lessonIndex === lIdx);
+    if (idx <= 0) return true;
+    const prev = flattenedLessons[idx - 1];
+    if (progress?.completedLessons[prev.lesson.id]) return true;
+    return watchPercent(prev.lesson.id) >= 80;
+  };
 
   const currentFlatIndex = flattenedLessons.findIndex(
     (item) => item.moduleIndex === activeModuleIndex && item.lessonIndex === activeLessonIndex
@@ -377,6 +398,7 @@ export default function StudentLearnPage() {
   }
 
   const completionPercent = progress?.progressPercentage || 0;
+  const standing = rankInCourse(courseId, user?.uid || '', completionPercent);
   const isCurrentLessonDone = !!progress?.completedLessons[currentLesson?.id || ''];
 
   return (
@@ -448,16 +470,119 @@ export default function StudentLearnPage() {
             {/* Secure Video Player */}
             <div className="w-full">
               <SecureVideoPlayer
-                videoUrl={currentLesson?.videoUrl}
+                videoUrl={currentLesson ? lessonVideo(courseId, currentLesson.id) || currentLesson.videoUrl : undefined}
                 poster={course.thumbnail}
                 title={currentLesson?.title || course.title}
                 studentName={userProfile?.name || user?.displayName || 'Student Learner'}
                 studentEmail={user?.email || 'student@englishcapsules.com'}
                 onEnded={handleVideoEnded}
+                onProgress={(percent) => {
+                  if (!currentLesson) return;
+                  recordWatch(currentLesson.id, percent);
+                  setWatchTick(percent);
+                }}
                 onNextLesson={hasNextLesson ? handleNextLesson : undefined}
                 onPrevLesson={hasPrevLesson ? handlePrevLesson : undefined}
               />
             </div>
+
+            {currentLesson && (
+              <div className="bg-white rounded-3xl border border-slate-200 p-5 shadow-sm space-y-3">
+                <p className="text-xs font-bold uppercase text-slate-500">
+                  Watched {watchPercent(currentLesson.id)}%. The next lesson opens at 80%.
+                </p>
+                <label className="block text-xs font-bold text-slate-500">Lesson notes</label>
+                <textarea
+                  value={noteText}
+                  onChange={(e) => setNoteText(e.target.value)}
+                  className="w-full border border-slate-200 rounded-xl px-3 py-2 text-sm min-h-20"
+                />
+                <button
+                  type="button"
+                  className="text-xs font-bold px-3 py-2 rounded-full bg-slate-100"
+                  onClick={() => saveLessonNote(currentLesson.id, noteText)}
+                >
+                  Save notes
+                </button>
+                <label className="block text-xs font-bold text-slate-500">Assignment</label>
+                <textarea
+                  value={assignmentText}
+                  onChange={(e) => setAssignmentText(e.target.value)}
+                  className="w-full border border-slate-200 rounded-xl px-3 py-2 text-sm min-h-16"
+                  placeholder="Write the assignment answer"
+                />
+                <button
+                  type="button"
+                  className="text-xs font-bold px-3 py-2 rounded-full bg-[#111827] text-white"
+                  onClick={() => {
+                    if (!assignmentText.trim()) return;
+                    submitAssignment(currentLesson.id, user?.email || 'student@local', assignmentText);
+                    setAssignmentText('');
+                  }}
+                >
+                  Submit assignment
+                </button>
+                <label className="block text-xs font-bold text-slate-500">Short question</label>
+                <input value={shortText} onChange={(e) => setShortText(e.target.value)} className="w-full border border-slate-200 rounded-xl px-3 py-2 text-sm" placeholder="Add a short question for this lesson" />
+                <button
+                  type="button"
+                  className="text-xs font-bold px-3 py-2 rounded-full bg-slate-100"
+                  onClick={() => {
+                    if (!shortText.trim()) return;
+                    addQuestion(shortText, ['Noted'], 0, 'short', currentLesson.id);
+                    setShortText('');
+                  }}
+                >
+                  Save short question
+                </button>
+                <label className="block text-xs font-bold text-slate-500">Message from this course</label>
+                <input value={discussion} onChange={(e) => setDiscussion(e.target.value)} className="w-full border border-slate-200 rounded-xl px-3 py-2 text-sm" placeholder="Ask about this lesson" />
+                <p className="text-[11px] text-slate-500">
+                  {course?.title || 'This course'} · Rank {standing.rank} of {standing.total} · {standing.progress}% progress
+                </p>
+                <button
+                  type="button"
+                  className="text-xs font-bold px-3 py-2 rounded-full bg-slate-100"
+                  onClick={async () => {
+                    const text = discussion.trim();
+                    if (!text) return;
+                    const email = user?.email || '';
+                    const courseTitle = course?.title || 'This course';
+                    const context = `${courseTitle} · Rank ${standing.rank} of ${standing.total} · ${standing.progress}%`;
+                    sendMessage(email || 'student@local', text, context);
+                    if (!email) {
+                      setMessageNote('Sign in with an email so the instructor, customer care, and admin can open this message.');
+                      return;
+                    }
+                    const res = await fetch('/api/messages', {
+                      method: 'POST',
+                      headers: { 'Content-Type': 'application/json' },
+                      body: JSON.stringify({
+                        kind: 'student',
+                        name: userProfile?.name || user?.displayName || 'Student',
+                        email,
+                        text,
+                        courseId,
+                        courseTitle,
+                        rank: standing.rank,
+                        rankTotal: standing.total,
+                        progress: standing.progress,
+                      }),
+                    });
+                    const data = await res.json();
+                    if (!res.ok || !data.success) {
+                      setMessageNote(data.message || 'Could not send.');
+                      return;
+                    }
+                    setDiscussion('');
+                    setMessageNote('Sent. The instructor, customer care, and admin panel can see this course and your rank.');
+                  }}
+                >
+                  Send to inbox
+                </button>
+                {messageNote && <p className="text-xs font-semibold">{messageNote}</p>}
+              </div>
+            )}
 
             {/* ── LESSON ACTION & CONTROLS BAR ── */}
             <div className="bg-white rounded-3xl border border-slate-200/80 p-5 shadow-sm flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
@@ -846,11 +971,13 @@ export default function StudentLearnPage() {
                         {mod.lessons?.map((les, lIdx) => {
                           const isPlaying = activeModuleIndex === mIdx && activeLessonIndex === lIdx;
                           const isDone = !!progress?.completedLessons[les.id];
+                          const isLocked = !lessonIsOpen(mIdx, lIdx);
 
                           return (
                             <div
                               key={les.id}
                               onClick={() => {
+                                if (!lessonIsOpen(mIdx, lIdx)) return;
                                 setActiveModuleIndex(mIdx);
                                 setActiveLessonIndex(lIdx);
                               }}
@@ -861,7 +988,9 @@ export default function StudentLearnPage() {
                               }`}
                             >
                               <div className="flex items-center gap-2.5 flex-1 min-w-0">
-                                {isDone ? (
+                                {isLocked ? (
+                                  <Lock className="w-4 h-4 text-slate-400 flex-shrink-0" />
+                                ) : isDone ? (
                                   <div className="w-4 h-4 rounded-full bg-emerald-500 text-white flex items-center justify-center flex-shrink-0 shadow-xs">
                                     <Check className="w-2.5 h-2.5 stroke-[3]" />
                                   </div>

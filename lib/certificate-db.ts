@@ -2,6 +2,7 @@ import fs from 'fs';
 import path from 'path';
 import { doc, getDoc, setDoc, serverTimestamp } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
+import { dataPath } from '@/lib/data-dir';
 
 export interface CertificateRecord {
   certificateId: string;
@@ -19,7 +20,7 @@ export interface CertificateRecord {
 }
 
 const LOCAL_CERTIFICATES_KEY = 'english_capsules_certificate_registry';
-const SERVER_DATA_DIR = path.join(process.cwd(), 'data');
+const SERVER_DATA_DIR = dataPath();
 const SERVER_CERTS_FILE = path.join(SERVER_DATA_DIR, 'certificates.json');
 
 // Seed initial verified certificates for instant demonstration & testing

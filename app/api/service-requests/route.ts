@@ -1,6 +1,18 @@
 import { NextResponse } from 'next/server';
 import { getOffer } from '@/lib/service-catalog';
-import { createServiceRequest } from '@/lib/service-requests';
+import { createServiceRequest, getServiceRequest, replyToServiceRequest } from '@/lib/service-requests';
+
+export async function GET(request: Request) {
+  const url = new URL(request.url);
+  const id = url.searchParams.get('id') || '';
+  const email = (url.searchParams.get('email') || '').trim().toLowerCase();
+  if (!id || !email) return NextResponse.json({ success: false, message: 'Request id and email are required.' }, { status: 400 });
+  const found = await getServiceRequest(id);
+  if (!found || found.email.toLowerCase() !== email) {
+    return NextResponse.json({ success: false, message: 'Request not found.' }, { status: 404 });
+  }
+  return NextResponse.json({ success: true, request: found });
+}
 
 export async function POST(request: Request) {
   try {
@@ -27,5 +39,16 @@ export async function POST(request: Request) {
   } catch (error) {
     console.error('[Service request]', error);
     return NextResponse.json({ success: false, message: 'Could not save the request.' }, { status: 500 });
+  }
+}
+
+export async function PUT(request: Request) {
+  try {
+    const body = await request.json();
+    const updated = await replyToServiceRequest(String(body.id || ''), 'customer', String(body.text || ''), String(body.email || ''));
+    return NextResponse.json({ success: true, request: updated });
+  } catch (error) {
+    const message = error instanceof Error ? error.message : 'Could not send the reply.';
+    return NextResponse.json({ success: false, message }, { status: 400 });
   }
 }

@@ -7,6 +7,8 @@ import FloatingNavbar from '@/components/english/FloatingNavbar';
 import EnglishFooter from '@/components/english/EnglishFooter';
 import CheckoutModal from '@/components/checkout/CheckoutModal';
 import { featuredCourses } from '@/lib/data';
+import { courseDiscount, courseEdit, hiddenCourseIds } from '@/lib/workspace';
+import { takaFromUsd } from '@/lib/utils';
 import type { CourseSchema } from '@/types/course';
 import {
   Search,
@@ -35,9 +37,12 @@ export default function CoursesCatalogPage() {
   const [showCheckout, setShowCheckout] = useState(false);
 
   // Honor deep links like /courses?category=Spoken+English from nav/footer
+  const [hiddenIds, setHiddenIds] = useState<string[]>([]);
+
   useEffect(() => {
     const cat = new URLSearchParams(window.location.search).get('category');
     if (cat) setSelectedCategory(cat);
+    setHiddenIds(hiddenCourseIds());
   }, []);
 
   // All categories list
@@ -51,7 +56,15 @@ export default function CoursesCatalogPage() {
 
   // Filtered & Sorted courses
   const filteredCourses = useMemo(() => {
-    return featuredCourses
+    const catalog = featuredCourses.map((course) => {
+      const edit = courseEdit(String(course.id));
+      return {
+        ...course,
+        title: edit.title || course.title,
+        price: typeof edit.price === 'number' ? edit.price : course.price,
+      };
+    });
+    return catalog
       .filter((c) => {
         const matchesSearch =
           c.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
@@ -67,8 +80,9 @@ export default function CoursesCatalogPage() {
             : priceFilter === 'Free'
             ? c.price === 0
             : c.price > 0;
+        const isVisible = !hiddenIds.includes(String(c.id));
 
-        return matchesSearch && matchesCat && matchesLevel && matchesPrice;
+        return matchesSearch && matchesCat && matchesLevel && matchesPrice && isVisible;
       })
       .sort((a, b) => {
         if (sortBy === 'rating') return (b.rating || 0) - (a.rating || 0);
@@ -78,7 +92,7 @@ export default function CoursesCatalogPage() {
         if (sortBy === 'newest') return (b.isNew ? 1 : 0) - (a.isNew ? 1 : 0);
         return 0;
       });
-  }, [searchQuery, selectedCategory, selectedLevel, priceFilter, sortBy]);
+  }, [searchQuery, selectedCategory, selectedLevel, priceFilter, sortBy, hiddenIds]);
 
   const handleEnroll = (course: any) => {
     setSelectedCourse({
@@ -376,11 +390,11 @@ export default function CoursesCatalogPage() {
                             ) : (
                               <div className="flex items-baseline gap-2">
                                 <span className="font-display font-extrabold text-2xl text-[#111827]">
-                                  ${course.price}
+                                  {takaFromUsd(Math.max(0, Math.round(course.price * (100 - courseDiscount(String(course.id))) / 100)))}
                                 </span>
-                                {course.originalPrice && (
+                                {(course.originalPrice || courseDiscount(String(course.id)) > 0) && (
                                   <span className="text-xs text-slate-400 line-through">
-                                    ${course.originalPrice}
+                                    {takaFromUsd(course.originalPrice || course.price)}
                                   </span>
                                 )}
                               </div>

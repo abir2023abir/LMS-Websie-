@@ -2,7 +2,11 @@ import fs from 'fs';
 import path from 'path';
 import { addDoc, collection, getDocs, serverTimestamp } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
+import { dataPath } from '@/lib/data-dir';
 import { getOffer, type ServiceOffer } from '@/lib/service-catalog';
+
+export type RequestStatus = 'new' | 'progress' | 'done';
+export type RequestMessage = { id: string; from: 'customer' | 'admin'; text: string; at: string };
 
 export type ServiceRequest = {
   id: string;
@@ -14,10 +18,12 @@ export type ServiceRequest = {
   phone: string;
   email: string;
   message: string;
+  status: RequestStatus;
+  thread: RequestMessage[];
   createdAt: string;
 };
 
-const FILE_PATH = path.join(process.cwd(), 'data', 'service-requests.json');
+const FILE_PATH = dataPath('service-requests.json');
 const COLLECTION = 'serviceRequests';
 
 const isDemoMode = () => {
@@ -46,6 +52,17 @@ function writeFileRequests(list: ServiceRequest[]) {
   fs.writeFileSync(FILE_PATH, JSON.stringify(list, null, 2));
 }
 
+function asStatus(value: unknown): RequestStatus {
+  return value === 'progress' || value === 'done' ? value : 'new';
+}
+
+function normalizeRequest(item: ServiceRequest): ServiceRequest {
+  const thread = item.thread?.length
+    ? item.thread
+    : [{ id: `${item.id}-opening`, from: 'customer' as const, text: item.message || '', at: item.createdAt }];
+  return { ...item, status: asStatus(item.status), thread };
+}
+
 function toIso(value: unknown): string {
   if (!value) return new Date().toISOString();
   if (typeof value === 'string') return value;
@@ -71,6 +88,8 @@ export async function createServiceRequest(input: {
   const billing = offer.period === 'once' ? 'once' : input.billing === 'year' ? 'year' : 'month';
   const price = billing === 'year' ? Math.round(offer.price * 12 * 0.8) : offer.price;
 
+  const createdAt = new Date().toISOString();
+  const message = input.message.trim();
   const record: ServiceRequest = {
     id: `req-${Date.now()}`,
     planId: offer.id,
@@ -80,8 +99,10 @@ export async function createServiceRequest(input: {
     name: input.name.trim(),
     phone: input.phone.trim(),
     email: input.email.trim(),
-    message: input.message.trim(),
-    createdAt: new Date().toISOString(),
+    message,
+    status: 'new',
+    thread: [{ id: `msg-${Date.now()}`, from: 'customer', text: message, at: createdAt }],
+    createdAt,
   };
 
   if (isDemoMode()) {
@@ -103,36 +124,121 @@ export async function createServiceRequest(input: {
     phone: record.phone,
     email: record.email,
     message: record.message,
+    status: record.status,
+    thread: record.thread,
     createdAt: serverTimestamp(),
   });
 
   return { ...record, id: docRef.id };
 }
 
+function mapDoc(id: string, data: Record<string, unknown>): ServiceRequest {
+  const createdAt = toIso(data.createdAt);
+  const message = String(data.message || '');
+  const thread = Array.isArray(data.thread)
+    ? (data.thread as RequestMessage[])
+    : [{ id: `${id}-opening`, from: 'customer' as const, text: message, at: createdAt }];
+  return normalizeRequest({
+    id,
+    planId: String(data.planId || ''),
+    planName: String(data.planName || ''),
+    price: Number(data.price || 0),
+    period: data.period === 'once' ? 'once' : data.period === 'year' ? 'year' : 'month',
+    name: String(data.name || ''),
+    phone: String(data.phone || ''),
+    email: String(data.email || ''),
+    message,
+    status: asStatus(data.status),
+    thread,
+    createdAt,
+  });
+}
+
 export async function listServiceRequests(): Promise<ServiceRequest[]> {
   if (isDemoMode()) {
     const fromFile = readFileRequests();
-    if (fromFile.length > 0) return fromFile;
-    return memoryStore();
+    const source = fromFile.length > 0 ? fromFile : memoryStore();
+    return source.map((item) => normalizeRequest(item));
   }
 
   const snap = await getDocs(collection(db, COLLECTION));
   const list: ServiceRequest[] = [];
   snap.forEach((docSnap) => {
-    const data = docSnap.data();
-    list.push({
-      id: docSnap.id,
-      planId: String(data.planId || ''),
-      planName: String(data.planName || ''),
-      price: Number(data.price || 0),
-      period: data.period === 'once' ? 'once' : data.period === 'year' ? 'year' : 'month',
-      name: String(data.name || ''),
-      phone: String(data.phone || ''),
-      email: String(data.email || ''),
-      message: String(data.message || ''),
-      createdAt: toIso(data.createdAt),
-    });
+    list.push(mapDoc(docSnap.id, docSnap.data() as Record<string, unknown>));
   });
 
   return list.sort((a, b) => (a.createdAt < b.createdAt ? 1 : -1));
+}
+
+async function writeAll(list: ServiceRequest[]) {
+  try {
+    writeFileRequests(list);
+  } catch {
+    const memory = memoryStore();
+    memory.splice(0, memory.length, ...list);
+  }
+}
+
+export async function getServiceRequest(id: string) {
+  const list = await listServiceRequests();
+  return list.find((item) => item.id === id) || null;
+}
+
+export async function updateServiceRequest(
+  id: string,
+  patch: Partial<Pick<ServiceRequest, 'name' | 'phone' | 'email' | 'message' | 'status'>>
+) {
+  if (isDemoMode()) {
+    const list = (await listServiceRequests()).map((item) => {
+      if (item.id !== id) return item;
+      const clean = Object.fromEntries(Object.entries(patch).filter(([, value]) => value !== undefined));
+      const next = { ...item, ...clean } as ServiceRequest;
+      if (typeof patch.message === 'string' && next.thread[0]?.from === 'customer') {
+        next.thread = [{ ...next.thread[0], text: patch.message }, ...next.thread.slice(1)];
+      }
+      return next;
+    });
+    if (!list.some((item) => item.id === id)) throw new Error('Request not found.');
+    await writeAll(list);
+    return list.find((item) => item.id === id)!;
+  }
+
+  const { doc, updateDoc } = await import('firebase/firestore');
+  await updateDoc(doc(db, COLLECTION, id), patch);
+  const current = await getServiceRequest(id);
+  if (!current) throw new Error('Request not found.');
+  return current;
+}
+
+export async function replyToServiceRequest(id: string, from: 'admin' | 'customer', text: string, email?: string) {
+  const clean = text.trim();
+  if (!clean) throw new Error('Write a message first.');
+  const current = await getServiceRequest(id);
+  if (!current) throw new Error('Request not found.');
+  if (from === 'customer' && email && current.email.toLowerCase() !== email.trim().toLowerCase()) {
+    throw new Error('This request belongs to another email.');
+  }
+  const message: RequestMessage = { id: `msg-${Date.now()}`, from, text: clean, at: new Date().toISOString() };
+  const status: RequestStatus = from === 'admin' && current.status === 'new' ? 'progress' : current.status;
+  const next: ServiceRequest = { ...current, status, thread: [...current.thread, message] };
+
+  if (isDemoMode()) {
+    const list = (await listServiceRequests()).map((item) => (item.id === id ? next : item));
+    await writeAll(list);
+    return next;
+  }
+
+  const { doc, updateDoc } = await import('firebase/firestore');
+  await updateDoc(doc(db, COLLECTION, id), { thread: next.thread, status: next.status });
+  return next;
+}
+
+export async function deleteServiceRequest(id: string) {
+  if (isDemoMode()) {
+    const list = (await listServiceRequests()).filter((item) => item.id !== id);
+    await writeAll(list);
+    return;
+  }
+  const { doc, deleteDoc } = await import('firebase/firestore');
+  await deleteDoc(doc(db, COLLECTION, id));
 }

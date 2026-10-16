@@ -83,11 +83,10 @@ export default function HeroSection() {
               className="relative w-full max-w-lg lg:max-w-xl h-[480px] sm:h-[580px] lg:h-[660px] z-20"
             >
               <Image
-                src="/images/student.png?v=3"
+                src="/images/student.png"
                 alt="English Student"
                 fill
                 priority
-                unoptimized
                 className="object-contain object-bottom drop-shadow-2xl scale-110 origin-bottom"
                 sizes="(max-width: 768px) 100vw, 50vw"
               />

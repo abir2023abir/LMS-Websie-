@@ -7,6 +7,7 @@ import { ArrowRight, Star, Clock, BookOpen } from 'lucide-react';
 import { motion } from 'framer-motion';
 import CheckoutModal from '@/components/checkout/CheckoutModal';
 import type { CourseSchema } from '@/types/course';
+import { takaFromUsd } from '@/lib/utils';
 
 const englishCapsulesCourses: CourseSchema[] = [
   {
@@ -152,11 +153,13 @@ export default function EnglishCoursesSection() {
                 <div className="flex items-center justify-between pt-2">
                   <div className="flex items-baseline gap-1.5">
                     <span className="font-display font-extrabold text-2xl text-[#111827]">
-                      ${course.price}
+                      {takaFromUsd(course.price)}
                     </span>
-                    <span className="text-xs text-slate-400 line-through">
-                      ${course.originalPrice}
-                    </span>
+                    {course.originalPrice ? (
+                      <span className="text-xs text-slate-400 line-through">
+                        {takaFromUsd(course.originalPrice)}
+                      </span>
+                    ) : null}
                   </div>
 
                   <Link

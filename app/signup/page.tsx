@@ -15,6 +15,8 @@ import {
   Sparkles,
 } from 'lucide-react';
 import { useAuth, type UserRole } from '@/context/AuthContext';
+import { homeForRole } from '@/lib/roles';
+import { Users, Briefcase } from 'lucide-react';
 
 export default function SignUpPage() {
   const router = useRouter();
@@ -24,16 +26,13 @@ export default function SignUpPage() {
   const [name, setName] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [linkedStudentEmail, setLinkedStudentEmail] = useState('');
   const [error, setError] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   // Redirect if user is already logged in
   if (!authLoading && user && role) {
-    if (role === 'Instructor') {
-      router.replace('/teacher');
-    } else {
-      router.replace('/student');
-    }
+    router.replace(homeForRole(role));
   }
 
   const handleEmailSignUp = async (e: FormEvent) => {
@@ -52,15 +51,17 @@ export default function SignUpPage() {
       setError('Password must be at least 6 characters');
       return;
     }
+    if (selectedRole === 'Guardian' && !linkedStudentEmail.trim()) {
+      setError('Enter the email of the student this guardian is linked to');
+      return;
+    }
 
     setIsSubmitting(true);
     try {
-      await signUpWithEmail(email, password, name, selectedRole);
-      if (selectedRole === 'Instructor') {
-        router.push('/teacher');
-      } else {
-        router.push('/student');
-      }
+      await signUpWithEmail(email, password, name, selectedRole, {
+        linkedStudentEmail: selectedRole === 'Guardian' ? linkedStudentEmail : undefined,
+      });
+      router.push(homeForRole(selectedRole));
     } catch (err: any) {
       console.error('Sign up error:', err);
       if (err.code === 'auth/email-already-in-use') {
@@ -145,7 +146,7 @@ export default function SignUpPage() {
                 }`}
               >
                 <GraduationCap className="w-5 h-5" />
-                <span>Student / Learner</span>
+                <span>Student</span>
               </button>
 
               <button
@@ -158,9 +159,53 @@ export default function SignUpPage() {
                 }`}
               >
                 <BookOpen className="w-5 h-5" />
-                <span>English Instructor</span>
+                <span>Mentor</span>
+              </button>
+
+              <button
+                type="button"
+                onClick={() => setSelectedRole('Guardian')}
+                className={`p-3.5 rounded-2xl border flex flex-col items-center gap-1.5 transition-all text-xs font-bold ${
+                  selectedRole === 'Guardian'
+                    ? 'bg-[#FACC15] text-[#111827] border-[#111827] shadow-md shadow-[#FACC15]/20'
+                    : 'bg-slate-50 border-slate-200 text-slate-600 hover:text-[#111827] hover:bg-slate-100'
+                }`}
+              >
+                <Users className="w-5 h-5" />
+                <span>Guardian</span>
+              </button>
+
+              <button
+                type="button"
+                onClick={() => setSelectedRole('ServiceCustomer')}
+                className={`p-3.5 rounded-2xl border flex flex-col items-center gap-1.5 transition-all text-xs font-bold ${
+                  selectedRole === 'ServiceCustomer'
+                    ? 'bg-[#FACC15] text-[#111827] border-[#111827] shadow-md shadow-[#FACC15]/20'
+                    : 'bg-slate-50 border-slate-200 text-slate-600 hover:text-[#111827] hover:bg-slate-100'
+                }`}
+              >
+                <Briefcase className="w-5 h-5" />
+                <span>Service Customer</span>
               </button>
             </div>
+            {selectedRole === 'Guardian' && (
+              <div className="mt-3">
+                <label htmlFor="linked-student" className="block text-xs font-bold text-slate-700 mb-1.5">
+                  Linked student email
+                </label>
+                <input
+                  id="linked-student"
+                  type="email"
+                  value={linkedStudentEmail}
+                  onChange={(e) => setLinkedStudentEmail(e.target.value)}
+                  placeholder="student@email.com"
+                  className="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-3 text-xs sm:text-sm text-[#111827] placeholder-slate-400 focus:outline-none focus:border-[#111827] font-medium"
+                />
+                <p className="mt-1.5 text-[11px] text-slate-500">
+                  This guardian can see only this student. Other students stay hidden.
+                </p>
+              </div>
+            )}
           </div>
 
           {/* Demo Notice */}

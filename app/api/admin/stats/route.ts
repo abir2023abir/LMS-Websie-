@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server';
 import { cookies } from 'next/headers';
 import { getAllCourses } from '@/lib/db';
 import { verifyAdminSession } from '@/lib/auth-server';
+import { isFirebaseDemo, takaFromUsd } from '@/lib/utils';
 
 export async function GET() {
   const cookieStore = cookies();
@@ -23,7 +24,7 @@ export async function GET() {
 
     // Fetch real transactions from Firestore if available
     let realTransactions: any[] = [];
-    try {
+    if (!isFirebaseDemo()) try {
       const { collection, getDocs, query, orderBy, limit } = await import('firebase/firestore');
       const { db } = await import('@/lib/firebase');
       const txnQuery = query(collection(db, 'transactions'), orderBy('createdAt', 'desc'), limit(15));
@@ -62,7 +63,7 @@ export async function GET() {
       category: c.category || 'Spoken English',
       sales: c.studentCount || 850,
       rating: c.rating || 4.9,
-      price: `$${c.price}`,
+      price: takaFromUsd(c.price),
       thumbnail: c.thumbnail || 'https://images.unsplash.com/photo-1522202176988-66273c2fd55f?w=200&h=150&fit=crop',
     }));
 
