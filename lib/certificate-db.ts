@@ -3,6 +3,7 @@ import path from 'path';
 import { doc, getDoc, setDoc, serverTimestamp } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
 import { dataPath } from '@/lib/data-dir';
+import { isFirebaseDemo } from '@/lib/utils';
 
 export interface CertificateRecord {
   certificateId: string;
@@ -136,8 +137,7 @@ export async function saveCertificateRecord(record: CertificateRecord): Promise<
 
   // 3. Persist to Firestore if real keys configured
   try {
-    const isDemoKey = !process.env.NEXT_PUBLIC_FIREBASE_API_KEY || process.env.NEXT_PUBLIC_FIREBASE_API_KEY.includes('Demo');
-    if (!isDemoKey) {
+    if (!isFirebaseDemo()) {
       const docRef = doc(db, 'certificates', normalizedId);
       await setDoc(docRef, {
         ...certToSave,
@@ -179,8 +179,7 @@ export async function getCertificateById(certificateId: string): Promise<Certifi
 
   // 3. Query Firestore certificates collection
   try {
-    const isDemoKey = !process.env.NEXT_PUBLIC_FIREBASE_API_KEY || process.env.NEXT_PUBLIC_FIREBASE_API_KEY.includes('Demo');
-    if (!isDemoKey) {
+    if (!isFirebaseDemo()) {
       const docRef = doc(db, 'certificates', normalizedId);
       const docSnap = await getDoc(docRef);
       if (docSnap.exists()) {

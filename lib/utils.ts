@@ -11,8 +11,10 @@ export function cn(...inputs: ClassValue[]): string {
 /** One US dollar shown as Bangladeshi taka. */
 /** True when no real Firebase project is configured; Firestore calls would only hang. */
 export function isFirebaseDemo(): boolean {
-  const key = process.env.NEXT_PUBLIC_FIREBASE_API_KEY;
-  return !key || key.startsWith('AIzaSyDemo') || key === 'your-api-key' || key.includes('DemoKey');
+  const key = process.env.NEXT_PUBLIC_FIREBASE_API_KEY || '';
+  const project = process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID || '';
+  const placeholder = /demo|your[-_]/i;
+  return !key.startsWith('AIza') || placeholder.test(key) || !project || placeholder.test(project);
 }
 
 export const USD_TO_BDT = 120;

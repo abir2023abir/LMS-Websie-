@@ -34,6 +34,7 @@ yarn-error.log*
 /data/payment-settings.json
 /data/admin-lms.json
 /data/desk-messages.json
+/data/course-edits.json
 /data/admin-payment-proofs/
 /data/assignment-files/
 

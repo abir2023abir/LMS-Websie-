@@ -3,6 +3,7 @@
 import React, { createContext, useContext, useEffect, useState } from 'react';
 import type { User } from 'firebase/auth';
 import { audit, isDeactivated, recordSession } from '@/lib/workspace';
+import { isFirebaseDemo } from '@/lib/utils';
 
 async function firebase() {
   const [base, fbAuth, fbStore] = await Promise.all([
@@ -53,10 +54,7 @@ const AuthContext = createContext<AuthContextType | undefined>(undefined);
 const LOCAL_SESSION_KEY = 'learnverse_current_session';
 const LOCAL_USERS_KEY = 'learnverse_registered_users';
 
-function checkIsDemoKey(): boolean {
-  const key = process.env.NEXT_PUBLIC_FIREBASE_API_KEY;
-  return !key || key.startsWith('AIzaSyDemo') || key === 'your-api-key' || key.includes('DemoKey');
-}
+const checkIsDemoKey = isFirebaseDemo;
 
 export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [user, setUser] = useState<User | null>(null);

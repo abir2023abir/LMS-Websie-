@@ -8,8 +8,9 @@ import useSWR from 'swr';
 import {
   Plus, LogOut, Shield, LayoutDashboard, BookOpen, Award, HelpCircle,
   Banknote, Users, FileText, Search, Trash2, RefreshCw, Eye,
-  Sparkles, Inbox, MessageSquare
+  Sparkles, Inbox, MessageSquare, Pencil
 } from 'lucide-react';
+import { applyCourseEdit, useCourseEdits } from '@/lib/course-edits-client';
 import StatsCards from './StatsCards';
 import RevenueAreaChart from './RevenueAreaChart';
 import TopCoursesList from './TopCoursesList';
@@ -45,6 +46,9 @@ export default function AdminDashboard() {
   const router = useRouter();
   const [activeTab, setActiveTab] = useState('Overview');
   const [searchTerm, setSearchTerm] = useState('');
+  const [editingCourse, setEditingCourse] = useState<string | null>(null);
+  const [editsVersion, setEditsVersion] = useState(0);
+  const courseEdits = useCourseEdits(editsVersion);
 
   // SWR real-time polling every 4 seconds
   const { data, mutate, isLoading } = useSWR('/api/admin/stats', fetcher, {
@@ -58,7 +62,7 @@ export default function AdminDashboard() {
   const serviceRequests = requestData?.requests || [];
 
   const stats = data?.stats || {};
-  const coursesList = stats?.courses || [];
+  const coursesList = (stats?.courses || []).map((c: any) => applyCourseEdit(c, courseEdits[String(c.id)]));
   const categoryDistribution = stats?.categoryDistribution || [];
 
   const handleLogout = async () => {
@@ -311,6 +315,13 @@ export default function AdminDashboard() {
                             <Eye className="w-4 h-4" />
                           </Link>
                           <button
+                            onClick={() => setEditingCourse(String(course.id))}
+                            className="p-1.5 hover:bg-amber-50 rounded-lg text-slate-500 hover:text-slate-900"
+                            title="Edit"
+                          >
+                            <Pencil className="w-4 h-4" />
+                          </button>
+                          <button
                             onClick={() => handleDeleteCourse(course.id)}
                             className="p-1.5 hover:bg-rose-50 rounded-lg text-slate-400 hover:text-rose-600"
                             title="Delete"
@@ -337,7 +348,13 @@ export default function AdminDashboard() {
         {activeTab === 'Messages' && <AdminMessages />}
 
         {/* ── TAB 5, 6, 7: CERTIFICATE, QUIZZES, ASSIGNMENTS ── */}
-        {activeTab === 'Courses' && <AdminCourseEditor />}
+        {editingCourse && (
+          <AdminCourseEditor
+            courseId={editingCourse}
+            onClose={() => setEditingCourse(null)}
+            onSaved={() => setEditsVersion((v) => v + 1)}
+          />
+        )}
 
         {activeTab === 'Payments' && (
           <div className="space-y-6">

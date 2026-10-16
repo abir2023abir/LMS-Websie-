@@ -3,6 +3,7 @@ import path from 'path';
 import { addDoc, collection, getDocs, serverTimestamp } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
 import { dataPath } from '@/lib/data-dir';
+import { isFirebaseDemo } from '@/lib/utils';
 import { getOffer, type ServiceOffer } from '@/lib/service-catalog';
 
 export type RequestStatus = 'new' | 'progress' | 'done';
@@ -26,10 +27,7 @@ export type ServiceRequest = {
 const FILE_PATH = dataPath('service-requests.json');
 const COLLECTION = 'serviceRequests';
 
-const isDemoMode = () => {
-  const apiKey = process.env.NEXT_PUBLIC_FIREBASE_API_KEY || 'AIzaSyDemoKeyForLearnVerseLMSApp123';
-  return apiKey.startsWith('AIzaSyDemo');
-};
+const isDemoMode = isFirebaseDemo;
 
 function memoryStore(): ServiceRequest[] {
   const g = globalThis as typeof globalThis & { __serviceRequests?: ServiceRequest[] };

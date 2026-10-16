@@ -16,6 +16,7 @@ import {
   type CourseProgressRecord,
 } from '@/lib/progress';
 import { getCourseById } from '@/lib/db';
+import { useCourseEdits } from '@/lib/course-edits-client';
 import { addQuestion, lessonNote, lessonVideo, recordWatch, saveLessonNote, sendMessage, submitAssignment, watchPercent } from '@/lib/workspace';
 import type { CourseSchema, ModuleSchema, LessonSchema } from '@/types/course';
 import {
@@ -157,6 +158,7 @@ export default function StudentLearnPage() {
   const [shortText, setShortText] = useState('');
   const [discussion, setDiscussion] = useState('');
   const [messageNote, setMessageNote] = useState('');
+  const courseEdits = useCourseEdits();
   const [watchTick, setWatchTick] = useState(0);
   const [expandedModules, setExpandedModules] = useState<Record<string, boolean>>({
     'mod-1': true,
@@ -470,7 +472,7 @@ export default function StudentLearnPage() {
             {/* Secure Video Player */}
             <div className="w-full">
               <SecureVideoPlayer
-                videoUrl={currentLesson ? lessonVideo(courseId, currentLesson.id) || currentLesson.videoUrl : undefined}
+                videoUrl={currentLesson ? courseEdits[courseId]?.videos?.[currentLesson.id] || lessonVideo(courseId, currentLesson.id) || currentLesson.videoUrl : undefined}
                 poster={course.thumbnail}
                 title={currentLesson?.title || course.title}
                 studentName={userProfile?.name || user?.displayName || 'Student Learner'}

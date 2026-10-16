@@ -10,7 +10,7 @@ import VideoPlayer from '@/components/player/VideoPlayer';
 import CheckoutModal from '@/components/checkout/CheckoutModal';
 import { getCourseById } from '@/lib/db';
 import { getFallbackCourseData } from '@/lib/progress';
-import { courseEdit, lessonVideo } from '@/lib/workspace';
+import { applyCourseEdit, loadCourseEdits } from '@/lib/course-edits-client';
 import { takaFromUsd } from '@/lib/utils';
 import type { CourseSchema, LessonSchema } from '@/types/course';
 import {
@@ -39,6 +39,7 @@ export default function CourseDetailsPage() {
   const [activeTab, setActiveTab] = useState<'overview' | 'curriculum' | 'reviews'>('overview');
   const [showCheckoutModal, setShowCheckoutModal] = useState(false);
   const [activeVideoUrl, setActiveVideoUrl] = useState<string | undefined>(undefined);
+  const [lessonVideos, setLessonVideos] = useState<Record<string, string>>({});
   const [activeLessonTitle, setActiveLessonTitle] = useState<string>('Introduction & Capsule Orientation');
   const [openModules, setOpenModules] = useState<Record<string, boolean>>({ 'mod-1': true, 'mod-0': true });
 
@@ -47,27 +48,28 @@ export default function CourseDetailsPage() {
       setLoading(true);
       if (!courseId) return;
 
-      let fetched = await getCourseById(courseId);
-      if (!fetched || !fetched.modules) {
-        fetched = getFallbackCourseData(courseId);
-      }
+      try {
+        const timeout = new Promise<null>((resolve) => setTimeout(() => resolve(null), 3000));
+        const [found, edits] = await Promise.all([
+          Promise.race([getCourseById(courseId).catch(() => null), timeout]),
+          loadCourseEdits(),
+        ]);
+        const fetched = found?.modules ? found : getFallbackCourseData(courseId);
 
-      if (fetched) {
-        const edit = courseEdit(courseId);
-        const priced = {
-          ...fetched,
-          title: edit.title || fetched.title,
-          price: typeof edit.price === 'number' ? edit.price : fetched.price,
-        };
-        setCourse(priced);
-        const first = priced.modules?.[0]?.lessons?.[0];
-        if (first) {
-          setActiveVideoUrl(lessonVideo(courseId, first.id) || first.videoUrl);
-          setActiveLessonTitle(first.title);
+        if (fetched) {
+          const edit = edits[courseId];
+          const priced = applyCourseEdit(fetched, edit);
+          setCourse(priced);
+          setLessonVideos(edit?.videos || {});
+          const first = priced.modules?.[0]?.lessons?.[0];
+          if (first) {
+            setActiveVideoUrl(edit?.videos?.[first.id] || first.videoUrl);
+            setActiveLessonTitle(first.title);
+          }
         }
+      } finally {
+        setLoading(false);
       }
-
-      setLoading(false);
     }
 
     loadCourse();
@@ -79,7 +81,7 @@ export default function CourseDetailsPage() {
 
   const handleSelectLesson = (lesson: LessonSchema) => {
     setActiveLessonTitle(lesson.title);
-    const saved = lessonVideo(courseId, lesson.id) || lesson.videoUrl;
+    const saved = lessonVideos[lesson.id] || lesson.videoUrl;
     if (saved) setActiveVideoUrl(saved);
   };
 

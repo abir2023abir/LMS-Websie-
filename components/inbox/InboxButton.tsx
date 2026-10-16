@@ -20,7 +20,7 @@ const titles: Record<Scope, string> = {
 export default function InboxButton({ scope, onDark = false }: { scope: Scope; onDark?: boolean }) {
   const { user } = useAuth();
   const [open, setOpen] = useState(false);
-  const [list, setList] = useState(visibleMessages(scope, user?.email || ''));
+  const [list, setList] = useState<ReturnType<typeof visibleMessages>>([]);
   const [text, setText] = useState('');
   const [context, setContext] = useState(scope === 'service' ? 'Service' : 'Lesson');
   const [reply, setReply] = useState('');

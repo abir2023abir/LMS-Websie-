@@ -7,7 +7,8 @@ import FloatingNavbar from '@/components/english/FloatingNavbar';
 import EnglishFooter from '@/components/english/EnglishFooter';
 import CheckoutModal from '@/components/checkout/CheckoutModal';
 import { featuredCourses } from '@/lib/data';
-import { courseDiscount, courseEdit, hiddenCourseIds } from '@/lib/workspace';
+import { courseDiscount, hiddenCourseIds } from '@/lib/workspace';
+import { applyCourseEdit, useCourseEdits } from '@/lib/course-edits-client';
 import { takaFromUsd } from '@/lib/utils';
 import type { CourseSchema } from '@/types/course';
 import {
@@ -38,6 +39,7 @@ export default function CoursesCatalogPage() {
 
   // Honor deep links like /courses?category=Spoken+English from nav/footer
   const [hiddenIds, setHiddenIds] = useState<string[]>([]);
+  const courseEdits = useCourseEdits();
 
   useEffect(() => {
     const cat = new URLSearchParams(window.location.search).get('category');
@@ -56,14 +58,7 @@ export default function CoursesCatalogPage() {
 
   // Filtered & Sorted courses
   const filteredCourses = useMemo(() => {
-    const catalog = featuredCourses.map((course) => {
-      const edit = courseEdit(String(course.id));
-      return {
-        ...course,
-        title: edit.title || course.title,
-        price: typeof edit.price === 'number' ? edit.price : course.price,
-      };
-    });
+    const catalog = featuredCourses.map((course) => applyCourseEdit(course, courseEdits[String(course.id)]));
     return catalog
       .filter((c) => {
         const matchesSearch =
@@ -92,7 +87,7 @@ export default function CoursesCatalogPage() {
         if (sortBy === 'newest') return (b.isNew ? 1 : 0) - (a.isNew ? 1 : 0);
         return 0;
       });
-  }, [searchQuery, selectedCategory, selectedLevel, priceFilter, sortBy, hiddenIds]);
+  }, [searchQuery, selectedCategory, selectedLevel, priceFilter, sortBy, hiddenIds, courseEdits]);
 
   const handleEnroll = (course: any) => {
     setSelectedCourse({

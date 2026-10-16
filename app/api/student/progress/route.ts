@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server';
 import { doc, getDoc, setDoc, serverTimestamp } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
+import { isFirebaseDemo } from '@/lib/utils';
 
 export async function GET(request: Request) {
   try {
@@ -17,7 +18,7 @@ export async function GET(request: Request) {
 
     const storeKey = `${userId}_${courseId}`;
 
-    try {
+    if (!isFirebaseDemo()) try {
       const docRef = doc(db, 'user_progress', storeKey);
       const docSnap = await getDoc(docRef);
 
@@ -58,7 +59,7 @@ export async function POST(request: Request) {
 
     const storeKey = `${userId}_${courseId}`;
 
-    try {
+    if (!isFirebaseDemo()) try {
       const docRef = doc(db, 'user_progress', storeKey);
       await setDoc(
         docRef,
