@@ -39,10 +39,15 @@ function readFile(): Record<string, CourseEdit> {
 
 export async function listCourseEdits(): Promise<Record<string, CourseEdit>> {
   if (!useSupabase) return readFile();
-  const res = await fetch(`${supabaseUrl}/rest/v1/course_edits?select=course_id,data`, { headers: headers(), cache: 'no-store' });
-  if (!res.ok) throw new Error(`Supabase read failed (${res.status})`);
-  const rows = (await res.json()) as { course_id: string; data: CourseEdit }[];
-  return Object.fromEntries(rows.map((row) => [row.course_id, row.data]));
+  try {
+    const res = await fetch(`${supabaseUrl}/rest/v1/course_edits?select=course_id,data`, { headers: headers(), cache: 'no-store' });
+    if (!res.ok) throw new Error(`status ${res.status}`);
+    const rows = (await res.json()) as { course_id: string; data: CourseEdit }[];
+    return Object.fromEntries(rows.map((row) => [row.course_id, row.data]));
+  } catch (error) {
+    console.error('[course-edits] Supabase read failed, using local file:', error);
+    return readFile();
+  }
 }
 
 export async function saveCourseEdit(courseId: string, patch: CourseEdit): Promise<CourseEdit> {
@@ -59,7 +64,10 @@ export async function saveCourseEdit(courseId: string, patch: CourseEdit): Promi
       method: 'POST',
       headers: { ...headers(), Prefer: 'resolution=merge-duplicates' },
       body: JSON.stringify({ course_id: courseId, data: next, updated_at: next.updatedAt }),
-    });
+    }).catch(() => null);
+    if (!res) throw new Error('Cannot reach Supabase. Check SUPABASE_URL in Vercel.');
+    if (res.status === 404) throw new Error('Supabase table missing. Run supabase/course_edits.sql in the SQL Editor.');
+    if (res.status === 401 || res.status === 403) throw new Error('Supabase rejected the key. Check SUPABASE_SERVICE_ROLE_KEY in Vercel.');
     if (!res.ok) throw new Error(`Supabase write failed (${res.status})`);
     return next;
   }
