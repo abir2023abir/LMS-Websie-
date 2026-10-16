@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect, useState } from 'react';
+import { createPortal } from 'react-dom';
 import { Inbox, X } from 'lucide-react';
 import { AnimatePresence, motion } from 'framer-motion';
 import { useAuth } from '@/context/AuthContext';
@@ -59,6 +60,7 @@ export default function InboxButton({ scope, onDark = false }: { scope: Scope; o
         )}
       </button>
 
+      {typeof document !== 'undefined' && createPortal(
       <AnimatePresence>
         {open && (
           <>
@@ -144,7 +146,9 @@ export default function InboxButton({ scope, onDark = false }: { scope: Scope; o
             </motion.aside>
           </>
         )}
-      </AnimatePresence>
+      </AnimatePresence>,
+      document.body,
+      )}
     </>
   );
 }
