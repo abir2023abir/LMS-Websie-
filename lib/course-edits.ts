@@ -19,10 +19,12 @@ const supabaseUrl = process.env.SUPABASE_URL?.replace(/\/$/, '');
 const supabaseKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
 const useSupabase = Boolean(supabaseUrl && supabaseKey);
 
-function headers() {
+function headers(): Record<string, string> {
+  // New sb_secret_ keys are not JWTs and must only go in the apikey header.
+  const legacyJwt = supabaseKey!.startsWith('eyJ');
   return {
     apikey: supabaseKey!,
-    Authorization: `Bearer ${supabaseKey}`,
+    ...(legacyJwt ? { Authorization: `Bearer ${supabaseKey}` } : {}),
     'Content-Type': 'application/json',
   };
 }
