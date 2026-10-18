@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, type FormEvent } from 'react';
+import { useEffect, useState, type FormEvent } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import {
@@ -12,7 +12,6 @@ import {
   ArrowRight,
   ArrowLeft,
   AlertCircle,
-  Sparkles,
 } from 'lucide-react';
 import { useAuth, type UserRole } from '@/context/AuthContext';
 import { homeForRole } from '@/lib/roles';
@@ -20,7 +19,7 @@ import { Users, Briefcase } from 'lucide-react';
 
 export default function SignUpPage() {
   const router = useRouter();
-  const { signUpWithEmail, loginWithGoogle, user, role, loading: authLoading, isDemoMode } = useAuth();
+  const { signUpWithEmail, user, role, loading: authLoading } = useAuth();
 
   const [selectedRole, setSelectedRole] = useState<UserRole>('Student');
   const [name, setName] = useState('');
@@ -31,9 +30,9 @@ export default function SignUpPage() {
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   // Redirect if user is already logged in
-  if (!authLoading && user && role) {
-    router.replace(homeForRole(role));
-  }
+  useEffect(() => {
+    if (!authLoading && user && role) router.replace(homeForRole(role));
+  }, [authLoading, user, role, router]);
 
   const handleEmailSignUp = async (e: FormEvent) => {
     e.preventDefault();
@@ -72,21 +71,6 @@ export default function SignUpPage() {
         setError('Password is too weak. Please use at least 6 characters.');
       } else {
         setError(err.message || 'Failed to create account. Please try again.');
-      }
-    } finally {
-      setIsSubmitting(false);
-    }
-  };
-
-  const handleGoogleSignIn = async () => {
-    setError('');
-    setIsSubmitting(true);
-    try {
-      await loginWithGoogle(selectedRole);
-    } catch (err: any) {
-      console.error('Google Sign-in error:', err);
-      if (err.code !== 'auth/popup-closed-by-user') {
-        setError('Google authentication failed. Please try again.');
       }
     } finally {
       setIsSubmitting(false);
@@ -202,19 +186,11 @@ export default function SignUpPage() {
                   className="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-3 text-xs sm:text-sm text-[#111827] placeholder-slate-400 focus:outline-none focus:border-[#111827] font-medium"
                 />
                 <p className="mt-1.5 text-[11px] text-slate-500">
-                  This guardian can see only this student. Other students stay hidden.
+                  The student or an admin must approve this link before you see anything.
                 </p>
               </div>
             )}
           </div>
-
-          {/* Demo Notice */}
-          {isDemoMode && (
-            <div className="p-3.5 rounded-2xl bg-amber-50 border border-amber-200 flex items-center gap-2.5 text-amber-800 text-xs font-semibold">
-              <Sparkles className="w-4 h-4 text-amber-600 flex-shrink-0" />
-              <span>Demo Mode Active: Create any account instantly!</span>
-            </div>
-          )}
 
           {/* Error Banner */}
           {error && (
@@ -300,45 +276,6 @@ export default function SignUpPage() {
               )}
             </button>
           </form>
-
-          {/* Google Auth */}
-          <div className="space-y-4">
-            <div className="relative">
-              <div className="absolute inset-0 flex items-center">
-                <div className="w-full border-t border-slate-200" />
-              </div>
-              <div className="relative flex justify-center text-[10px] uppercase font-bold">
-                <span className="bg-white px-3 text-slate-400">Or continue with</span>
-              </div>
-            </div>
-
-            <button
-              type="button"
-              onClick={handleGoogleSignIn}
-              disabled={isSubmitting}
-              className="w-full bg-slate-50 hover:bg-slate-100 border border-slate-200 text-[#111827] font-bold text-xs py-3 px-4 rounded-xl flex items-center justify-center gap-3 transition-colors"
-            >
-              <svg className="w-4 h-4" viewBox="0 0 24 24">
-                <path
-                  fill="#EA4335"
-                  d="M12 5c1.6 0 3 .6 4.1 1.7l3.1-3.1C17.3 1.8 14.8 1 12 1 7.5 1 3.7 3.6 1.9 7.3l3.7 2.9C6.5 7.4 9 5 12 5z"
-                />
-                <path
-                  fill="#4285F4"
-                  d="M23.5 12.3c0-.8-.1-1.6-.2-2.3H12v4.5h6.5c-.3 1.5-1.1 2.8-2.4 3.7l3.7 2.9c2.2-2 3.7-5 3.7-8.8z"
-                />
-                <path
-                  fill="#FBBC05"
-                  d="M5.6 14.8c-.2-.7-.4-1.5-.4-2.3s.2-1.6.4-2.3L1.9 7.3C.7 9.7 0 12 0 14.5s.7 4.8 1.9 7.2l3.7-2.9z"
-                />
-                <path
-                  fill="#34A853"
-                  d="M12 23.5c3.2 0 6-1.1 8-3l-3.7-2.9c-1.1.7-2.5 1.2-4.3 1.2-3 0-5.5-2.4-6.4-5.2L1.9 16.5C3.7 20.2 7.5 23.5 12 23.5z"
-                />
-              </svg>
-              <span>Sign up with Google</span>
-            </button>
-          </div>
 
           {/* Login Link */}
           <div className="text-center pt-2 border-t border-slate-100 text-xs text-slate-600">

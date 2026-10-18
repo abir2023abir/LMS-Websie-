@@ -11,6 +11,7 @@ import CertificateModal from '@/components/student/CertificateModal';
 import DashboardCalendar from '@/components/dashboard/DashboardCalendar';
 import InboxButton from '@/components/inbox/InboxButton';
 import CampusMessageForm from '@/components/messages/CampusMessageForm';
+import GuardianRequests from '@/components/student/GuardianRequests';
 import {
   getEnrolledCoursesWithProgress,
   type EnrolledCourseWithProgress,
@@ -197,6 +198,8 @@ export default function StudentDashboardPage() {
           <section className="bg-white border border-slate-200 rounded-3xl p-6 max-w-xl">
             <CampusMessageForm kind="student" lockedKind defaultName={userProfile?.name || user?.displayName || ''} defaultEmail={user?.email || ''} />
           </section>
+
+          <GuardianRequests />
 
           <DashboardCalendar />
 

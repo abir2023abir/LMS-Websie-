@@ -35,6 +35,7 @@ yarn-error.log*
 /data/admin-lms.json
 /data/desk-messages.json
 /data/course-edits.json
+/data/accounts.json
 /data/admin-payment-proofs/
 /data/assignment-files/
 
@@ -46,3 +47,8 @@ next-env.d.ts
 .DS_Store
 *.pem
 Thumbs.db
+
+.vercel
+.env*
+
+/LMS database passl.txt

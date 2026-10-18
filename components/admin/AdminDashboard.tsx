@@ -25,6 +25,7 @@ import AdminCertificates from './AdminCertificates';
 import AdminEarnings from './AdminEarnings';
 import AdminPaymentsBoard from './AdminPaymentsBoard';
 import AdminMessages from './AdminMessages';
+import AdminAccounts from './AdminAccounts';
 import { takaFromUsd } from '@/lib/utils';
 
 const navTabs = [
@@ -34,6 +35,7 @@ const navTabs = [
   { name: 'Quizzes', icon: HelpCircle },
   { name: 'Earnings', icon: Banknote },
   { name: 'Students', icon: Users },
+  { name: 'Accounts', icon: Shield },
   { name: 'Requests', icon: Inbox },
   { name: 'Messages', icon: MessageSquare },
   { name: 'Assignments', icon: FileText },
@@ -340,6 +342,7 @@ export default function AdminDashboard() {
 
         {/* ── TAB 3: STUDENTS DIRECTORY ── */}
         {activeTab === 'Students' && <AdminStudents />}
+        {activeTab === 'Accounts' && <AdminAccounts />}
 
         {/* ── TAB 4: EARNINGS & TRANSACTIONS ── */}
         {activeTab === 'Earnings' && <AdminEarnings />}

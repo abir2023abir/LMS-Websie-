@@ -1,40 +1,19 @@
 'use client';
 
-import { useEffect, useState, type FormEvent } from 'react';
+import { useCallback, useEffect, useState, type FormEvent } from 'react';
 import Link from 'next/link';
 import AuthGuard from '@/components/auth/AuthGuard';
 import FloatingNavbar from '@/components/english/FloatingNavbar';
 import EnglishFooter from '@/components/english/EnglishFooter';
 import { useAuth } from '@/context/AuthContext';
 import { getEnrolledCoursesWithProgress, type EnrolledCourseWithProgress } from '@/lib/progress';
-import { Shield, LogOut, BookOpen } from 'lucide-react';
+import { Shield, LogOut, BookOpen, CalendarCheck, CalendarClock } from 'lucide-react';
 import WorkspaceLinks from '@/components/workspace/WorkspaceLinks';
-import DashboardCalendar from '@/components/dashboard/DashboardCalendar';
 import InboxButton from '@/components/inbox/InboxButton';
-import { allAssignments, attemptsFor } from '@/lib/workspace';
+import { allAssignments, attemptsFor, events } from '@/lib/workspace';
 
-const LOCAL_USERS_KEY = 'learnverse_registered_users';
-
-interface LinkedStudent {
-  uid: string;
-  name: string;
-  email: string;
-}
-
-function findStudent(email: string): LinkedStudent | null {
-  if (typeof window === 'undefined') return null;
-  try {
-    const users = JSON.parse(localStorage.getItem(LOCAL_USERS_KEY) || '[]');
-    const found = users.find(
-      (u: { email?: string; role?: string }) =>
-        u.email?.toLowerCase() === email.toLowerCase() && u.role !== 'Guardian'
-    );
-    if (!found) return null;
-    return { uid: found.uid, name: found.name || found.email, email: found.email };
-  } catch {
-    return null;
-  }
-}
+type LinkRequest = { id: string; student_email: string; status: 'pending' | 'approved' | 'rejected' };
+type Student = { id: string; name: string; email: string };
 
 export default function GuardianPage() {
   return (
@@ -46,37 +25,58 @@ export default function GuardianPage() {
 
 function GuardianHome() {
   const { userProfile, logout, linkGuardianToStudent } = useAuth();
-  const [email, setEmail] = useState(userProfile?.linkedStudentEmail || '');
-  const [student, setStudent] = useState<LinkedStudent | null>(null);
+  const [email, setEmail] = useState('');
+  const [links, setLinks] = useState<LinkRequest[]>([]);
+  const [student, setStudent] = useState<Student | null>(null);
+  const [attendance, setAttendance] = useState<string[]>([]);
   const [courses, setCourses] = useState<EnrolledCourseWithProgress[]>([]);
+  const [note, setNote] = useState('');
   const [saving, setSaving] = useState(false);
 
-  useEffect(() => {
-    const linked = userProfile?.linkedStudentEmail;
-    if (!linked) {
+  const load = useCallback(async () => {
+    const linkRes = await fetch('/api/guardian/links').then((res) => res.json()).catch(() => ({}));
+    setLinks(linkRes.asGuardian || []);
+    const res = await fetch('/api/guardian/student');
+    const data = await res.json().catch(() => ({}));
+    if (!res.ok || !data.student) {
       setStudent(null);
+      setAttendance([]);
       setCourses([]);
       return;
     }
-    const match = findStudent(linked);
-    setStudent(match);
-    if (!match) {
-      setCourses([]);
-      return;
-    }
-    getEnrolledCoursesWithProgress(match.uid).then(setCourses).catch(() => setCourses([]));
-  }, [userProfile?.linkedStudentEmail]);
+    setStudent(data.student);
+    setAttendance(data.attendance || []);
+    getEnrolledCoursesWithProgress(data.student.id).then(setCourses).catch(() => setCourses([]));
+  }, []);
+
+  useEffect(() => {
+    load();
+  }, [load]);
 
   const saveLink = async (e: FormEvent) => {
     e.preventDefault();
     if (!email.trim()) return;
     setSaving(true);
+    setNote('');
     try {
       await linkGuardianToStudent(email);
+      setEmail('');
+      setNote('Request sent. The student or an admin must approve it.');
+      await load();
+    } catch (err: any) {
+      setNote(err.message || 'Could not send the request.');
     } finally {
       setSaving(false);
     }
   };
+
+  const today = new Date().toISOString().slice(0, 10);
+  const last30 = attendance.filter((day) => day >= new Date(Date.now() - 30 * 86400000).toISOString().slice(0, 10));
+  const upcomingExams = events()
+    .filter((item) => item.kind === 'exam' && item.date.slice(0, 10) >= today)
+    .sort((a, b) => a.date.localeCompare(b.date));
+  const pending = links.filter((item) => item.status === 'pending');
+  const rejected = links.filter((item) => item.status === 'rejected');
 
   return (
     <div className="min-h-screen bg-slate-50 text-[#111827] flex flex-col">
@@ -91,7 +91,7 @@ function GuardianHome() {
               {userProfile?.name || 'Guardian'}
             </h1>
             <p className="text-sm text-[#111827]/80 font-medium">
-              You can see only the student linked to this account.
+              You see only the student who approved your link.
             </p>
           </div>
           <InboxButton scope="own" />
@@ -106,42 +106,43 @@ function GuardianHome() {
       </section>
 
       <main className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-10 w-full flex-1 space-y-6">
-        <DashboardCalendar />
         <WorkspaceLinks />
-        <form onSubmit={saveLink} className="bg-white rounded-3xl border border-slate-200 p-6 shadow-sm space-y-3">
-          <label htmlFor="student-email" className="block text-xs font-bold uppercase tracking-wider text-slate-500">
-            Linked student
-          </label>
-          <div className="flex flex-col sm:flex-row gap-3">
-            <input
-              id="student-email"
-              type="email"
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              placeholder="student@email.com"
-              className="flex-1 bg-slate-50 border border-slate-200 rounded-xl px-4 py-3 text-sm font-medium focus:outline-none focus:border-[#111827]"
-            />
-            <button
-              type="submit"
-              disabled={saving}
-              className="bg-[#111827] text-white font-extrabold text-sm px-5 py-3 rounded-xl disabled:opacity-50"
-            >
-              {saving ? 'Saving' : 'Save link'}
-            </button>
-          </div>
-        </form>
 
-        {!userProfile?.linkedStudentEmail && (
-          <p className="text-sm text-slate-600">No student is linked yet. Other students stay hidden.</p>
-        )}
-
-        {userProfile?.linkedStudentEmail && !student && (
-          <div className="bg-white rounded-3xl border border-slate-200 p-6 shadow-sm">
-            <p className="font-bold">Linked to {userProfile.linkedStudentEmail}</p>
-            <p className="text-sm text-slate-600 mt-1">
-              That student account is not on this browser yet. No other student is shown.
-            </p>
-          </div>
+        {!student && (
+          <form onSubmit={saveLink} className="bg-white rounded-3xl border border-slate-200 p-6 shadow-sm space-y-3">
+            <label htmlFor="student-email" className="block text-xs font-bold uppercase tracking-wider text-slate-500">
+              Link a student
+            </label>
+            <div className="flex flex-col sm:flex-row gap-3">
+              <input
+                id="student-email"
+                type="email"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                placeholder="student@email.com"
+                className="flex-1 bg-slate-50 border border-slate-200 rounded-xl px-4 py-3 text-sm font-medium focus:outline-none focus:border-[#111827]"
+              />
+              <button
+                type="submit"
+                disabled={saving}
+                className="bg-[#111827] text-white font-extrabold text-sm px-5 py-3 rounded-xl disabled:opacity-50"
+              >
+                {saving ? 'Sending' : 'Send request'}
+              </button>
+            </div>
+            {note && <p className="text-sm text-slate-600">{note}</p>}
+            {pending.map((item) => (
+              <p key={item.id} className="text-sm">
+                Waiting for approval: <span className="font-bold">{item.student_email}</span>
+              </p>
+            ))}
+            {rejected.map((item) => (
+              <p key={item.id} className="text-sm text-rose-600">
+                Not approved: {item.student_email}
+              </p>
+            ))}
+            {links.length === 0 && <p className="text-sm text-slate-600">No student is linked yet. Other students stay hidden.</p>}
+          </form>
         )}
 
         {student && (
@@ -151,6 +152,32 @@ function GuardianHome() {
               <h2 className="font-display font-extrabold text-2xl mt-1">{student.name}</h2>
               <p className="text-sm text-slate-600">{student.email}</p>
             </div>
+
+            <div className="grid sm:grid-cols-2 gap-4">
+              <div className="bg-white rounded-3xl border border-slate-200 p-6 shadow-sm space-y-2">
+                <h3 className="font-bold flex items-center gap-2">
+                  <CalendarCheck className="w-4 h-4 text-amber-600" /> Attendance
+                </h3>
+                <p className="text-sm">
+                  Present <span className="font-extrabold">{last30.length}</span> of the last 30 days
+                </p>
+                <p className="text-xs text-slate-500">
+                  Last seen: {attendance.length ? attendance[attendance.length - 1] : 'not yet'}
+                </p>
+              </div>
+              <div className="bg-white rounded-3xl border border-slate-200 p-6 shadow-sm space-y-2">
+                <h3 className="font-bold flex items-center gap-2">
+                  <CalendarClock className="w-4 h-4 text-amber-600" /> Upcoming exams
+                </h3>
+                {upcomingExams.map((item) => (
+                  <p key={item.id} className="text-sm">
+                    {item.date.slice(0, 10)} · {item.title}
+                  </p>
+                ))}
+                {upcomingExams.length === 0 && <p className="text-sm text-slate-600">No exam scheduled.</p>}
+              </div>
+            </div>
+
             <div className="bg-white rounded-3xl border border-slate-200 p-6 shadow-sm space-y-2">
               <h3 className="font-bold">Results</h3>
               {attemptsFor(student.email).map((item) => (
@@ -158,10 +185,11 @@ function GuardianHome() {
               ))}
               {attemptsFor(student.email).length === 0 && <p className="text-sm text-slate-600">No exam yet.</p>}
               <h3 className="font-bold pt-2">Assignments</h3>
-              {allAssignments().filter((item) => item.email.toLowerCase() === student.email.toLowerCase()).map((item) => (
+              {allAssignments().filter((item) => item.email.toLowerCase() === student.email).map((item) => (
                 <p key={`${item.lessonId}-${item.text}`} className="text-sm">{item.status}: {item.text}</p>
               ))}
             </div>
+
             {courses.length === 0 ? (
               <p className="text-sm text-slate-600">This student has no course progress yet.</p>
             ) : (

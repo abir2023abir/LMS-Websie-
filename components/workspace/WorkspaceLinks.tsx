@@ -16,10 +16,14 @@ export default function WorkspaceLinks() {
   const router = useRouter();
   const roles = userProfile?.roles || (role ? [role] : []);
 
-  const changeRole = (next: UserRole) => {
-    if (roles.includes(next)) switchRole(next);
-    else addRole(next);
-    router.push(homeForRole(next));
+  const changeRole = async (next: UserRole) => {
+    try {
+      if (roles.includes(next)) await switchRole(next);
+      else await addRole(next);
+      router.push(homeForRole(next));
+    } catch (err: any) {
+      alert(err.message || 'Could not change the role.');
+    }
   };
 
   return (
