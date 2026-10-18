@@ -1,14 +1,30 @@
 'use client';
 
-import { useEffect, useState, type FormEvent } from 'react';
+import { Suspense, useEffect, useState, type FormEvent } from 'react';
 import Link from 'next/link';
-import { useRouter } from 'next/navigation';
+import { useRouter, useSearchParams } from 'next/navigation';
 import { Mail, Lock, ArrowRight, ArrowLeft, AlertCircle } from 'lucide-react';
 import { useAuth } from '@/context/AuthContext';
 import { homeForRole } from '@/lib/roles';
 
 export default function LoginPage() {
+  return (
+    <Suspense
+      fallback={
+        <div className="min-h-screen bg-slate-50 flex items-center justify-center">
+          <div className="w-8 h-8 border-2 border-[#111827] border-t-transparent rounded-full animate-spin" />
+        </div>
+      }
+    >
+      <LoginPageContent />
+    </Suspense>
+  );
+}
+
+function LoginPageContent() {
   const router = useRouter();
+  const searchParams = useSearchParams();
+  const nextPath = searchParams.get('next');
   const { loginWithEmail, user, role, loading: authLoading } = useAuth();
 
   const [email, setEmail] = useState('');
@@ -18,8 +34,12 @@ export default function LoginPage() {
 
   // If user is already authenticated, redirect to their role dashboard
   useEffect(() => {
-    if (!authLoading && user && role) router.replace(homeForRole(role));
-  }, [authLoading, user, role, router]);
+    if (!authLoading && user && role) {
+      const safeNext =
+        nextPath && nextPath.startsWith('/') && !nextPath.startsWith('//') ? nextPath : null;
+      router.replace(safeNext || homeForRole(role));
+    }
+  }, [authLoading, user, role, router, nextPath]);
 
   const handleEmailLogin = async (e: FormEvent) => {
     e.preventDefault();

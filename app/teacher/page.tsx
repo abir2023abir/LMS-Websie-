@@ -65,6 +65,14 @@ export default function TeacherPanelPage() {
   const [submitting, setSubmitting] = useState(false);
   const [formError, setFormError] = useState('');
   const [formSuccess, setFormSuccess] = useState('');
+  const [adminStaff, setAdminStaff] = useState(false);
+
+  useEffect(() => {
+    fetch('/api/auth/staff', { cache: 'no-store' })
+      .then((res) => res.json())
+      .then((data) => setAdminStaff(Boolean(data.success && data.admin)))
+      .catch(() => setAdminStaff(false));
+  }, []);
 
   // Fetch teacher's courses
   const fetchCourses = async () => {
@@ -202,8 +210,8 @@ export default function TeacherPanelPage() {
       const payload = {
         title,
         description,
-        instructorId: user?.uid || 'instructor-demo',
-        instructorName: userProfile?.name || user?.displayName || 'Teacher',
+        instructorId: user?.uid || (adminStaff ? 'admin' : 'instructor-demo'),
+        instructorName: userProfile?.name || user?.displayName || (adminStaff ? 'Admin' : 'Teacher'),
         price: Math.round(Number(price) / USD_TO_BDT) || 0,
         thumbnail: finalThumbnail,
         category,
@@ -248,7 +256,7 @@ export default function TeacherPanelPage() {
   };
 
   return (
-    <AuthGuard allowedRole="Instructor">
+    <AuthGuard allowedRole="Instructor" allowAdmin loginNext="/teacher">
       <div className="min-h-screen bg-slate-50 text-[#111827] flex flex-col justify-between selection:bg-[#FACC15] selection:text-[#111827]">
         <FloatingNavbar />
 
