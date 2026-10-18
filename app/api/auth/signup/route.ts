@@ -1,5 +1,7 @@
+import { cookies } from 'next/headers';
 import { NextResponse } from 'next/server';
 import { ROLES, createProfile, profileByEmail, publicProfile, requestGuardianLink, type Role } from '@/lib/accounts';
+import { verifyAdminSession } from '@/lib/auth-server';
 import { setUserSession } from '@/lib/user-session';
 
 export const dynamic = 'force-dynamic';
@@ -21,6 +23,13 @@ export async function POST(request: Request) {
       return NextResponse.json({ success: false, code: 'auth/weak-password', message: 'Password must be at least 6 characters.' }, { status: 400 });
     }
     if (!ROLES.includes(role)) return NextResponse.json({ success: false, message: 'Pick a role.' }, { status: 400 });
+    const adminSession = verifyAdminSession(cookies().get('admin_session')?.value);
+    if (role !== 'Student' && !adminSession) {
+      return NextResponse.json(
+        { success: false, message: 'Only student accounts can be created here. Staff accounts are set up by an administrator.' },
+        { status: 403 },
+      );
+    }
     if (role === 'Guardian' && !studentEmail) {
       return NextResponse.json({ success: false, message: 'Enter the email of the student this guardian is linked to.' }, { status: 400 });
     }

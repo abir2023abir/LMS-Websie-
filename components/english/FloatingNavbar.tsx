@@ -108,7 +108,7 @@ export default function FloatingNavbar() {
                 onClick={() => setMobileMenuOpen(false)}
               >
                 <div className="w-full flex items-center justify-between bg-[#FACC15] text-[#111827] font-bold text-xs py-2.5 px-4 rounded-full">
-                  <span>{user ? 'My Dashboard' : 'Log In / Sign Up'}</span>
+                  <span>{user ? 'My Dashboard' : 'Log In'}</span>
                   <ArrowRight className="w-4 h-4" />
                 </div>
               </Link>

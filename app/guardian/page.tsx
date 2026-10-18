@@ -2,10 +2,10 @@
 
 import { useCallback, useEffect, useState, type FormEvent } from 'react';
 import Link from 'next/link';
-import AuthGuard from '@/components/auth/AuthGuard';
+import RoleLoginPage from '@/components/auth/RoleLoginPage';
+import { useAuth } from '@/context/AuthContext';
 import FloatingNavbar from '@/components/english/FloatingNavbar';
 import EnglishFooter from '@/components/english/EnglishFooter';
-import { useAuth } from '@/context/AuthContext';
 import { getFallbackCourseData } from '@/lib/progress';
 import { Shield, LogOut, BookOpen, CalendarCheck, CalendarClock, Trophy } from 'lucide-react';
 import WorkspaceLinks from '@/components/workspace/WorkspaceLinks';
@@ -17,12 +17,30 @@ type Progress = { course_id: string; percent: number; completed_lessons: number;
 type Result = { id: string; kind: 'exam' | 'quiz'; label: string; score: number; total: number; passed: boolean; review: string; at: string };
 type ExamEvent = { id: string; title: string; date: string; meet: string };
 
+const guardianLogin = {
+  requiredRole: 'Guardian' as const,
+  title: 'Guardian Sign In',
+  subtitle: 'View your linked student’s attendance, progress, and exam results',
+  submitLabel: 'Sign In to Guardian Portal',
+  idPrefix: 'guardian',
+};
+
 export default function GuardianPage() {
-  return (
-    <AuthGuard allowedRole="Guardian">
-      <GuardianHome />
-    </AuthGuard>
-  );
+  const { user, role, loading } = useAuth();
+
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-slate-50 flex items-center justify-center">
+        <div className="w-8 h-8 border-2 border-[#111827] border-t-transparent rounded-full animate-spin" />
+      </div>
+    );
+  }
+
+  if (!user || role !== 'Guardian') {
+    return <RoleLoginPage config={guardianLogin} />;
+  }
+
+  return <GuardianHome />;
 }
 
 function GuardianHome() {

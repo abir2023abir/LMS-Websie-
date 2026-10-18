@@ -256,7 +256,7 @@ export default function TeacherPanelPage() {
   };
 
   return (
-    <AuthGuard allowedRole="Instructor" allowAdmin loginNext="/teacher">
+    <AuthGuard allowedRole="Instructor" allowAdmin loginNext="/instructor">
       <div className="min-h-screen bg-slate-50 text-[#111827] flex flex-col justify-between selection:bg-[#FACC15] selection:text-[#111827]">
         <FloatingNavbar />
 

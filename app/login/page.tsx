@@ -169,11 +169,10 @@ function LoginPageContent() {
             </button>
           </form>
 
-          {/* Sign Up Link */}
           <div className="text-center pt-2 border-t border-slate-100 text-xs text-slate-600">
-            Don’t have an account yet?{' '}
+            New student?{' '}
             <Link href="/signup" className="text-amber-600 hover:underline font-extrabold">
-              Create an Account
+              Create a student account
             </Link>
           </div>
         </div>
