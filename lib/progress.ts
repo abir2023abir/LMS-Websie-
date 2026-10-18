@@ -1,6 +1,7 @@
 import type { CourseSchema, ModuleSchema } from '@/types/course';
 import { featuredCourses } from '@/lib/data';
 import { isFirebaseDemo } from '@/lib/utils';
+import { sendRecord } from '@/lib/server-sync';
 
 async function firestore() {
   if (isFirebaseDemo()) return null;
@@ -199,6 +200,13 @@ export async function saveLessonCompletion(
   // 1. Save to local storage for immediate persistence
   localStore[storeKey] = updatedRecord;
   saveLocalProgressStore(localStore);
+  sendRecord('/api/student/records', {
+    type: 'progress',
+    courseId,
+    percent: progressPercentage,
+    completedLessons: totalCompletedLessons,
+    totalLessons: totalCourseLessons,
+  });
 
   // 2. Sync to Firestore in the background; the lesson UI must not wait on the network.
   firestore()
@@ -287,6 +295,22 @@ export async function saveModuleQuizResult(
 
   localStore[storeKey] = updatedRecord;
   saveLocalProgressStore(localStore);
+  sendRecord('/api/student/records', {
+    type: 'progress',
+    courseId,
+    percent: progressPercentage,
+    completedLessons: totalCompletedLessons,
+    totalLessons: totalCourseLessons,
+  });
+  sendRecord('/api/student/records', {
+    type: 'result',
+    id: `quiz-${courseId}-${moduleId}`,
+    kind: 'quiz',
+    label: courseModules.find((m) => m.id === moduleId)?.title || 'Module quiz',
+    score: Math.round(scorePercentage),
+    total: 100,
+    passed,
+  });
 
   return updatedRecord;
 }

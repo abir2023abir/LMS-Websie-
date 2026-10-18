@@ -1,3 +1,5 @@
+import { sendRecord } from '@/lib/server-sync';
+
 const KEY = 'lms_client_workspace_v1';
 
 export type CourseVisibility = 'published' | 'hidden' | 'archived';
@@ -317,8 +319,10 @@ export function submitExam(email: string, picks: number[], bank = load().questio
   }, 0);
   const passed = total > 0 && score * 2 >= total;
   const store = load();
+  const id = `e-${Date.now()}`;
+  sendRecord('/api/student/records', { type: 'result', id, kind: 'exam', label: 'Exam', score, total, passed });
   store.attempts.unshift({
-    id: `e-${Date.now()}`,
+    id,
     email,
     score,
     total,
@@ -345,6 +349,7 @@ export function reviewAttempt(id: string, review: string, passed: boolean) {
   const store = load();
   store.attempts = store.attempts.map((item) => (item.id === id ? { ...item, review, passed } : item));
   save(store);
+  sendRecord('/api/results/review', { id, review, passed }, 'PATCH');
   audit(`Exam ${id} reviewed: ${passed ? 'pass' : 'fail'}`);
 }
 
@@ -581,7 +586,9 @@ export function events() {
 
 export function addEvent(title: string, kind: CalendarEvent['kind'], date: string, meet: string) {
   const store = load();
-  store.events.push({ id: `c-${Date.now()}`, title, kind, date, meet });
+  const id = `c-${Date.now()}`;
+  store.events.push({ id, title, kind, date, meet });
+  sendRecord('/api/events', { id, title, kind, date, meet });
   store.notices.unshift({
     id: `n-${Date.now()}`,
     text: `${kind} set: ${title} on ${date}`,

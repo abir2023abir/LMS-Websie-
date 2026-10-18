@@ -1,9 +1,11 @@
 import { NextResponse } from 'next/server';
 import { continueDeskThread, getDeskThread, listDeskThreads, openDeskThread, replyDeskThread, type DeskKind } from '@/lib/desk-messages';
+import { staffDenied, staffIdentity } from '@/lib/user-session';
 
 export async function GET(request: Request) {
   const url = new URL(request.url);
   if (url.searchParams.get('board') === '1') {
+    if (!(await staffIdentity())) return staffDenied();
     return NextResponse.json({ success: true, threads: listDeskThreads() });
   }
   const id = url.searchParams.get('id') || '';
@@ -19,6 +21,7 @@ export async function POST(request: Request) {
   try {
     const body = await request.json();
     if (body.action === 'reply') {
+      if (!(await staffIdentity())) return staffDenied();
       const thread = replyDeskThread(String(body.id || ''), String(body.text || ''));
       return NextResponse.json({ success: true, thread, threads: listDeskThreads() });
     }

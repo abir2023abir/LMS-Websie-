@@ -6,14 +6,16 @@ import AuthGuard from '@/components/auth/AuthGuard';
 import FloatingNavbar from '@/components/english/FloatingNavbar';
 import EnglishFooter from '@/components/english/EnglishFooter';
 import { useAuth } from '@/context/AuthContext';
-import { getEnrolledCoursesWithProgress, type EnrolledCourseWithProgress } from '@/lib/progress';
-import { Shield, LogOut, BookOpen, CalendarCheck, CalendarClock } from 'lucide-react';
+import { getFallbackCourseData } from '@/lib/progress';
+import { Shield, LogOut, BookOpen, CalendarCheck, CalendarClock, Trophy } from 'lucide-react';
 import WorkspaceLinks from '@/components/workspace/WorkspaceLinks';
 import InboxButton from '@/components/inbox/InboxButton';
-import { allAssignments, attemptsFor, events } from '@/lib/workspace';
 
 type LinkRequest = { id: string; student_email: string; status: 'pending' | 'approved' | 'rejected' };
 type Student = { id: string; name: string; email: string };
+type Progress = { course_id: string; percent: number; completed_lessons: number; total_lessons: number; updated_at: string };
+type Result = { id: string; kind: 'exam' | 'quiz'; label: string; score: number; total: number; passed: boolean; review: string; at: string };
+type ExamEvent = { id: string; title: string; date: string; meet: string };
 
 export default function GuardianPage() {
   return (
@@ -29,7 +31,9 @@ function GuardianHome() {
   const [links, setLinks] = useState<LinkRequest[]>([]);
   const [student, setStudent] = useState<Student | null>(null);
   const [attendance, setAttendance] = useState<string[]>([]);
-  const [courses, setCourses] = useState<EnrolledCourseWithProgress[]>([]);
+  const [progress, setProgress] = useState<Progress[]>([]);
+  const [results, setResults] = useState<Result[]>([]);
+  const [upcomingExams, setUpcomingExams] = useState<ExamEvent[]>([]);
   const [note, setNote] = useState('');
   const [saving, setSaving] = useState(false);
 
@@ -38,15 +42,12 @@ function GuardianHome() {
     setLinks(linkRes.asGuardian || []);
     const res = await fetch('/api/guardian/student');
     const data = await res.json().catch(() => ({}));
-    if (!res.ok || !data.student) {
-      setStudent(null);
-      setAttendance([]);
-      setCourses([]);
-      return;
-    }
-    setStudent(data.student);
-    setAttendance(data.attendance || []);
-    getEnrolledCoursesWithProgress(data.student.id).then(setCourses).catch(() => setCourses([]));
+    const ok = res.ok && data.student;
+    setStudent(ok ? data.student : null);
+    setAttendance(ok ? data.attendance || [] : []);
+    setProgress(ok ? data.progress || [] : []);
+    setResults(ok ? data.results || [] : []);
+    setUpcomingExams(ok ? data.exams || [] : []);
   }, []);
 
   useEffect(() => {
@@ -70,11 +71,8 @@ function GuardianHome() {
     }
   };
 
-  const today = new Date().toISOString().slice(0, 10);
   const last30 = attendance.filter((day) => day >= new Date(Date.now() - 30 * 86400000).toISOString().slice(0, 10));
-  const upcomingExams = events()
-    .filter((item) => item.kind === 'exam' && item.date.slice(0, 10) >= today)
-    .sort((a, b) => a.date.localeCompare(b.date));
+  const courseName = (id: string) => getFallbackCourseData(id)?.title || `Course ${id}`;
   const pending = links.filter((item) => item.status === 'pending');
   const rejected = links.filter((item) => item.status === 'rejected');
 
@@ -171,7 +169,12 @@ function GuardianHome() {
                 </h3>
                 {upcomingExams.map((item) => (
                   <p key={item.id} className="text-sm">
-                    {item.date.slice(0, 10)} · {item.title}
+                    {String(item.date).slice(0, 10)} · {item.title}
+                    {item.meet && (
+                      <a href={item.meet} target="_blank" rel="noreferrer" className="ml-2 text-xs font-bold underline">
+                        Meet
+                      </a>
+                    )}
                   </p>
                 ))}
                 {upcomingExams.length === 0 && <p className="text-sm text-slate-600">No exam scheduled.</p>}
@@ -179,33 +182,37 @@ function GuardianHome() {
             </div>
 
             <div className="bg-white rounded-3xl border border-slate-200 p-6 shadow-sm space-y-2">
-              <h3 className="font-bold">Results</h3>
-              {attemptsFor(student.email).map((item) => (
-                <p key={item.id} className="text-sm">{item.score}/{item.total} · {item.passed ? 'pass' : 'fail'}</p>
+              <h3 className="font-bold flex items-center gap-2">
+                <Trophy className="w-4 h-4 text-amber-600" /> Results
+              </h3>
+              {results.map((item) => (
+                <p key={item.id} className="text-sm">
+                  {item.label} · {item.kind === 'quiz' ? `${item.score}%` : `${item.score}/${item.total}`} ·{' '}
+                  <span className={item.passed ? 'text-emerald-600 font-bold' : 'text-rose-600 font-bold'}>{item.passed ? 'pass' : 'fail'}</span>
+                  {item.review && <span className="text-slate-500"> · {item.review}</span>}
+                </p>
               ))}
-              {attemptsFor(student.email).length === 0 && <p className="text-sm text-slate-600">No exam yet.</p>}
-              <h3 className="font-bold pt-2">Assignments</h3>
-              {allAssignments().filter((item) => item.email.toLowerCase() === student.email).map((item) => (
-                <p key={`${item.lessonId}-${item.text}`} className="text-sm">{item.status}: {item.text}</p>
-              ))}
+              {results.length === 0 && <p className="text-sm text-slate-600">No quiz or exam result yet.</p>}
             </div>
 
-            {courses.length === 0 ? (
+            {progress.length === 0 ? (
               <p className="text-sm text-slate-600">This student has no course progress yet.</p>
             ) : (
               <div className="grid gap-4">
-                {courses.map((item) => (
-                  <div key={item.course.id} className="bg-white rounded-3xl border border-slate-200 p-5 shadow-sm flex items-center justify-between gap-4">
+                {progress.map((item) => (
+                  <div key={item.course_id} className="bg-white rounded-3xl border border-slate-200 p-5 shadow-sm flex items-center justify-between gap-4">
                     <div className="flex items-center gap-3">
                       <div className="w-10 h-10 rounded-xl bg-amber-50 text-amber-700 flex items-center justify-center">
                         <BookOpen className="w-5 h-5" />
                       </div>
                       <div>
-                        <p className="font-bold">{item.course.title}</p>
-                        <p className="text-xs text-slate-500">{Math.round(item.progress.progressPercentage || 0)}% complete</p>
+                        <p className="font-bold">{courseName(item.course_id)}</p>
+                        <p className="text-xs text-slate-500">
+                          {item.percent}% complete · {item.completed_lessons}/{item.total_lessons} lessons
+                        </p>
                       </div>
                     </div>
-                    <Link href={`/courses/${item.course.id}`} className="text-xs font-bold text-[#111827] underline">
+                    <Link href={`/courses/${item.course_id}`} className="text-xs font-bold text-[#111827] underline">
                       Course
                     </Link>
                   </div>

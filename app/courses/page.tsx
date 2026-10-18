@@ -7,7 +7,6 @@ import FloatingNavbar from '@/components/english/FloatingNavbar';
 import EnglishFooter from '@/components/english/EnglishFooter';
 import CheckoutModal from '@/components/checkout/CheckoutModal';
 import { featuredCourses } from '@/lib/data';
-import { courseDiscount, hiddenCourseIds } from '@/lib/workspace';
 import { applyCourseEdit, useCourseEdits } from '@/lib/course-edits-client';
 import { takaFromUsd } from '@/lib/utils';
 import type { CourseSchema } from '@/types/course';
@@ -39,13 +38,22 @@ export default function CoursesCatalogPage() {
 
   // Honor deep links like /courses?category=Spoken+English from nav/footer
   const [hiddenIds, setHiddenIds] = useState<string[]>([]);
+  const [discounts, setDiscounts] = useState<Record<string, number>>({});
   const courseEdits = useCourseEdits();
 
   useEffect(() => {
     const cat = new URLSearchParams(window.location.search).get('category');
     if (cat) setSelectedCategory(cat);
-    setHiddenIds(hiddenCourseIds());
+    fetch('/api/courses/settings')
+      .then((res) => res.json())
+      .then((data) => {
+        const rows = Object.values(data.settings || {}) as { course_id: string; visibility: string; discount: number }[];
+        setHiddenIds(rows.filter((row) => row.visibility !== 'published').map((row) => row.course_id));
+        setDiscounts(Object.fromEntries(rows.map((row) => [row.course_id, row.discount || 0])));
+      })
+      .catch(() => undefined);
   }, []);
+  const courseDiscount = (id: string) => discounts[id] || 0;
 
   // All categories list
   const categoryNames = useMemo(() => {

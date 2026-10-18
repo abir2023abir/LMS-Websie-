@@ -7,7 +7,6 @@ import EnglishFooter from '@/components/english/EnglishFooter';
 import WorkspaceLinks from '@/components/workspace/WorkspaceLinks';
 import DashboardCalendar from '@/components/dashboard/DashboardCalendar';
 import InboxButton from '@/components/inbox/InboxButton';
-import AdminMessages from '@/components/admin/AdminMessages';
 import { useAuth } from '@/context/AuthContext';
 import {
   addBookingDocument,
@@ -80,13 +79,6 @@ function ServiceHome() {
         </div>
       </section>
       <main className="max-w-5xl mx-auto px-4 py-8 w-full space-y-6">
-        <AdminMessages
-          listUrl="/api/messages?board=1"
-          replyUrl="/api/messages"
-          replyBody={(id, text) => ({ action: 'reply', id, text })}
-          title="Course messages"
-          intro="A student message from inside a course includes the course and that student’s rank. The instructor and the admin panel see the same thread."
-        />
         <DashboardCalendar />
         <WorkspaceLinks />
         <section className="grid sm:grid-cols-2 gap-3">

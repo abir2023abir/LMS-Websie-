@@ -1,6 +1,17 @@
 import { NextResponse } from 'next/server';
 import { requireAdmin } from '@/lib/admin-guard';
-import { decideLink, linkById, listLinks, listProfiles, profileById, publicProfile, updateProfile } from '@/lib/accounts';
+import {
+  assignCourseMentor,
+  decideLink,
+  linkById,
+  listCourseSettings,
+  listLinks,
+  listProfiles,
+  profileByEmail,
+  profileById,
+  publicProfile,
+  updateProfile,
+} from '@/lib/accounts';
 
 export const dynamic = 'force-dynamic';
 
@@ -8,8 +19,13 @@ export async function GET() {
   const denied = requireAdmin();
   if (denied) return denied;
   try {
-    const [profiles, links] = await Promise.all([listProfiles(), listLinks()]);
-    return NextResponse.json({ success: true, profiles: profiles.map(publicProfile), links });
+    const [profiles, links, courses] = await Promise.all([listProfiles(), listLinks(), listCourseSettings()]);
+    return NextResponse.json({
+      success: true,
+      profiles: profiles.map((item) => ({ ...publicProfile(item), mentor_level: item.mentor_level || 'lead' })),
+      links,
+      courses,
+    });
   } catch (error: any) {
     return NextResponse.json({ success: false, message: error.message }, { status: 500 });
   }
@@ -30,12 +46,28 @@ export async function PATCH(request: Request) {
       await decideLink(String(body.linkId), body.status, 'admin');
       return NextResponse.json({ success: true });
     }
-    if (body.profileId && typeof body.disabled === 'boolean') {
-      if (!(await profileById(String(body.profileId)))) {
-        return NextResponse.json({ success: false, message: 'Account not found.' }, { status: 404 });
+    if (body.courseId) {
+      const mentor = await profileByEmail(String(body.mentorEmail || ''));
+      if (!mentor || !mentor.roles.includes('Instructor')) {
+        return NextResponse.json({ success: false, message: 'That email is not a mentor account.' }, { status: 400 });
       }
-      await updateProfile(String(body.profileId), { disabled: body.disabled });
+      await assignCourseMentor(String(body.courseId), mentor.email, 'admin');
       return NextResponse.json({ success: true });
+    }
+    if (body.profileId) {
+      const profile = await profileById(String(body.profileId));
+      if (!profile) return NextResponse.json({ success: false, message: 'Account not found.' }, { status: 404 });
+      if (typeof body.disabled === 'boolean') {
+        await updateProfile(profile.id, { disabled: body.disabled });
+        return NextResponse.json({ success: true });
+      }
+      if (body.mentorLevel === 'lead' || body.mentorLevel === 'assistant') {
+        if (!profile.roles.includes('Instructor')) {
+          return NextResponse.json({ success: false, message: 'Only mentor accounts have a level.' }, { status: 400 });
+        }
+        await updateProfile(profile.id, { mentor_level: body.mentorLevel });
+        return NextResponse.json({ success: true });
+      }
     }
     return NextResponse.json({ success: false, message: 'Nothing to change.' }, { status: 400 });
   } catch (error: any) {

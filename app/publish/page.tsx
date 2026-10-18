@@ -1,104 +1,154 @@
 'use client';
 
-import { useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import Link from 'next/link';
 import FloatingNavbar from '@/components/english/FloatingNavbar';
 import EnglishFooter from '@/components/english/EnglishFooter';
 import WorkspaceLinks from '@/components/workspace/WorkspaceLinks';
-import { useAuth } from '@/context/AuthContext';
 import { featuredCourses } from '@/lib/data';
-import {
-  assignMentor,
-  courseApproval,
-  courseDiscount,
-  courseVisibility,
-  mentorFor,
-  mentorLevel,
-  setApproval,
-  setCourseVisibility,
-  setDiscount,
-  setMentorLevel,
-  type CourseVisibility,
-} from '@/lib/workspace';
+
+type Visibility = 'published' | 'hidden' | 'archived';
+type Settings = {
+  course_id: string;
+  visibility: Visibility;
+  approval: 'none' | 'pending' | 'approved';
+  discount: number;
+  mentor_email: string;
+  mentor_history: { email: string; at: string }[];
+};
+
+const blank = (id: string): Settings => ({
+  course_id: id,
+  visibility: 'published',
+  approval: 'none',
+  discount: 0,
+  mentor_email: '',
+  mentor_history: [],
+});
 
 export default function PublishPage() {
-  const { user } = useAuth();
-  const [tick, setTick] = useState(0);
-  const [assistant, setAssistant] = useState('');
+  const [settings, setSettings] = useState<Record<string, Settings>>({});
+  const [level, setLevel] = useState<string | null>(null);
+  const [loaded, setLoaded] = useState(false);
+  const [discounts, setDiscounts] = useState<Record<string, number>>({});
   const [note, setNote] = useState('');
-  const [mentor, setMentor] = useState('');
-  const [discount, setDiscountValue] = useState(10);
-  const level = mentorLevel(user?.email || '');
-  void tick;
+
+  const load = useCallback(async () => {
+    const data = await fetch('/api/courses/settings').then((res) => res.json()).catch(() => ({}));
+    setSettings(data.settings || {});
+    setLevel(data.level || null);
+    setLoaded(true);
+  }, []);
+
+  useEffect(() => {
+    load();
+  }, [load]);
+
+  const change = async (courseId: string, patch: Partial<Settings>) => {
+    setNote('');
+    const res = await fetch('/api/courses/settings', {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ courseId, ...patch }),
+    });
+    const data = await res.json().catch(() => ({}));
+    if (!res.ok) setNote(data.message || 'Could not save.');
+    load();
+  };
+
+  const assistant = level === 'assistant';
 
   return (
     <div className="min-h-screen bg-slate-50 text-[#111827] flex flex-col">
       <FloatingNavbar />
       <main className="max-w-5xl mx-auto px-4 pt-32 pb-16 w-full space-y-6">
-        <h1 className="font-display font-extrabold text-3xl">Publish, archive, and accounts</h1>
+        <h1 className="font-display font-extrabold text-3xl">Publish and archive</h1>
         <WorkspaceLinks />
-        <section className="space-y-3">
-          {featuredCourses.map((course) => {
-            const id = String(course.id);
-            const status = courseVisibility(id);
-            const approval = courseApproval(id);
-            const assigned = mentorFor(id);
-            return (
-              <article key={course.id} className="bg-white rounded-3xl border border-slate-200 p-5 shadow-sm space-y-3">
-                <div>
-                  <p className="font-bold">{course.title}</p>
-                  <p className="text-xs text-slate-500">Now: {status} · approval {approval} · discount {courseDiscount(id)}% · mentor {assigned.email || 'none'}</p>
-                </div>
-                <div className="flex flex-wrap gap-2">
-                  <button type="button" className="text-xs font-bold px-3 py-2 rounded-full bg-slate-100" onClick={() => { setApproval(id, 'pending'); setTick((n) => n + 1); }}>Send for approval</button>
-                  <button type="button" className="text-xs font-bold px-3 py-2 rounded-full bg-[#FACC15]" disabled={level === 'assistant'} onClick={() => { setApproval(id, 'approved'); setTick((n) => n + 1); }}>Approve</button>
-                  {(['published', 'hidden', 'archived'] as CourseVisibility[]).map((value) => (
-                    <button
-                      key={value}
-                      type="button"
-                      className="text-xs font-bold px-3 py-2 rounded-full bg-slate-100 disabled:opacity-40"
-                      disabled={value === 'published' && (level === 'assistant' || approval === 'pending')}
-                      onClick={() => {
-                        setCourseVisibility(id, value);
-                        setTick((n) => n + 1);
+        {loaded && !level && (
+          <p className="bg-white rounded-3xl border border-slate-200 p-6 text-sm">
+            Only mentors and admins can manage courses. Sign in with a mentor account.
+          </p>
+        )}
+        {level && (
+          <>
+            <p className="text-sm text-slate-600">
+              Your level: <span className="font-bold">{level}</span>.{' '}
+              {assistant ? 'Assistant mentors can send a course for approval but cannot approve, publish, or change discounts.' : 'You can approve, publish, and set discounts.'}
+            </p>
+            {note && <p className="text-sm text-rose-600">{note}</p>}
+            <section className="space-y-3">
+              {featuredCourses.map((course) => {
+                const id = String(course.id);
+                const row = settings[id] || blank(id);
+                const discount = discounts[id] ?? row.discount;
+                return (
+                  <article key={id} className="bg-white rounded-3xl border border-slate-200 p-5 shadow-sm space-y-3">
+                    <div>
+                      <p className="font-bold">{course.title}</p>
+                      <p className="text-xs text-slate-500">
+                        Now: {row.visibility} · approval {row.approval} · discount {row.discount}% · mentor {row.mentor_email || 'none'}
+                      </p>
+                    </div>
+                    <div className="flex flex-wrap gap-2">
+                      <button type="button" className="text-xs font-bold px-3 py-2 rounded-full bg-slate-100" onClick={() => change(id, { approval: 'pending' })}>
+                        Send for approval
+                      </button>
+                      <button
+                        type="button"
+                        className="text-xs font-bold px-3 py-2 rounded-full bg-[#FACC15] disabled:opacity-40"
+                        disabled={assistant}
+                        onClick={() => change(id, { approval: 'approved' })}
+                      >
+                        Approve
+                      </button>
+                      {(['published', 'hidden', 'archived'] as Visibility[]).map((value) => (
+                        <button
+                          key={value}
+                          type="button"
+                          className="text-xs font-bold px-3 py-2 rounded-full bg-slate-100 disabled:opacity-40"
+                          disabled={assistant || (value === 'published' && row.approval === 'pending')}
+                          onClick={() => change(id, { visibility: value })}
+                        >
+                          {value}
+                        </button>
+                      ))}
+                    </div>
+                    <form
+                      className="flex flex-wrap gap-2 items-center"
+                      onSubmit={(e) => {
+                        e.preventDefault();
+                        change(id, { discount });
                       }}
                     >
-                      {value}
-                    </button>
-                  ))}
-                </div>
-                <form className="flex flex-wrap gap-2" onSubmit={(e) => { e.preventDefault(); assignMentor(id, mentor); setDiscount(id, discount); setMentor(''); setTick((n) => n + 1); }}>
-                  <input value={mentor} onChange={(e) => setMentor(e.target.value)} placeholder="Mentor email" className="border border-slate-200 rounded-xl px-3 py-2 text-xs" />
-                  <input type="number" value={discount} onChange={(e) => setDiscountValue(Number(e.target.value))} className="w-20 border border-slate-200 rounded-xl px-3 py-2 text-xs" />
-                  <button className="text-xs font-bold px-3 py-2 rounded-full bg-slate-100">Save mentor and discount</button>
-                </form>
-                {assigned.history.length > 0 && <p className="text-xs text-slate-500">Mentor history: {assigned.history.map((row) => row.email).join(', ')}</p>}
-              </article>
-            );
-          })}
-        </section>
+                      <input
+                        type="number"
+                        min={0}
+                        max={90}
+                        value={discount}
+                        disabled={assistant}
+                        onChange={(e) => setDiscounts((all) => ({ ...all, [id]: Number(e.target.value) }))}
+                        className="w-20 border border-slate-200 rounded-xl px-3 py-2 text-xs"
+                      />
+                      <button disabled={assistant} className="text-xs font-bold px-3 py-2 rounded-full bg-slate-100 disabled:opacity-40">
+                        Save discount
+                      </button>
+                    </form>
+                    {row.mentor_history.length > 0 && (
+                      <p className="text-xs text-slate-500">Mentor history: {row.mentor_history.map((item) => item.email).join(', ')}</p>
+                    )}
+                  </article>
+                );
+              })}
+            </section>
+          </>
+        )}
         <section className="bg-white rounded-3xl border border-slate-200 p-6 space-y-2 shadow-sm">
-          <h2 className="font-bold">Turn an account off</h2>
+          <h2 className="font-bold">Mentors, levels, and accounts</h2>
           <p className="text-sm text-slate-600">
-            Accounts are turned off in the admin panel under{' '}
-            <Link href="/admin" className="font-bold underline">Accounts</Link>. A turned-off account cannot sign in.
+            The admin assigns course mentors, sets lead or assistant, and turns accounts off in the admin panel under{' '}
+            <Link href="/admin" className="font-bold underline">Accounts</Link>.
           </p>
         </section>
-        {note && <p className="text-sm">{note}</p>}
-        <form
-          className="bg-white rounded-3xl border border-slate-200 p-6 space-y-3 shadow-sm"
-          onSubmit={(e) => {
-            e.preventDefault();
-            setMentorLevel(assistant, 'assistant');
-            setNote(`${assistant} is now an assistant mentor and cannot publish.`);
-            setAssistant('');
-          }}
-        >
-          <h2 className="font-bold">Make a mentor an assistant</h2>
-          <p className="text-sm text-slate-600">Your level is {level}. Assistants cannot approve or publish.</p>
-          <input value={assistant} onChange={(e) => setAssistant(e.target.value)} type="email" placeholder="Mentor email" className="w-full border border-slate-200 rounded-xl px-3 py-2 text-sm" />
-          <button className="bg-slate-100 font-bold text-sm px-4 py-2 rounded-xl">Set assistant</button>
-        </form>
       </main>
       <EnglishFooter />
     </div>

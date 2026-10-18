@@ -14,6 +14,54 @@ export type Profile = {
   roles: Role[];
   active_role: Role;
   disabled: boolean;
+  mentor_level?: MentorLevel;
+  created_at: string;
+};
+
+export type MentorLevel = 'lead' | 'assistant';
+export type Visibility = 'published' | 'hidden' | 'archived';
+export type Approval = 'none' | 'pending' | 'approved';
+
+export type CourseSettings = {
+  course_id: string;
+  visibility: Visibility;
+  approval: Approval;
+  discount: number;
+  mentor_email: string;
+  mentor_history: { email: string; at: string }[];
+  updated_by: string | null;
+  updated_at: string;
+};
+
+export type StudentProgress = {
+  student_id: string;
+  course_id: string;
+  percent: number;
+  completed_lessons: number;
+  total_lessons: number;
+  updated_at: string;
+};
+
+export type StudentResult = {
+  id: string;
+  student_id: string;
+  kind: 'exam' | 'quiz';
+  label: string;
+  score: number;
+  total: number;
+  passed: boolean;
+  review: string;
+  graded_by: string | null;
+  at: string;
+};
+
+export type CalendarEvent = {
+  id: string;
+  title: string;
+  kind: 'class' | 'exam' | 'meeting' | 'deadline';
+  date: string;
+  meet: string;
+  created_by: string | null;
   created_at: string;
 };
 
@@ -33,8 +81,22 @@ type Tables = {
   profiles: Profile;
   guardian_links: GuardianLink;
   attendance: { student_id: string; day: string };
+  course_settings: CourseSettings;
+  student_progress: StudentProgress;
+  student_results: StudentResult;
+  calendar_events: CalendarEvent;
 };
 type Table = keyof Tables;
+
+const KEYS: Record<Table, string[]> = {
+  profiles: ['email'],
+  guardian_links: ['guardian_id', 'student_email'],
+  attendance: ['student_id', 'day'],
+  course_settings: ['course_id'],
+  student_progress: ['student_id', 'course_id'],
+  student_results: ['id'],
+  calendar_events: ['id'],
+};
 type Filter = Record<string, string | boolean>;
 
 const supabaseUrl = process.env.SUPABASE_URL?.replace(/\/$/, '');
@@ -62,7 +124,7 @@ function query(filter: Filter) {
 async function rest<T>(url: string, init: RequestInit): Promise<T> {
   const res = await fetch(url, { ...init, cache: 'no-store' }).catch(() => null);
   if (!res) throw new Error('Cannot reach Supabase. Check SUPABASE_URL in Vercel.');
-  if (res.status === 404) throw new Error('Supabase table missing. Run supabase/phase1_accounts.sql in the SQL Editor.');
+  if (res.status === 404) throw new Error('Supabase table missing. Run supabase/phase1_accounts.sql and supabase/phase1_mentors.sql in the SQL Editor.');
   if (res.status === 401 || res.status === 403) throw new Error('Supabase rejected the key. Check SUPABASE_SERVICE_ROLE_KEY in Vercel.');
   if (res.status === 409) throw new Error('duplicate');
   if (!res.ok) throw new Error(`Supabase request failed (${res.status})`);
@@ -72,11 +134,15 @@ async function rest<T>(url: string, init: RequestInit): Promise<T> {
 
 type FileDb = { [K in Table]: Tables[K][] };
 
+function emptyDb(): FileDb {
+  return { profiles: [], guardian_links: [], attendance: [], course_settings: [], student_progress: [], student_results: [], calendar_events: [] };
+}
+
 function readFile(): FileDb {
   try {
-    return { profiles: [], guardian_links: [], attendance: [], ...JSON.parse(fs.readFileSync(file, 'utf8')) };
+    return { ...emptyDb(), ...JSON.parse(fs.readFileSync(file, 'utf8')) };
   } catch {
-    return { profiles: [], guardian_links: [], attendance: [] };
+    return emptyDb();
   }
 }
 
@@ -91,15 +157,27 @@ function matches(row: object, filter: Filter) {
 
 async function select<T extends Table>(table: T, filter: Filter = {}): Promise<Tables[T][]> {
   if (useSupabase) {
-    return rest(`${supabaseUrl}/rest/v1/${table}?select=*&${query(filter)}`, { headers: headers() });
+    try {
+      return await rest(`${supabaseUrl}/rest/v1/${table}?select=*&${query(filter)}`, { headers: headers() });
+    } catch (error: any) {
+      // A table from a later SQL file reads as empty until that file is run; writes still report it.
+      if (String(error.message).startsWith('Supabase table missing')) {
+        console.error(`[accounts] ${table}: ${error.message}`);
+        return [];
+      }
+      throw error;
+    }
   }
   return readFile()[table].filter((row) => matches(row, filter)) as Tables[T][];
 }
 
-async function insert<T extends Table>(table: T, row: Tables[T], ignoreDuplicate = false): Promise<void> {
+type OnClash = 'error' | 'ignore' | 'merge';
+
+async function insert<T extends Table>(table: T, row: Tables[T], onClash: OnClash = 'error'): Promise<void> {
+  const key = KEYS[table];
   if (useSupabase) {
-    const prefer = ignoreDuplicate ? 'resolution=ignore-duplicates' : 'return=minimal';
-    const conflict = table === 'attendance' ? '?on_conflict=student_id,day' : '';
+    const prefer = onClash === 'ignore' ? 'resolution=ignore-duplicates' : onClash === 'merge' ? 'resolution=merge-duplicates' : 'return=minimal';
+    const conflict = onClash === 'error' ? '' : `?on_conflict=${key.join(',')}`;
     await rest(`${supabaseUrl}/rest/v1/${table}${conflict}`, {
       method: 'POST',
       headers: headers({ Prefer: prefer }),
@@ -109,13 +187,15 @@ async function insert<T extends Table>(table: T, row: Tables[T], ignoreDuplicate
   }
   const db = readFile();
   const rows = db[table] as Tables[T][];
-  const key = table === 'attendance' ? ['student_id', 'day'] : table === 'profiles' ? ['email'] : ['guardian_id', 'student_email'];
-  const clash = rows.some((item) => key.every((k) => (item as Record<string, unknown>)[k] === (row as Record<string, unknown>)[k]));
-  if (clash) {
-    if (ignoreDuplicate) return;
-    throw new Error('duplicate');
+  const same = (item: Tables[T]) => key.every((k) => (item as Record<string, unknown>)[k] === (row as Record<string, unknown>)[k]);
+  const index = rows.findIndex(same);
+  if (index >= 0) {
+    if (onClash === 'ignore') return;
+    if (onClash === 'error') throw new Error('duplicate');
+    rows[index] = { ...rows[index], ...row };
+  } else {
+    rows.push(row);
   }
-  rows.push(row);
   writeFile(db);
 }
 
@@ -183,7 +263,7 @@ export async function createProfile(input: { email: string; name: string; passwo
   return profile;
 }
 
-export async function updateProfile(id: string, patch: Partial<Pick<Profile, 'roles' | 'active_role' | 'disabled' | 'name'>>) {
+export async function updateProfile(id: string, patch: Partial<Pick<Profile, 'roles' | 'active_role' | 'disabled' | 'name' | 'mentor_level'>>) {
   await update('profiles', { id }, patch);
 }
 
@@ -227,14 +307,83 @@ export async function decideLink(id: string, status: LinkStatus, decidedBy: stri
 export async function approvedStudentFor(guardianId: string) {
   const link = (await select('guardian_links', { guardian_id: guardianId, status: 'approved' }))[0];
   if (!link) return null;
-  return profileByEmail(link.student_email);
+  const student = await profileByEmail(link.student_email);
+  return student && !student.disabled ? student : null;
 }
 
 export async function markAttendance(studentId: string) {
   const day = new Date().toISOString().slice(0, 10);
-  await insert('attendance', { student_id: studentId, day }, true);
+  await insert('attendance', { student_id: studentId, day }, 'ignore');
 }
 
 export async function attendanceFor(studentId: string) {
   return (await select('attendance', { student_id: studentId })).map((row) => row.day).sort();
+}
+
+export function defaultCourseSettings(courseId: string): CourseSettings {
+  return {
+    course_id: courseId,
+    visibility: 'published',
+    approval: 'none',
+    discount: 0,
+    mentor_email: '',
+    mentor_history: [],
+    updated_by: null,
+    updated_at: new Date().toISOString(),
+  };
+}
+
+export async function listCourseSettings() {
+  return select('course_settings');
+}
+
+export async function courseSettings(courseId: string) {
+  return (await select('course_settings', { course_id: courseId }))[0] || defaultCourseSettings(courseId);
+}
+
+export async function saveCourseSettings(next: CourseSettings) {
+  await insert('course_settings', { ...next, updated_at: new Date().toISOString() }, 'merge');
+}
+
+// Changing the mentor only touches course_settings; results and messages stay keyed to the student.
+export async function assignCourseMentor(courseId: string, mentorEmail: string, by: string) {
+  const current = await courseSettings(courseId);
+  const email = normalizeEmail(mentorEmail);
+  const history = [{ email, at: new Date().toISOString() }, ...current.mentor_history];
+  await saveCourseSettings({ ...current, mentor_email: email, mentor_history: history, updated_by: by });
+}
+
+export async function saveProgress(row: Omit<StudentProgress, 'updated_at'>) {
+  await insert('student_progress', { ...row, updated_at: new Date().toISOString() }, 'merge');
+}
+
+export async function progressFor(studentId: string) {
+  return select('student_progress', { student_id: studentId });
+}
+
+export async function saveResult(row: StudentResult) {
+  await insert('student_results', row, 'merge');
+}
+
+export async function resultById(id: string) {
+  return (await select('student_results', { id }))[0] || null;
+}
+
+export async function reviewResult(id: string, passed: boolean, review: string, gradedBy: string) {
+  await update('student_results', { id }, { passed, review, graded_by: gradedBy });
+}
+
+export async function resultsFor(studentId: string) {
+  return (await select('student_results', { student_id: studentId })).sort((a, b) => b.at.localeCompare(a.at));
+}
+
+export async function addCalendarEvent(row: CalendarEvent) {
+  await insert('calendar_events', row, 'merge');
+}
+
+export async function upcomingExams() {
+  const today = new Date().toISOString().slice(0, 10);
+  return (await select('calendar_events', { kind: 'exam' }))
+    .filter((row) => String(row.date).slice(0, 10) >= today)
+    .sort((a, b) => String(a.date).localeCompare(String(b.date)));
 }

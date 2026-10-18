@@ -19,6 +19,7 @@ export interface UserProfile {
   role: UserRole;
   roles?: UserRole[];
   linkedStudentEmail?: string;
+  mentorLevel?: 'lead' | 'assistant';
   avatarUrl?: string;
   createdAt?: any;
 }
@@ -50,6 +51,7 @@ type ServerProfile = {
   email: string;
   roles: UserRole[];
   active_role: UserRole;
+  mentor_level?: 'lead' | 'assistant';
   created_at: string;
 };
 
@@ -69,6 +71,7 @@ function toProfile(server: ServerProfile): UserProfile {
     email: server.email,
     role: server.active_role,
     roles: server.roles,
+    mentorLevel: server.mentor_level || 'lead',
     avatarUrl: avatarFor(server.name),
     createdAt: server.created_at,
   };
