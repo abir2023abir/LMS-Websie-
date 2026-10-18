@@ -1,6 +1,7 @@
 'use client';
 
 import { useState } from 'react';
+import Link from 'next/link';
 import FloatingNavbar from '@/components/english/FloatingNavbar';
 import EnglishFooter from '@/components/english/EnglishFooter';
 import WorkspaceLinks from '@/components/workspace/WorkspaceLinks';
@@ -11,7 +12,6 @@ import {
   courseApproval,
   courseDiscount,
   courseVisibility,
-  deactivateEmail,
   mentorFor,
   mentorLevel,
   setApproval,
@@ -24,7 +24,6 @@ import {
 export default function PublishPage() {
   const { user } = useAuth();
   const [tick, setTick] = useState(0);
-  const [email, setEmail] = useState('');
   const [assistant, setAssistant] = useState('');
   const [note, setNote] = useState('');
   const [mentor, setMentor] = useState('');
@@ -78,20 +77,14 @@ export default function PublishPage() {
             );
           })}
         </section>
-        <form
-          className="bg-white rounded-3xl border border-slate-200 p-6 space-y-3 shadow-sm"
-          onSubmit={(e) => {
-            e.preventDefault();
-            deactivateEmail(email);
-            setNote(`${email} can no longer sign in.`);
-            setEmail('');
-          }}
-        >
+        <section className="bg-white rounded-3xl border border-slate-200 p-6 space-y-2 shadow-sm">
           <h2 className="font-bold">Turn an account off</h2>
-          <input value={email} onChange={(e) => setEmail(e.target.value)} type="email" placeholder="Email" className="w-full border border-slate-200 rounded-xl px-3 py-2 text-sm" />
-          <button className="bg-[#111827] text-white font-bold text-sm px-4 py-2 rounded-xl">Deactivate</button>
-          {note && <p className="text-sm">{note}</p>}
-        </form>
+          <p className="text-sm text-slate-600">
+            Accounts are turned off in the admin panel under{' '}
+            <Link href="/admin" className="font-bold underline">Accounts</Link>. A turned-off account cannot sign in.
+          </p>
+        </section>
+        {note && <p className="text-sm">{note}</p>}
         <form
           className="bg-white rounded-3xl border border-slate-200 p-6 space-y-3 shadow-sm"
           onSubmit={(e) => {
