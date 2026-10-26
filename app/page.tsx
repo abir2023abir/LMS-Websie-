@@ -1,31 +1,25 @@
-import FloatingNavbar from '@/components/english/FloatingNavbar';
-import HeroSection from '@/components/english/HeroSection';
-import StatsSection from '@/components/english/StatsSection';
-import CollageSection from '@/components/english/CollageSection';
-import ProgramsSection from '@/components/english/ProgramsSection';
-import KidsSection from '@/components/english/KidsSection';
-import WhyUsSection from '@/components/english/WhyUsSection';
-import ReviewsSection from '@/components/english/ReviewsSection';
-import LearningMethodsSection from '@/components/english/LearningMethodsSection';
-import ContactFormSection from '@/components/english/ContactFormSection';
-import OffersBanner from '@/components/english/OffersBanner';
-import EnglishFooter from '@/components/english/EnglishFooter';
+import Navbar from '@/components/landing/Navbar';
+import Hero from '@/components/landing/Hero';
+import About from '@/components/landing/About';
+import SuccessStories from '@/components/landing/SuccessStories';
+import CoursesSection from '@/components/landing/CoursesSection';
+import WhyChooseUs from '@/components/landing/WhyChooseUs';
+import Testimonials from '@/components/landing/Testimonials';
+import BlogAndContact from '@/components/landing/BlogAndContact';
+import Footer from '@/components/landing/Footer';
 
 export default function HomePage() {
   return (
     <main className="min-h-screen bg-white font-sans antialiased selection:bg-[#FACC15] selection:text-[#111827]">
-      <FloatingNavbar />
-      <HeroSection />
-      <StatsSection />
-      <CollageSection />
-      <ProgramsSection />
-      <KidsSection />
-      <WhyUsSection />
-      <ReviewsSection />
-      <LearningMethodsSection />
-      <ContactFormSection />
-      <OffersBanner />
-      <EnglishFooter />
+      <Navbar />
+      <Hero />
+      <About />
+      <SuccessStories />
+      <CoursesSection />
+      <WhyChooseUs />
+      <Testimonials />
+      <BlogAndContact />
+      <Footer />
     </main>
   );
 }

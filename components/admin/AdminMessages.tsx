@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from 'react';
 
-type Note = { id: string; from: 'sender' | 'admin'; text: string; at: string };
+type Note = { id: string; from: 'sender' | 'admin' | 'instructor'; text: string; at: string };
 type Thread = {
   id: string;
   kind: 'student' | 'service';
@@ -16,13 +16,30 @@ type Thread = {
   rank?: number;
   rankTotal?: number;
   progress?: number;
+  moduleTitle?: string;
+  lessonTitle?: string;
+  instructorName?: string;
+  phone?: string;
+  topic?: string;
+  billing?: string;
+  appointmentDate?: string;
+  appointmentTime?: string;
+  company?: string;
+  monthlyRevenue?: string;
 };
 
 function courseLine(item: Thread) {
   if (!item.courseTitle) return '';
   const rank = item.rank ? `Rank ${item.rank}${item.rankTotal ? ` of ${item.rankTotal}` : ''}` : 'Rank not recorded';
   const progress = typeof item.progress === 'number' && item.rank ? ` · ${item.progress}% of this course` : '';
-  return `${item.courseTitle} · ${rank}${progress}`;
+  const lesson = [item.moduleTitle, item.lessonTitle].filter(Boolean).join(' · ');
+  return `${item.courseTitle}${lesson ? ` · ${lesson}` : ''} · ${rank}${progress}`;
+}
+
+function appointmentLine(item: Thread) {
+  if (!item.appointmentDate) return '';
+  const when = new Date(`${item.appointmentDate}T12:00:00`).toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric', year: 'numeric' });
+  return `${when} at ${item.appointmentTime} (Bangladesh time)`;
 }
 
 export default function AdminMessages({
@@ -30,7 +47,7 @@ export default function AdminMessages({
   replyUrl = '/api/admin/messages',
   replyBody,
   title = 'Messages',
-  intro = 'Student notes and customer-service inquiries land here. A message sent from inside a course includes that course and the student’s rank.',
+  intro = 'Course questions and consultation requests land here. Course messages include lesson details and the assigned instructor.',
 }: {
   listUrl?: string;
   replyUrl?: string;
@@ -99,6 +116,8 @@ export default function AdminMessages({
                 <div className="font-bold text-sm">{item.name}</div>
                 <div className="text-[11px] text-slate-500">{item.kind === 'service' ? 'Customer service' : 'Student'} · {item.status}</div>
                 {courseLine(item) && <div className="text-[11px] text-slate-700 mt-1">{courseLine(item)}</div>}
+                {item.instructorName && <div className="text-[11px] text-slate-500 mt-1">Instructor: {item.instructorName}</div>}
+                {appointmentLine(item) && <div className="text-[11px] text-slate-700 mt-1">{appointmentLine(item)}</div>}
               </button>
             ))}
           </div>
@@ -108,11 +127,15 @@ export default function AdminMessages({
                 <div className="font-bold">{active.name}</div>
                 <div className="text-[11px] text-slate-500">{active.email} · {active.kind === 'service' ? 'Customer service' : 'Student'}</div>
                 {courseLine(active) && <div className="text-xs font-semibold mt-1">{courseLine(active)}</div>}
+                {active.instructorName && <div className="mt-1 text-xs text-slate-500">Instructor: {active.instructorName}</div>}
+                {active.topic && <div className="mt-1 text-xs font-semibold text-slate-700">Topic: {active.topic}{active.billing ? ` · ${active.billing} billing` : ''}</div>}
+                {appointmentLine(active) && <div className="mt-1 rounded-xl bg-amber-50 px-3 py-2 text-xs font-semibold text-slate-800">Preferred time: {appointmentLine(active)} · pending confirmation</div>}
+                {(active.phone || active.company || active.monthlyRevenue) && <div className="mt-1 text-xs text-slate-500">{[active.phone && `Phone: ${active.phone}`, active.company && `Company: ${active.company}`, active.monthlyRevenue && `Monthly revenue: ${active.monthlyRevenue}`].filter(Boolean).join(' · ')}</div>}
               </div>
               <div className="flex-1 space-y-2 my-4 max-h-80 overflow-y-auto">
                 {active.messages.map((message) => (
-                  <div key={message.id} className={`max-w-[85%] rounded-2xl px-3 py-2 text-sm ${message.from === 'admin' ? 'ml-auto bg-[#111827] text-white' : 'bg-slate-100'}`}>
-                    <div className="text-[10px] opacity-70 mb-1">{message.from === 'admin' ? 'Admin' : active.name}</div>
+                  <div key={message.id} className={`max-w-[85%] rounded-2xl px-3 py-2 text-sm ${message.from === 'sender' ? 'bg-slate-100' : `ml-auto ${message.from === 'admin' ? 'bg-[#111827]' : 'bg-sky-700'} text-white`}`}>
+                    <div className="mb-1 text-[10px] opacity-70">{message.from === 'admin' ? 'Admin' : message.from === 'instructor' ? 'Instructor' : active.name}</div>
                     {message.text}
                   </div>
                 ))}

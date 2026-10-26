@@ -12,6 +12,7 @@ export async function POST(request: Request) {
     const name = String(body.name || '').trim();
     const email = String(body.email || '').trim();
     const password = String(body.password || '');
+    const phone = String(body.phone || '').trim();
     const role = body.role as Role;
     const studentEmail = String(body.linkedStudentEmail || '').trim();
 
@@ -23,6 +24,9 @@ export async function POST(request: Request) {
       return NextResponse.json({ success: false, code: 'auth/weak-password', message: 'Password must be at least 6 characters.' }, { status: 400 });
     }
     if (!ROLES.includes(role)) return NextResponse.json({ success: false, message: 'Pick a role.' }, { status: 400 });
+    if (role === 'Student' && (!phone || !/^\+?[\d\s().-]{7,20}$/.test(phone) || phone.replace(/\D/g, '').length < 7)) {
+      return NextResponse.json({ success: false, message: 'Enter a valid phone number. It is required for student accounts.' }, { status: 400 });
+    }
     const adminSession = verifyAdminSession(cookies().get('admin_session')?.value);
     if (role !== 'Student' && !adminSession) {
       return NextResponse.json(
@@ -41,7 +45,7 @@ export async function POST(request: Request) {
       );
     }
 
-    const profile = await createProfile({ email, name, password, role });
+    const profile = await createProfile({ email, name, password, role, phone });
     if (role === 'Guardian') await requestGuardianLink(profile.id, studentEmail);
 
     const response = NextResponse.json({ success: true, profile: publicProfile(profile) });

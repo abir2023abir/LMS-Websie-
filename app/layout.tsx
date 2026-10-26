@@ -16,20 +16,19 @@ const spaceGrotesk = Space_Grotesk({
 });
 
 export const metadata: Metadata = {
-  title: 'English Capsules — The Largest Community For Learning English',
+  title: 'Career Bridge.Studio — Practical Learning for Your Next Step',
   description:
-    'Learn English in a practical and easy way with English Capsules. Short, effective sessions designed to fit your time and goals.',
+    'Build practical skills with structured courses, guided learning, and progress tracking from Career Bridge.Studio.',
   keywords: [
-    'English Capsules',
-    'Learn English',
-    'Spoken English',
-    'IELTS Prep',
-    'Business English',
+    'Career Bridge Studio',
+    'online learning',
+    'practical skills',
+    'structured courses',
+    'career development',
   ],
   openGraph: {
-    title: 'English Capsules — The Largest Community For Learning English',
-    description:
-      'Practical & easy English learning sessions. Join 40,000+ successful students.',
+    title: 'Career Bridge.Studio — Practical Learning for Your Next Step',
+    description: 'Build practical skills with structured courses, guided learning, and progress tracking.',
     type: 'website',
     locale: 'en_US',
   },

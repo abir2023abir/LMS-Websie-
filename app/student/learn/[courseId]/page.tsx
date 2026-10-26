@@ -537,10 +537,10 @@ export default function StudentLearnPage() {
                 >
                   Save short question
                 </button>
-                <label className="block text-xs font-bold text-slate-500">Message from this course</label>
-                <input value={discussion} onChange={(e) => setDiscussion(e.target.value)} className="w-full border border-slate-200 rounded-xl px-3 py-2 text-sm" placeholder="Ask about this lesson" />
+                <label className="block text-xs font-bold text-slate-500">Ask your instructor about this lesson</label>
+                <textarea value={discussion} onChange={(e) => setDiscussion(e.target.value)} rows={3} className="w-full border border-slate-200 rounded-xl px-3 py-2 text-sm" placeholder="Ask a question about the lesson or module" />
                 <p className="text-[11px] text-slate-500">
-                  {course?.title || 'This course'} · Rank {standing.rank} of {standing.total} · {standing.progress}% progress
+                  {course?.title || 'This course'} · {currentModule?.title} · {currentLesson.title} · Rank {standing.rank} of {standing.total} · {standing.progress}% progress
                 </p>
                 <button
                   type="button"
@@ -550,7 +550,7 @@ export default function StudentLearnPage() {
                     if (!text) return;
                     const email = user?.email || '';
                     const courseTitle = course?.title || 'This course';
-                    const context = `${courseTitle} · Rank ${standing.rank} of ${standing.total} · ${standing.progress}%`;
+                    const context = `${courseTitle} · ${currentModule?.title || 'Module'} · ${currentLesson.title} · Rank ${standing.rank} of ${standing.total} · ${standing.progress}%`;
                     sendMessage(email || 'student@local', text, context);
                     if (!email) {
                       setMessageNote('Sign in with an email so the instructor, customer care, and admin can open this message.');
@@ -566,6 +566,10 @@ export default function StudentLearnPage() {
                         text,
                         courseId,
                         courseTitle,
+                        moduleTitle: currentModule?.title || '',
+                        lessonId: currentLesson.id,
+                        lessonTitle: currentLesson.title,
+                        instructorId: course?.instructorId || '',
                         rank: standing.rank,
                         rankTotal: standing.total,
                         progress: standing.progress,
@@ -577,10 +581,10 @@ export default function StudentLearnPage() {
                       return;
                     }
                     setDiscussion('');
-                    setMessageNote('Sent. The instructor, customer care, and admin panel can see this course and your rank.');
+                    setMessageNote('Sent to your course instructor and the admin inbox with this lesson and your progress attached.');
                   }}
                 >
-                  Send to inbox
+                  Send question
                 </button>
                 {messageNote && <p className="text-xs font-semibold">{messageNote}</p>}
               </div>

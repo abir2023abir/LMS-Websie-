@@ -95,35 +95,35 @@ export default function StudentDashboardPage() {
         {/* ── WELCOME HERO HEADER (HOMEPAGE GOLD/YELLOW GRADIENT) ── */}
         <section className="bg-gradient-to-b from-[#FACC15] via-[#FACC15] to-[#EAB308] pt-32 lg:pt-36 pb-14 px-4 sm:px-6 lg:px-8 text-[#111827]">
           <div className="max-w-7xl mx-auto flex flex-col md:flex-row items-start md:items-center justify-between gap-6">
-            <div className="flex items-center gap-5">
+            <div className="flex min-w-0 items-center gap-3 sm:gap-5">
               <div className="w-16 h-16 sm:w-20 sm:h-20 rounded-2xl bg-[#111827] text-[#FACC15] flex items-center justify-center font-extrabold text-2xl sm:text-3xl shadow-xl shadow-black/20 flex-shrink-0">
                 {userProfile?.name ? userProfile.name.charAt(0).toUpperCase() : 'S'}
               </div>
-              <div className="space-y-1">
+              <div className="min-w-0 space-y-1">
                 <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-[#111827] text-white text-xs font-bold shadow-sm">
                   <GraduationCap className="w-3.5 h-3.5 text-[#FACC15]" /> Student Panel
                 </div>
-                <h1 className="font-display font-extrabold text-2xl sm:text-4xl text-[#111827] tracking-tight">
+                <h1 className="font-display font-extrabold text-2xl sm:text-4xl text-[#111827] tracking-tight break-words">
                   Welcome back, {userProfile?.name || user?.displayName || 'Learner'}!
                 </h1>
-                <p className="text-xs sm:text-sm text-[#111827]/80 font-medium">
+                <p className="text-xs sm:text-sm text-[#111827]/80 font-medium break-all sm:break-normal">
                   {user?.email || 'Logged in to English Capsules Learning Environment'}
                 </p>
               </div>
             </div>
 
-            <div className="flex items-center gap-3">
+            <div className="flex w-full sm:w-auto items-center gap-2 sm:gap-3">
               <InboxButton scope="own" />
               <Link
                 href="/courses"
-                className="bg-[#111827] hover:bg-black text-white font-extrabold text-xs sm:text-sm px-6 py-3.5 rounded-full transition-all shadow-lg shadow-black/20 flex items-center gap-2"
+                className="min-h-11 flex-1 sm:flex-none justify-center bg-[#111827] hover:bg-black text-white font-extrabold text-xs sm:text-sm px-4 sm:px-6 py-3.5 rounded-full transition-all shadow-lg shadow-black/20 flex items-center gap-2"
               >
                 <Sparkles className="w-4 h-4 text-[#FACC15]" />
                 <span>Explore Capsules</span>
               </Link>
               <button
                 onClick={logout}
-                className="p-3 rounded-full bg-white/40 hover:bg-rose-500 hover:text-white text-[#111827] border border-black/10 transition-colors"
+                className="min-h-11 min-w-11 flex-shrink-0 flex items-center justify-center p-3 rounded-full bg-white/40 hover:bg-rose-500 hover:text-white text-[#111827] border border-black/10 transition-colors"
                 title="Sign Out"
               >
                 <LogOut className="w-4 h-4" />

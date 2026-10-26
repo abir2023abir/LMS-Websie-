@@ -1,92 +1,12 @@
 import { NextResponse } from 'next/server';
-// @ts-ignore
-import SSLCommerzPayment from 'sslcommerz-lts';
-import { readPaymentConfig } from '@/lib/payment-config';
-export async function POST(request: Request) {
-  try {
-    const host = request.headers.get('host') || 'localhost:3002';
-    const protocol = request.headers.get('x-forwarded-proto') || 'http';
-    const BASE_URL = process.env.NEXT_PUBLIC_SITE_URL || `${protocol}://${host}`;
 
-    const body = await request.json();
-    const { courseId, courseTitle, price, name, email, phone, paymentMethod } = body;
+export const dynamic = 'force-dynamic';
 
-    if (!courseId || !price || !email) {
-      return NextResponse.json(
-        { success: false, message: 'Missing required checkout details' },
-        { status: 400 }
-      );
-    }
-
-    const tran_id = `TXN_SSL_${Date.now()}_${Math.random().toString(36).substring(2, 7).toUpperCase()}`;
-    const config = readPaymentConfig();
-    const STORE_ID = config.storeId;
-    const STORE_PASSWORD = config.storePassword;
-    const wallet = paymentMethod === 'bkash' ? 'bkash' : paymentMethod === 'nagad' ? 'nagad' : paymentMethod === 'card' ? 'visa,master' : '';
-
-    const data = {
-      total_amount: price,
-      currency: 'BDT',
-      tran_id: tran_id,
-      success_url: `${BASE_URL}/api/payment/success?courseId=${courseId}&email=${encodeURIComponent(email)}`,
-      fail_url: `${BASE_URL}/api/payment/fail?courseId=${courseId}`,
-      cancel_url: `${BASE_URL}/api/payment/cancel?courseId=${courseId}`,
-      ipn_url: `${BASE_URL}/api/payment/ipn`,
-      shipping_method: 'Courier',
-      product_name: courseTitle || 'English Capsule Course',
-      product_category: 'Education',
-      product_profile: 'general',
-      cus_name: name || 'Student',
-      cus_email: email,
-      cus_add1: 'Dhaka',
-      cus_add2: 'Dhaka',
-      cus_city: 'Dhaka',
-      cus_state: 'Dhaka',
-      cus_postcode: '1000',
-      cus_country: 'Bangladesh',
-      cus_phone: phone || '01700000000',
-      cus_fax: '01700000000',
-      ship_name: name || 'Student',
-      ship_add1: 'Dhaka',
-      ship_add2: 'Dhaka',
-      ship_city: 'Dhaka',
-      ship_state: 'Dhaka',
-      ship_postcode: '1000',
-      ship_country: 'Bangladesh',
-      ...(wallet ? { multi_card_name: wallet } : {}),
-    };
-
-    if (!STORE_ID || STORE_ID === 'your_sslcommerz_store_id') {
-      return NextResponse.json({
-        success: true,
-        gatewayUrl: `${BASE_URL}/api/payment/success?courseId=${courseId}&email=${encodeURIComponent(email)}&tranId=${tran_id}`,
-        tranId: tran_id,
-        isSandboxMock: true,
-      });
-    }
-
-    // Initialize SSLCommerz SDK
-    const sslcz = new SSLCommerzPayment(STORE_ID, STORE_PASSWORD, config.live);
-    const apiResponse = await sslcz.init(data);
-
-    if (apiResponse?.GatewayPageURL) {
-      return NextResponse.json({
-        success: true,
-        gatewayUrl: apiResponse.GatewayPageURL,
-        tranId: tran_id,
-      });
-    }
-
-    // Fallback if GatewayPageURL not present
-    return NextResponse.json({
-      success: true,
-      gatewayUrl: `${BASE_URL}/api/payment/success?courseId=${courseId}&email=${encodeURIComponent(email)}&tranId=${tran_id}`,
-      tranId: tran_id,
-    });
-  } catch (err: any) {
-    return NextResponse.json(
-      { success: false, message: err.message || 'Payment initialization error' },
-      { status: 500 }
-    );
-  }
+// The gateway credentials/verification flow are not configured. Never return a
+// success URL that would make an unverified request look like a paid order.
+export async function POST() {
+  return NextResponse.json(
+    { success: false, mode: 'unavailable', message: 'Live payment processing is not configured. Use the clearly marked demo checkout to test enrollment.' },
+    { status: 503 },
+  );
 }

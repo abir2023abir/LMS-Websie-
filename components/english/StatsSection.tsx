@@ -4,10 +4,10 @@ import { ArrowRight, ChevronsRight } from 'lucide-react';
 import { motion } from 'framer-motion';
 
 const statCards = [
-  { value: '+10', label: 'Training Program', highlighted: false },
-  { value: '+1.5k', label: 'Online Course', highlighted: false },
-  { value: '+40k', label: 'Successful Student', highlighted: false },
-  { value: '+9', label: 'Years of Experience', highlighted: true },
+  { value: '01', label: 'Structured Learning Programmes', highlighted: false },
+  { value: '02', label: 'Practical Lessons & Activities', highlighted: false },
+  { value: '03', label: 'Trackable Learning Progress', highlighted: false },
+  { value: '04', label: 'Goal-Focused Skill Development', highlighted: true },
 ];
 
 export default function StatsSection() {
@@ -27,17 +27,17 @@ export default function StatsSection() {
             <div className="bg-[#FACC15] text-[#111827] p-1 rounded-full flex items-center justify-center">
               <ChevronsRight className="w-3.5 h-3.5" />
             </div>
-            <span className="text-xs font-bold tracking-wide">Who we are</span>
+            <span className="text-xs font-bold tracking-wide">WHO WE ARE</span>
           </div>
 
           {/* Headline */}
           <h2 className="font-display font-extrabold text-3xl sm:text-4xl lg:text-5xl text-[#111827] tracking-tight leading-tight">
-            From 2015 Till Now We Have New Educated People
+            A Better Learning Journey, Built Around Your Goals
           </h2>
 
           {/* Description */}
           <p className="text-slate-600 text-sm sm:text-base leading-relaxed font-normal">
-            We have set our goal to be more than just an educational center. We give our students a different experience based on quality education, personalized follow-up, and innovative ways of training. What distinguishes us is that we don&apos;t just teach the language, we create an enjoyable learning experience that helps our students become confident, develop, and achieve their goals.
+            Career Bridge . Studio helps learners develop knowledge, strengthen practical skills, and follow a structured path toward personal and professional growth. Learn through organised lessons, practise your skills, and track your progress as you move forward.
           </p>
         </motion.div>
 
@@ -57,34 +57,17 @@ export default function StatsSection() {
                   : 'bg-[#FEFCE8]/60 border-[#FEF9C3] hover:border-[#FACC15]/40'
               }`}
             >
-              <div className="font-display font-extrabold text-4xl sm:text-5xl text-[#111827] mb-2 tracking-tight">
+              <div className="font-display font-extrabold text-3xl sm:text-4xl text-[#111827] mb-3 tracking-tight">
                 {card.value}
               </div>
-              <div className="text-sm font-semibold text-slate-600">
+              <div className="text-sm font-semibold text-slate-600 leading-relaxed">
                 {card.label}
               </div>
             </motion.div>
           ))}
         </div>
 
-        {/* ── Bottom Action Button ── */}
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          whileInView={{ opacity: 1, y: 0 }}
-          viewport={{ once: true }}
-          transition={{ duration: 0.5, delay: 0.4 }}
-          className="pt-4"
-        >
-          <a
-            href="#contact"
-            className="group inline-flex items-center bg-[#FACC15] hover:bg-[#eab308] text-[#111827] rounded-full pl-6 pr-1.5 py-2.5 text-sm font-bold shadow-lg shadow-[#FACC15]/20 transition-all"
-          >
-            <span>Contact Us</span>
-            <div className="ml-3 w-8 h-8 rounded-full bg-[#111827] flex items-center justify-center transition-colors">
-              <ArrowRight className="w-4 h-4 text-[#FACC15]" />
-            </div>
-          </a>
-        </motion.div>
+
       </div>
     </section>
   );

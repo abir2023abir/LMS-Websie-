@@ -1,8 +1,9 @@
 import { NextResponse } from 'next/server';
 import { cookies } from 'next/headers';
-import { getAllCourses } from '@/lib/db';
 import { verifyAdminSession } from '@/lib/auth-server';
-import { isFirebaseDemo, takaFromUsd } from '@/lib/utils';
+import { isFirebaseDemo } from '@/lib/utils';
+import { listProfiles } from '@/lib/accounts';
+import { listPayments } from '@/lib/admin-studio';
 
 export async function GET() {
   const cookieStore = cookies();
@@ -15,28 +16,70 @@ export async function GET() {
   }
 
   try {
-    const courses = await getAllCourses();
-
-    // Calculate aggregated metrics from real Firestore courses & data
-    const totalCourses = courses.length || 10;
-    const totalStudents = courses.reduce((acc, c) => acc + (c.studentCount || 120), 0);
-    const calculatedCourseRevenue = courses.reduce((acc, c) => acc + (c.price * (c.studentCount || 12)), 0);
-
-    // Fetch real transactions from Firestore if available
+    let courses: any[] = [];
     let realTransactions: any[] = [];
+    let realStudents: any[] = [];
+    let dataAvailable = false;
+    try {
+      realStudents = (await listProfiles()).filter((profile) => profile.roles.includes('Student') && !profile.disabled);
+      dataAvailable = true;
+    } catch {
+      // Keep unavailable analytics empty instead of inventing counts.
+    }
     if (!isFirebaseDemo()) try {
       const { collection, getDocs, query, orderBy, limit } = await import('firebase/firestore');
       const { db } = await import('@/lib/firebase');
-      const txnQuery = query(collection(db, 'transactions'), orderBy('createdAt', 'desc'), limit(15));
-      const txnSnap = await getDocs(txnQuery);
+      const [courseSnap, txnSnap] = await Promise.all([
+        getDocs(collection(db, 'courses')),
+        getDocs(query(collection(db, 'transactions'), orderBy('createdAt', 'desc'), limit(200))),
+      ]);
+      courses = courseSnap.docs.map((doc) => ({ id: doc.id, ...doc.data() }));
+      dataAvailable = true;
       txnSnap.forEach((doc) => {
         realTransactions.push({ id: doc.id, ...doc.data() });
       });
     } catch {
-      // Offline fallback
+      dataAvailable = false;
     }
 
-    // Dynamic category distribution from courses
+    const manualPayments = listPayments();
+    const paidTransactions = [
+      ...realTransactions.filter((txn) => ['paid', 'success', 'valid', 'completed'].includes(String(txn.status || '').toLowerCase())),
+      ...manualPayments.filter((payment) => ['paid', 'approved'].includes(payment.status)).map((payment) => ({
+        ...payment, studentId: payment.studentEmail || payment.studentName,
+        createdAt: payment.createdAt, courseTitle: payment.courseTitle,
+      })),
+    ];
+    const totalStudents = new Set(paidTransactions.map((txn) => String(txn.studentId || txn.studentEmail || txn.studentName || '')).filter(Boolean)).size;
+    const calculatedCourseRevenue = paidTransactions.reduce((sum, txn) => sum + (Number(txn.amount) || 0), 0);
+    const courseAnalytics = new Map<string, { learners: Set<string>; revenue: number; transactions: number }>();
+    for (const txn of paidTransactions) {
+      const key = String(txn.courseId || txn.courseTitle || '');
+      if (!key) continue;
+      const record = courseAnalytics.get(key) || { learners: new Set<string>(), revenue: 0, transactions: 0 };
+      const learner = String(txn.studentId || txn.studentEmail || txn.studentName || '');
+      if (learner) record.learners.add(learner);
+      record.revenue += Number(txn.amount) || 0;
+      record.transactions += 1;
+      courseAnalytics.set(key, record);
+    }
+    const monthlyMap = new Map<string, { month: string; revenue: number; sales: number; signups: number }>();
+    for (const txn of paidTransactions) {
+      const date = txn.createdAt?.toDate ? txn.createdAt.toDate() : new Date(txn.createdAt || txn.date || '');
+      if (Number.isNaN(date.getTime())) continue;
+      const key = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}`;
+      const entry = monthlyMap.get(key) || { month: date.toLocaleDateString('en-US', { month: 'short', year: '2-digit' }), revenue: 0, sales: 0, signups: 0 };
+      entry.revenue += Number(txn.amount) || 0; entry.sales += 1; monthlyMap.set(key, entry);
+    }
+    for (const student of realStudents) {
+      const date = student.createdAt?.toDate ? student.createdAt.toDate() : new Date(student.createdAt || student.created_at || student.joinedDate || '');
+      if (Number.isNaN(date.getTime())) continue;
+      const key = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}`;
+      const entry = monthlyMap.get(key) || { month: date.toLocaleDateString('en-US', { month: 'short', year: '2-digit' }), revenue: 0, sales: 0, signups: 0 };
+      entry.signups += 1; monthlyMap.set(key, entry);
+    }
+
+    // Category inventory shows real course documents only.
     const categoryDistributionMap: Record<string, { count: number; students: number; revenue: number }> = {};
     courses.forEach((c) => {
       const cat = c.category || 'General English';
@@ -44,8 +87,9 @@ export async function GET() {
         categoryDistributionMap[cat] = { count: 0, students: 0, revenue: 0 };
       }
       categoryDistributionMap[cat].count += 1;
-      categoryDistributionMap[cat].students += c.studentCount || 0;
-      categoryDistributionMap[cat].revenue += (c.price * (c.studentCount || 0));
+        const analytics = courseAnalytics.get(String(c.id)) || courseAnalytics.get(String(c.title));
+        categoryDistributionMap[cat].students += analytics?.learners.size || 0;
+        categoryDistributionMap[cat].revenue += analytics?.revenue || 0;
     });
 
     const categoryDistribution = Object.entries(categoryDistributionMap).map(([name, data]) => ({
@@ -55,64 +99,30 @@ export async function GET() {
       revenue: data.revenue,
     }));
 
-    // Dynamic Top Selling Courses ordered by sales / studentCount
-    const sortedCourses = [...courses].sort((a, b) => (b.studentCount || 0) - (a.studentCount || 0));
-    const formattedTopCourses = sortedCourses.slice(0, 5).map((c, i) => ({
-      id: c.id || `c-${i}`,
-      title: c.title,
-      category: c.category || 'Spoken English',
-      sales: c.studentCount || 850,
-      rating: c.rating || 4.9,
-      price: takaFromUsd(c.price),
-      thumbnail: c.thumbnail || 'https://images.unsplash.com/photo-1522202176988-66273c2fd55f?w=200&h=150&fit=crop',
-    }));
-
-    // Dynamic Monthly revenue progression
-    const baseMonthly = [
-      { month: 'Jan', revenue: Math.round(calculatedCourseRevenue * 0.11), sales: Math.round(totalStudents * 0.10), signups: 120 },
-      { month: 'Feb', revenue: Math.round(calculatedCourseRevenue * 0.14), sales: Math.round(totalStudents * 0.13), signups: 155 },
-      { month: 'Mar', revenue: Math.round(calculatedCourseRevenue * 0.13), sales: Math.round(totalStudents * 0.12), signups: 140 },
-      { month: 'Apr', revenue: Math.round(calculatedCourseRevenue * 0.19), sales: Math.round(totalStudents * 0.18), signups: 210 },
-      { month: 'May', revenue: Math.round(calculatedCourseRevenue * 0.18), sales: Math.round(totalStudents * 0.17), signups: 195 },
-      { month: 'Jun', revenue: Math.round(calculatedCourseRevenue * 0.25), sales: Math.round(totalStudents * 0.30), signups: 280 },
-    ];
-
-    const fallbackStudents = [
-      { id: 'std-1', name: 'Tanvir Ahmed', email: 'tanvir@gmail.com', enrolledCourse: 'Spoken English & Accent Perfection', status: 'Active', joinedDate: '2026-08-14' },
-      { id: 'std-2', name: 'Nusaiba Rahaman', email: 'nusaiba@yahoo.com', enrolledCourse: 'IELTS Academic & General Band 8+', status: 'Active', joinedDate: '2026-08-15' },
-      { id: 'std-3', name: 'Mahmudul Hasan', email: 'mahmud@gmail.com', enrolledCourse: 'Business English & Corporate Communication', status: 'Active', joinedDate: '2026-08-16' },
-      { id: 'std-4', name: 'Sadia Sultana', email: 'sadia@gmail.com', enrolledCourse: 'Phonics Safari: Alphabet Magic', status: 'Active', joinedDate: '2026-08-17' },
-      { id: 'std-5', name: 'Kamrul Islam', email: 'kamrul@gmail.com', enrolledCourse: 'General English Foundation Capsule', status: 'Active', joinedDate: '2026-08-18' },
-    ];
-
     return NextResponse.json({
       success: true,
       stats: {
         totalStudents,
         totalRevenue: calculatedCourseRevenue,
-        completionRate: 82,
-        totalCourses,
+        completionRate: 0,
+        totalCourses: courses.length,
+        dataAvailable,
         courses: courses.map((c) => ({
           id: c.id,
           title: c.title,
           category: c.category || 'General English',
           price: c.price,
-          duration: c.duration || '20h',
-          lessonCount: c.lessonCount || 24,
-          studentCount: c.studentCount || 340,
+          duration: c.duration || '',
+          lessonCount: c.lessonCount || 0,
+          studentCount: 0,
           thumbnail: c.thumbnail,
-          rating: c.rating || 4.9,
+          rating: c.rating || 0,
         })),
-        topCourses: formattedTopCourses,
+        topCourses: [],
         categoryDistribution,
-        transactions: realTransactions.length > 0 ? realTransactions : [
-          { id: 'TXN-8921', studentName: 'Tanvir Ahmed', studentEmail: 'tanvir@gmail.com', courseTitle: 'Spoken English & Accent Perfection', amount: 49, status: 'VALID', paymentMethod: 'SSLCommerz (bKash)', date: 'Today, 2:15 PM' },
-          { id: 'TXN-8920', studentName: 'Nusaiba Rahaman', studentEmail: 'nusaiba@yahoo.com', courseTitle: 'IELTS Academic Band 8+ Masterclass', amount: 69, status: 'VALID', paymentMethod: 'SSLCommerz (Visa)', date: 'Today, 11:40 AM' },
-          { id: 'TXN-8919', studentName: 'Mahmudul Hasan', studentEmail: 'mahmud@gmail.com', courseTitle: 'Business English & Corporate Skills', amount: 59, status: 'VALID', paymentMethod: 'SSLCommerz (Nagad)', date: 'Yesterday, 8:20 PM' },
-          { id: 'TXN-8918', studentName: 'Sadia Sultana', studentEmail: 'sadia@gmail.com', courseTitle: 'Phonics Safari: Alphabet Magic', amount: 29, status: 'VALID', paymentMethod: 'SSLCommerz (bKash)', date: 'Aug 17, 2026' },
-        ],
-        studentsList: fallbackStudents,
-        monthlyRevenue: baseMonthly,
+        transactions: realTransactions,
+        studentsList: realStudents.map((student) => ({ id: student.id, name: student.name, email: student.email, created_at: student.created_at })),
+        monthlyRevenue: [...monthlyMap.entries()].sort(([a], [b]) => a.localeCompare(b)).slice(-6).map(([, value]) => value),
       },
     });
   } catch (error: any) {

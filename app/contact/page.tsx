@@ -4,7 +4,10 @@ import { Clock, Mail, MapPin, MessageCircle, Phone } from 'lucide-react';
 import FloatingNavbar from '@/components/english/FloatingNavbar';
 import EnglishFooter from '@/components/english/EnglishFooter';
 import { contactInfo } from '@/lib/contact';
-import CampusMessageForm from '@/components/messages/CampusMessageForm';
+import ConsultationBookingForm from '@/components/messages/ConsultationBookingForm';
+import { getContactBookingContent } from '@/lib/contact-booking-content';
+
+export const dynamic = 'force-dynamic';
 
 export const metadata: Metadata = {
   title: 'Contact Us — English Capsules',
@@ -17,7 +20,9 @@ const socials = [
   { label: 'YouTube', href: contactInfo.youtube },
 ];
 
-export default function ContactPage() {
+export default function ContactPage({ searchParams }: { searchParams?: Record<string, string | string[] | undefined> }) {
+  const initialService = typeof searchParams?.service === 'string' ? searchParams.service : '';
+  const initialBilling = typeof searchParams?.billing === 'string' ? searchParams.billing : '';
   return (
     <div className="min-h-screen bg-white text-[#111827] selection:bg-[#FACC15] selection:text-[#111827]">
       <FloatingNavbar />
@@ -107,11 +112,11 @@ export default function ContactPage() {
           </Link>
         </div>
 
-        <div className="lg:col-span-7 rounded-3xl overflow-hidden border border-slate-200 min-h-[420px] bg-slate-100">
+        <div className="lg:col-span-7 rounded-3xl overflow-hidden border border-slate-200 h-[320px] sm:h-[420px] lg:h-auto lg:min-h-[420px] bg-slate-100">
           <iframe
             title="English Capsules campus map"
             src={contactInfo.mapEmbed}
-            className="w-full h-[420px] lg:h-full min-h-[420px]"
+            className="w-full h-full min-h-0"
             loading="lazy"
           />
           <a
@@ -125,11 +130,7 @@ export default function ContactPage() {
         </div>
       </section>
 
-      <section className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 pb-16">
-        <div className="max-w-xl rounded-3xl border border-slate-200 p-6">
-          <CampusMessageForm />
-        </div>
-      </section>
+      <ConsultationBookingForm initialService={initialService} initialBilling={initialBilling} content={getContactBookingContent()} />
 
       <EnglishFooter />
     </div>

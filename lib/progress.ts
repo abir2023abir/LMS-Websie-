@@ -35,6 +35,18 @@ export interface EnrolledCourseWithProgress {
 const LOCAL_PROGRESS_KEY = 'lms_student_progress_records';
 const LOCAL_ENROLLMENTS_KEY = 'lms_student_enrollments';
 
+export function recordLocalCourseEnrollment(userId: string, courseId: string) {
+  if (typeof window === 'undefined' || !userId || !courseId) return;
+  const key = `${LOCAL_ENROLLMENTS_KEY}_${userId}`;
+  try {
+    const stored = JSON.parse(localStorage.getItem(key) || '[]');
+    const enrolled = Array.isArray(stored) ? stored.map(String) : [];
+    if (!enrolled.includes(courseId)) localStorage.setItem(key, JSON.stringify([...enrolled, courseId]));
+  } catch {
+    localStorage.setItem(key, JSON.stringify([courseId]));
+  }
+}
+
 // Helper to get local records
 function getLocalProgressStore(): Record<string, CourseProgressRecord> {
   if (typeof window === 'undefined') return {};
@@ -324,7 +336,7 @@ export async function getEnrolledCoursesWithProgress(
 ): Promise<EnrolledCourseWithProgress[]> {
   const localStore = getLocalProgressStore();
 
-  // Retrieve enrolled course IDs from localStorage or seed with defaults
+  // Enrollment is explicit; only courses purchased or manually granted to this student appear here.
   let enrolledIds: string[] = [];
   if (typeof window !== 'undefined') {
     try {
@@ -333,11 +345,6 @@ export async function getEnrolledCoursesWithProgress(
         enrolledIds = JSON.parse(raw);
       }
     } catch {}
-  }
-
-  // Default seed courses if newly registered user
-  if (!enrolledIds || enrolledIds.length === 0) {
-    enrolledIds = ['1', '2', '3', 'eng-1', 'eng-2'];
   }
 
   // Map to course data
@@ -350,70 +357,19 @@ export async function getEnrolledCoursesWithProgress(
     const storeKey = `${userId}_${courseId}`;
     let progress = localStore[storeKey];
 
-    // Default mock progress if uninitialized
+    // New enrollments always start with no course progress.
     if (!progress) {
-      const defaultCompletedLessons: Record<string, boolean> = {};
-      const defaultCompletedModules: Record<string, boolean> = {};
-      let completedLessonsCount = 0;
-
-      // Seed first course as 100% completed for instant certificate demonstration
-      if (courseId === '1' || courseId === 'eng-1') {
-        (course.modules || []).forEach((mod) => {
-          defaultCompletedModules[mod.id] = true;
-          (mod.lessons || []).forEach((les) => {
-            defaultCompletedLessons[les.id] = true;
-            completedLessonsCount++;
-          });
-        });
-        progress = {
-          courseId,
-          userId,
-          completedLessons: defaultCompletedLessons,
-          completedModules: defaultCompletedModules,
-          progressPercentage: 100,
-          isCompleted: true,
-          completedAt: new Date().toISOString(),
-          certificateId: 'EC-2026-8921',
-          lastAccessedLessonId: course.modules?.[0]?.lessons?.[0]?.id || 'les-0-0',
-          lastAccessedModuleId: course.modules?.[0]?.id || 'mod-1',
-          lastAccessedAt: new Date().toISOString(),
-        };
-      } else if (courseId === '2' || courseId === 'eng-2') {
-        // 50% completed
-        const firstMod = course.modules?.[0];
-        if (firstMod) {
-          defaultCompletedModules[firstMod.id] = true;
-          (firstMod.lessons || []).forEach((les) => {
-            defaultCompletedLessons[les.id] = true;
-            completedLessonsCount++;
-          });
-        }
-        const totalL = countTotalLessons(course.modules || []);
-        progress = {
-          courseId,
-          userId,
-          completedLessons: defaultCompletedLessons,
-          completedModules: defaultCompletedModules,
-          progressPercentage: totalL > 0 ? Math.round((completedLessonsCount / totalL) * 100) : 40,
-          isCompleted: false,
-          lastAccessedLessonId: course.modules?.[1]?.lessons?.[0]?.id || 'les-1-0',
-          lastAccessedModuleId: course.modules?.[1]?.id || 'mod-2',
-          lastAccessedAt: new Date().toISOString(),
-        };
-      } else {
-        // Fresh course
-        progress = {
-          courseId,
-          userId,
-          completedLessons: {},
-          completedModules: {},
-          progressPercentage: 0,
-          isCompleted: false,
-          lastAccessedLessonId: course.modules?.[0]?.lessons?.[0]?.id || 'les-0-0',
-          lastAccessedModuleId: course.modules?.[0]?.id || 'mod-1',
-          lastAccessedAt: new Date().toISOString(),
-        };
-      }
+      progress = {
+        courseId,
+        userId,
+        completedLessons: {},
+        completedModules: {},
+        progressPercentage: 0,
+        isCompleted: false,
+        lastAccessedLessonId: course.modules?.[0]?.lessons?.[0]?.id || 'les-0-0',
+        lastAccessedModuleId: course.modules?.[0]?.id || 'mod-1',
+        lastAccessedAt: new Date().toISOString(),
+      };
 
       localStore[storeKey] = progress;
       saveLocalProgressStore(localStore);

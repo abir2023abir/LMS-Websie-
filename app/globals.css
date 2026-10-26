@@ -18,14 +18,45 @@
 
 html {
   scroll-behavior: smooth;
+  -webkit-text-size-adjust: 100%;
+  text-size-adjust: 100%;
 }
 
 body {
+  min-width: 320px;
+  overflow-x: hidden;
   background-color: #ffffff;
   color: #111827;
   font-family: var(--font-inter), system-ui, sans-serif;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
+}
+
+/* Keep media and long user-provided content inside narrow viewports. */
+img,
+video,
+iframe {
+  max-width: 100%;
+}
+
+button,
+a,
+input,
+select,
+textarea {
+  touch-action: manipulation;
+}
+
+input,
+select,
+textarea {
+  max-width: 100%;
+}
+
+@media (max-width: 640px) {
+  html {
+    scroll-padding-top: 5rem;
+  }
 }
 
 /* ─── Scrollbar ─── */
@@ -57,4 +88,25 @@ body {
   font-size: 0.75rem;
   font-weight: 700;
   letter-spacing: 0.04em;
+}
+
+/* ─── CSS Animations ── */
+@keyframes float {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-12px); }
+}
+
+@keyframes rotate {
+  0%, 100% { transform: rotate(0deg) scale(1); }
+  25% { transform: rotate(15deg) scale(1.15); }
+  50% { transform: rotate(0deg) scale(1); }
+  75% { transform: rotate(-15deg) scale(1.15); }
+}
+
+.animate-float {
+  animation: float 5s ease-in-out infinite;
+}
+
+.animate-rotate {
+  animation: rotate 4s ease-in-out infinite;
 }

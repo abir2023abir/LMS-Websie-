@@ -3,8 +3,8 @@
 import {
   BarChart, Bar, LineChart, Line, ResponsiveContainer, RadialBarChart, RadialBar, PolarAngleAxis
 } from 'recharts';
-import { Users, Banknote, BookOpen, TrendingUp } from 'lucide-react';
-import { takaFromUsd } from '@/lib/utils';
+import { Users, Banknote, BookOpen } from 'lucide-react';
+import { taka } from '@/lib/utils';
 
 interface StatsCardsProps {
   stats?: {
@@ -17,20 +17,16 @@ interface StatsCardsProps {
 }
 
 export default function StatsCards({ stats }: StatsCardsProps) {
-  const totalStudents = stats?.totalStudents || 3240;
-  const totalRevenue = stats?.totalRevenue || 7280;
-  const completionRate = stats?.completionRate || 82;
-  const totalCourses = stats?.totalCourses || 10;
+  const totalStudents = stats?.totalStudents ?? 0;
+  const totalRevenue = stats?.totalRevenue ?? 0;
+  const completionRate = stats?.completionRate ?? 0;
+  const totalCourses = stats?.totalCourses ?? 0;
 
   // Extract real dynamic mini-chart data from monthly stats
   const monthlyData = stats?.monthlyRevenue || [];
-  const miniBarData = monthlyData.length > 0
-    ? monthlyData.map((m) => ({ val: m.sales }))
-    : [{ val: 12 }, { val: 19 }, { val: 15 }, { val: 28 }, { val: 22 }, { val: 35 }, { val: 30 }];
+  const miniBarData = monthlyData.map((m) => ({ val: m.sales }));
 
-  const miniLineData = monthlyData.length > 0
-    ? monthlyData.map((m) => ({ val: m.revenue }))
-    : [{ val: 2400 }, { val: 3200 }, { val: 2800 }, { val: 4500 }, { val: 3900 }, { val: 5600 }, { val: 7200 }];
+  const miniLineData = monthlyData.map((m) => ({ val: m.revenue }));
 
   const gaugeData = [
     { name: 'Completed', value: completionRate, fill: '#FACC15' }
@@ -52,15 +48,12 @@ export default function StatsCards({ stats }: StatsCardsProps) {
               <Users className="w-5 h-5" />
             </div>
             <div>
-              <p className="text-xs font-semibold text-slate-500">Total Enrolled Learners</p>
+              <p className="text-xs font-semibold text-slate-500">Enrolled Learners</p>
               <h3 className="font-display font-extrabold text-2xl text-slate-900">
                 {formatNumber(totalStudents)}
               </h3>
             </div>
           </div>
-          <span className="flex items-center text-[11px] font-bold text-green-600 bg-green-50 px-2.5 py-1 rounded-full">
-            <TrendingUp className="w-3 h-3 mr-0.5" /> +18.4%
-          </span>
         </div>
 
         <div className="h-14 w-full pt-2">
@@ -82,13 +75,10 @@ export default function StatsCards({ stats }: StatsCardsProps) {
             <div>
               <p className="text-xs font-semibold text-slate-500">Total Course Earnings</p>
               <h3 className="font-display font-extrabold text-2xl text-slate-900">
-                {takaFromUsd(totalRevenue)}
+                {totalRevenue > 0 ? taka(totalRevenue) : '৳0'}
               </h3>
             </div>
           </div>
-          <span className="flex items-center text-[11px] font-bold text-green-600 bg-green-50 px-2.5 py-1 rounded-full">
-            <TrendingUp className="w-3 h-3 mr-0.5" /> +24.1%
-          </span>
         </div>
 
         <div className="h-14 w-full pt-2">
@@ -111,14 +101,14 @@ export default function StatsCards({ stats }: StatsCardsProps) {
           </div>
 
           <div>
-            <div className="text-2xl font-extrabold font-display text-slate-900">{completionRate}%</div>
+          <div className="text-2xl font-extrabold font-display text-slate-900">{completionRate}%</div>
             <p className="text-[11px] text-slate-500 font-medium">Graduation & Cert Rate</p>
           </div>
 
           <div className="flex items-center gap-3 text-[11px]">
             <span className="text-slate-600"><strong>{totalCourses}</strong> Published</span>
             <span className="text-slate-300">•</span>
-            <span className="text-slate-600"><strong>99.4%</strong> Uptime</span>
+            <span className="text-slate-600"><strong>{totalStudents}</strong> Learners</span>
           </div>
         </div>
 

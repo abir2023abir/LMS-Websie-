@@ -1,12 +1,29 @@
 import { NextResponse } from 'next/server';
-import { continueDeskThread, getDeskThread, listDeskThreads, openDeskThread, replyDeskThread, type DeskKind } from '@/lib/desk-messages';
-import { staffDenied, staffIdentity } from '@/lib/user-session';
+import { bookedTimesOn, continueDeskThread, getDeskThread, listDeskThreads, openDeskThread, replyDeskThread, type DeskKind } from '@/lib/desk-messages';
+import { currentProfile, staffDenied, staffIdentity } from '@/lib/user-session';
+import { getCourseById, getCoursesByInstructor } from '@/lib/db';
+import { listCourseSettings } from '@/lib/accounts';
+
+async function visibleThreadsFor(staff: NonNullable<Awaited<ReturnType<typeof staffIdentity>>>) {
+  const threads = listDeskThreads();
+  if (staff.admin) return threads;
+  const [courses, settings] = await Promise.all([getCoursesByInstructor(staff.profile.id), listCourseSettings()]);
+  const assigned = settings.filter((row) => String(row.mentor_email || '').toLowerCase() === staff.profile.email.toLowerCase()).map((row) => row.course_id);
+  const courseIds = new Set([...courses.map((course) => course.id || ''), ...assigned]);
+  return threads.filter((item) => item.instructorId === staff.profile.id || item.instructorId.toLowerCase() === staff.profile.email.toLowerCase() || courseIds.has(item.courseId));
+}
 
 export async function GET(request: Request) {
   const url = new URL(request.url);
+  if (url.searchParams.get('availability') === '1') {
+    const date = url.searchParams.get('date') || '';
+    if (!/^\d{4}-\d{2}-\d{2}$/.test(date)) return NextResponse.json({ success: false, message: 'Invalid date.' }, { status: 400 });
+    return NextResponse.json({ success: true, bookedTimes: bookedTimesOn(date) });
+  }
   if (url.searchParams.get('board') === '1') {
-    if (!(await staffIdentity())) return staffDenied();
-    return NextResponse.json({ success: true, threads: listDeskThreads() });
+    const staff = await staffIdentity();
+    if (!staff) return staffDenied();
+    return NextResponse.json({ success: true, threads: await visibleThreadsFor(staff) });
   }
   const id = url.searchParams.get('id') || '';
   const email = (url.searchParams.get('email') || '').trim().toLowerCase();
@@ -21,25 +38,53 @@ export async function POST(request: Request) {
   try {
     const body = await request.json();
     if (body.action === 'reply') {
-      if (!(await staffIdentity())) return staffDenied();
-      const thread = replyDeskThread(String(body.id || ''), String(body.text || ''));
-      return NextResponse.json({ success: true, thread, threads: listDeskThreads() });
+      const staff = await staffIdentity();
+      if (!staff) return staffDenied();
+      const id = String(body.id || '');
+      const existing = getDeskThread(id);
+      if (!existing) return NextResponse.json({ success: false, message: 'Message not found.' }, { status: 404 });
+      if (!staff.admin && existing.instructorId !== staff.profile.id && existing.instructorId.toLowerCase() !== staff.profile.email.toLowerCase()) {
+        const [courses, settings] = await Promise.all([getCoursesByInstructor(staff.profile.id), listCourseSettings()]);
+        const assigned = settings.some((row) => row.course_id === existing.courseId && String(row.mentor_email || '').toLowerCase() === staff.profile.email.toLowerCase());
+        if (!assigned && !courses.some((course) => course.id === existing.courseId)) return staffDenied();
+      }
+      const thread = replyDeskThread(id, String(body.text || ''), staff.admin ? 'admin' : 'instructor');
+      return NextResponse.json({ success: true, thread, threads: await visibleThreadsFor(staff) });
     }
     if (body.id) {
       const thread = continueDeskThread(String(body.id), String(body.email || ''), String(body.text || ''));
       return NextResponse.json({ success: true, thread });
     }
     const kind: DeskKind = body.kind === 'service' ? 'service' : 'student';
+    const courseId = String(body.courseId || '');
+    const sender = kind === 'student' ? await currentProfile() : null;
+    if (kind === 'student' && !sender) return NextResponse.json({ success: false, message: 'Sign in to send a course question.' }, { status: 401 });
+    if (kind === 'student' && !sender?.roles.includes('Student')) return NextResponse.json({ success: false, message: 'Only a student account can send course questions.' }, { status: 403 });
+    if (kind === 'student' && !courseId) return NextResponse.json({ success: false, message: 'Course context is required for a lesson question.' }, { status: 400 });
+    const course = kind === 'student' && courseId ? await getCourseById(courseId) : null;
+    if (kind === 'student' && !course) return NextResponse.json({ success: false, message: 'Could not find that course.' }, { status: 404 });
     const thread = openDeskThread({
       kind,
-      name: String(body.name || ''),
-      email: String(body.email || ''),
+      name: sender?.name || String(body.name || ''),
+      email: sender?.email || String(body.email || ''),
       text: String(body.text || ''),
-      courseId: String(body.courseId || ''),
-      courseTitle: String(body.courseTitle || ''),
+      courseId,
+      courseTitle: String(course?.title || body.courseTitle || ''),
       rank: Number(body.rank) || 0,
       rankTotal: Number(body.rankTotal) || 0,
       progress: Number(body.progress) || 0,
+      instructorId: course?.instructorId || '',
+      instructorName: course?.instructorName || course?.instructorId || '',
+      moduleTitle: String(body.moduleTitle || ''),
+      lessonId: String(body.lessonId || ''),
+      lessonTitle: String(body.lessonTitle || ''),
+      phone: String(body.phone || ''),
+      topic: String(body.topic || ''),
+      billing: String(body.billing || ''),
+      appointmentDate: String(body.appointmentDate || ''),
+      appointmentTime: String(body.appointmentTime || ''),
+      company: String(body.company || ''),
+      monthlyRevenue: String(body.monthlyRevenue || ''),
     });
     return NextResponse.json({ success: true, thread });
   } catch (error) {

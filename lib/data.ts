@@ -81,11 +81,95 @@ export const categories: Category[] = [
 ];
 
 /* ─────────────────────────────────────────────
-   Curated English Capsules Catalog
+   All Courses (for courses page)
 ───────────────────────────────────────────── */
 export const featuredCourses: Course[] = [
   {
     id: '1',
+    slug: 'foundations-of-bookkeeping-accounting',
+    title: 'Foundations of Bookkeeping & Accounting',
+    description:
+      'Learn transaction recording, ledgers, basic accounting principles, and financial statements.',
+    instructor: {
+      name: 'Career Bridge Team',
+      avatar: 'https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?w=120&h=120&fit=crop',
+      title: 'Finance & Accounting Expert',
+    },
+    thumbnail:
+      'https://images.unsplash.com/photo-1554224155-6726b3ff858f?w=600&h=340&fit=crop&auto=format',
+    category: 'Accounting',
+    categoryColor: 'bg-emerald-500/20 text-emerald-300 border-emerald-500/30',
+    price: 49,
+    originalPrice: 99,
+    rating: 4.8,
+    reviewCount: 8420,
+    studentCount: 32000,
+    duration: '20h 00m',
+    lessonCount: 30,
+    level: 'Beginner',
+    tags: ['Bookkeeping', 'Accounting', 'Financial Statements', 'Ledgers'],
+    isFeatured: true,
+    isNew: false,
+    isBestseller: true,
+  },
+  {
+    id: '2',
+    slug: 'business-finance-financial-reporting',
+    title: 'Business Finance & Financial Reporting',
+    description:
+      'Understand income, expenses, cash flow, and financial reports for better business decisions.',
+    instructor: {
+      name: 'Career Bridge Team',
+      avatar: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=120&h=120&fit=crop',
+      title: 'Finance Expert',
+    },
+    thumbnail:
+      'https://images.unsplash.com/photo-1460925895917-afdab827c52f?w=600&h=340&fit=crop&auto=format',
+    category: 'Business',
+    categoryColor: 'bg-blue-500/20 text-blue-300 border-blue-500/30',
+    price: 59,
+    originalPrice: 129,
+    rating: 4.85,
+    reviewCount: 6150,
+    studentCount: 24500,
+    duration: '25h 30m',
+    lessonCount: 35,
+    level: 'Intermediate',
+    tags: ['Business Finance', 'Financial Reporting', 'Cash Flow', 'Decision Making'],
+    isFeatured: true,
+    isNew: false,
+    isBestseller: true,
+  },
+  {
+    id: '3',
+    slug: 'digital-skills-career-readiness',
+    title: 'Digital Skills & Career Readiness',
+    description:
+      'Develop practical digital skills, improve workplace readiness, and prepare for new opportunities.',
+    instructor: {
+      name: 'Career Bridge Team',
+      avatar: 'https://images.unsplash.com/photo-1580489944761-15a19d654956?w=120&h=120&fit=crop',
+      title: 'Digital Skills Instructor',
+    },
+    thumbnail:
+      'https://images.unsplash.com/photo-1516321318423-f06f85e504b3?w=600&h=340&fit=crop&auto=format',
+    category: 'Digital Skills',
+    categoryColor: 'bg-purple-500/20 text-purple-300 border-purple-500/30',
+    price: 39,
+    originalPrice: 79,
+    rating: 4.9,
+    reviewCount: 9800,
+    studentCount: 41000,
+    duration: '18h 00m',
+    lessonCount: 28,
+    level: 'Beginner',
+    tags: ['Digital Skills', 'Career Readiness', 'Workplace Skills', 'Professional Development'],
+    isFeatured: true,
+    isNew: true,
+    isBestseller: false,
+  },
+  {
+    id: '4',
     slug: 'general-english-foundation-capsule',
     title: 'General English Foundation Capsule: Zero to Confident Speaker',
     description:
@@ -108,12 +192,12 @@ export const featuredCourses: Course[] = [
     lessonCount: 36,
     level: 'Beginner',
     tags: ['Vocabulary', 'Everyday English', 'Grammar', 'Confidence'],
-    isFeatured: true,
+    isFeatured: false,
     isNew: false,
     isBestseller: true,
   },
   {
-    id: '2',
+    id: '5',
     slug: 'spoken-english-accent-perfection',
     title: 'Spoken English & Accent Perfection: Sound Like a Native',
     description:
@@ -136,12 +220,12 @@ export const featuredCourses: Course[] = [
     lessonCount: 42,
     level: 'Intermediate',
     tags: ['Spoken English', 'Accent Training', 'Fluency', 'Phonetics'],
-    isFeatured: true,
+    isFeatured: false,
     isNew: false,
     isBestseller: true,
   },
   {
-    id: '3',
+    id: '6',
     slug: 'business-english-corporate-communication',
     title: 'Business English & Corporate Communication Masterclass',
     description:
@@ -164,12 +248,12 @@ export const featuredCourses: Course[] = [
     lessonCount: 38,
     level: 'Advanced',
     tags: ['Business English', 'Email Writing', 'Presentations', 'Leadership'],
-    isFeatured: true,
+    isFeatured: false,
     isNew: true,
     isBestseller: false,
   },
   {
-    id: '4',
+    id: '7',
     slug: 'ielts-academic-general-band-8-masterclass',
     title: 'IELTS Academic & General Band 8+ Ultimate Masterclass',
     description:
@@ -192,12 +276,12 @@ export const featuredCourses: Course[] = [
     lessonCount: 54,
     level: 'Intermediate',
     tags: ['IELTS', 'Band 8+', 'Speaking Interview', 'Writing Task 2'],
-    isFeatured: true,
+    isFeatured: false,
     isNew: false,
     isBestseller: true,
   },
   {
-    id: '5',
+    id: '8',
     slug: 'english-grammar-mastery-writing-mechanics',
     title: 'English Grammar Mastery & Advanced Sentence Mechanics',
     description:
@@ -225,7 +309,7 @@ export const featuredCourses: Course[] = [
     isBestseller: false,
   },
   {
-    id: '6',
+    id: '9',
     slug: 'english-job-interviews-career-success',
     title: 'English for Job Interviews & International Remote Careers',
     description:
@@ -248,92 +332,8 @@ export const featuredCourses: Course[] = [
     lessonCount: 26,
     level: 'Intermediate',
     tags: ['Interviews', 'Career English', 'STAR Method', 'Remote Work'],
-    isFeatured: true,
-    isNew: true,
-    isBestseller: false,
-  },
-  {
-    id: '7',
-    slug: 'kids-young-learners-english-jumpstart',
-    title: 'Kids & Young Learners English: Fun Phonics & Storytelling',
-    description:
-      'Engaging, colorful English program for young learners (ages 6-12). Builds foundational phonics, vocabulary, listening habits, and speaking confidence through games.',
-    instructor: {
-      name: 'Emily Clarke',
-      avatar: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=120&h=120&fit=crop',
-      title: 'Early Childhood English Educator',
-    },
-    thumbnail:
-      'https://images.unsplash.com/photo-1503676260728-1c00da094a0b?w=600&h=340&fit=crop&auto=format',
-    category: 'Kids English',
-    categoryColor: 'bg-cyan-500/20 text-cyan-300 border-cyan-500/30',
-    price: 29,
-    originalPrice: 79,
-    rating: 4.94,
-    reviewCount: 6320,
-    studentCount: 38400,
-    duration: '16h 20m',
-    lessonCount: 28,
-    level: 'Beginner',
-    tags: ['Kids English', 'Phonics', 'Storytelling', 'Early Learning'],
     isFeatured: false,
     isNew: true,
-    isBestseller: false,
-  },
-  {
-    id: '8',
-    slug: 'british-american-phonetics-accent-softening',
-    title: 'British & American Phonetics: IPA & Advanced Articulation',
-    description:
-      'Deep dive into the International Phonetic Alphabet (IPA), glottal stops, dark /l/, rhotic vs non-rhotic vowels, and clear speech projection for public speaking.',
-    instructor: {
-      name: 'Christopher Lee',
-      avatar: 'https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=120&h=120&fit=crop',
-      title: 'Voice Actor & Phonetics Coach',
-    },
-    thumbnail:
-      'https://images.unsplash.com/photo-1516321318423-f06f85e504b3?w=600&h=340&fit=crop&auto=format',
-    category: 'Spoken English',
-    categoryColor: 'bg-amber-500/20 text-amber-300 border-amber-500/30',
-    price: 55,
-    originalPrice: 135,
-    rating: 4.9,
-    reviewCount: 7800,
-    studentCount: 42100,
-    duration: '26h 15m',
-    lessonCount: 34,
-    level: 'Advanced',
-    tags: ['Phonetics', 'IPA', 'Public Speaking', 'Accent Softening'],
-    isFeatured: false,
-    isNew: false,
-    isBestseller: false,
-  },
-  {
-    id: '9',
-    slug: 'toefl-ibt-110-comprehensive-bootcamp',
-    title: 'TOEFL iBT 110+ Comprehensive Score Booster Bootcamp',
-    description:
-      'Score high on the TOEFL iBT exam. Intensive practice for academic lectures, integrated speaking tasks, independent writing templates, and timed reading passages.',
-    instructor: {
-      name: 'Sophia Martinez',
-      avatar: 'https://images.unsplash.com/photo-1517841905240-472988babdf9?w=120&h=120&fit=crop',
-      title: 'Certified TOEFL Master Trainer',
-    },
-    thumbnail:
-      'https://images.unsplash.com/photo-1497633762265-9d179a990aa6?w=600&h=340&fit=crop&auto=format',
-    category: 'TOEFL & Exams',
-    categoryColor: 'bg-rose-500/20 text-rose-300 border-rose-500/30',
-    price: 65,
-    originalPrice: 169,
-    rating: 4.87,
-    reviewCount: 8150,
-    studentCount: 46200,
-    duration: '38h 00m',
-    lessonCount: 46,
-    level: 'Advanced',
-    tags: ['TOEFL', 'Exam Prep', 'Academic English', 'Study Abroad'],
-    isFeatured: false,
-    isNew: false,
     isBestseller: false,
   },
   {
@@ -360,9 +360,99 @@ export const featuredCourses: Course[] = [
     lessonCount: 24,
     level: 'Beginner',
     tags: ['Idioms', 'Phrasal Verbs', 'Conversational English', 'Free Capsule'],
+    isFeatured: false,
+    isNew: false,
+    isBestseller: true,
+  },
+];
+
+/* ─────────────────────────────────────────────
+   Homepage Featured Courses (Only the 3 specific courses from PDF)
+───────────────────────────────────────────── */
+export const homepageFeaturedCourses: Course[] = [
+  {
+    id: '1',
+    slug: 'foundations-of-bookkeeping-accounting',
+    title: 'Foundations of Bookkeeping & Accounting',
+    description:
+      'Learn transaction recording, ledgers, basic accounting principles, and financial statements.',
+    instructor: {
+      name: 'Career Bridge Team',
+      avatar: 'https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?w=120&h=120&fit=crop',
+      title: 'Finance & Accounting Expert',
+    },
+    thumbnail:
+      'https://images.unsplash.com/photo-1554224155-6726b3ff858f?w=600&h=340&fit=crop&auto=format',
+    category: 'Accounting',
+    categoryColor: 'bg-emerald-500/20 text-emerald-300 border-emerald-500/30',
+    price: 49,
+    originalPrice: 99,
+    rating: 4.8,
+    reviewCount: 8420,
+    studentCount: 32000,
+    duration: '20h 00m',
+    lessonCount: 30,
+    level: 'Beginner',
+    tags: ['Bookkeeping', 'Accounting', 'Financial Statements', 'Ledgers'],
     isFeatured: true,
     isNew: false,
     isBestseller: true,
+  },
+  {
+    id: '2',
+    slug: 'business-finance-financial-reporting',
+    title: 'Business Finance & Financial Reporting',
+    description:
+      'Understand income, expenses, cash flow, and financial reports for better business decisions.',
+    instructor: {
+      name: 'Career Bridge Team',
+      avatar: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=120&h=120&fit=crop',
+      title: 'Finance Expert',
+    },
+    thumbnail:
+      'https://images.unsplash.com/photo-1460925895917-afdab827c52f?w=600&h=340&fit=crop&auto=format',
+    category: 'Business',
+    categoryColor: 'bg-blue-500/20 text-blue-300 border-blue-500/30',
+    price: 59,
+    originalPrice: 129,
+    rating: 4.85,
+    reviewCount: 6150,
+    studentCount: 24500,
+    duration: '25h 30m',
+    lessonCount: 35,
+    level: 'Intermediate',
+    tags: ['Business Finance', 'Financial Reporting', 'Cash Flow', 'Decision Making'],
+    isFeatured: true,
+    isNew: false,
+    isBestseller: true,
+  },
+  {
+    id: '3',
+    slug: 'digital-skills-career-readiness',
+    title: 'Digital Skills & Career Readiness',
+    description:
+      'Develop practical digital skills, improve workplace readiness, and prepare for new opportunities.',
+    instructor: {
+      name: 'Career Bridge Team',
+      avatar: 'https://images.unsplash.com/photo-1580489944761-15a19d654956?w=120&h=120&fit=crop',
+      title: 'Digital Skills Instructor',
+    },
+    thumbnail:
+      'https://images.unsplash.com/photo-1516321318423-f06f85e504b3?w=600&h=340&fit=crop&auto=format',
+    category: 'Digital Skills',
+    categoryColor: 'bg-purple-500/20 text-purple-300 border-purple-500/30',
+    price: 39,
+    originalPrice: 79,
+    rating: 4.9,
+    reviewCount: 9800,
+    studentCount: 41000,
+    duration: '18h 00m',
+    lessonCount: 28,
+    level: 'Beginner',
+    tags: ['Digital Skills', 'Career Readiness', 'Workplace Skills', 'Professional Development'],
+    isFeatured: true,
+    isNew: true,
+    isBestseller: false,
   },
 ];
 

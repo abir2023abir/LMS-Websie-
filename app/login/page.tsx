@@ -84,19 +84,15 @@ function LoginPageContent() {
       <div className="sm:mx-auto sm:w-full sm:max-w-md text-center z-10 px-4 space-y-3">
         <Link href="/" className="inline-flex items-center gap-2 group">
           <div className="border-2 border-[#111827] px-3.5 py-1.5 rounded-2xl bg-[#FACC15] shadow-md flex flex-col items-center justify-center">
-            <span className="font-display font-black text-xs tracking-wider text-[#111827] uppercase leading-none">
-              English
-            </span>
-            <span className="font-display font-bold text-[9px] tracking-widest text-[#111827] uppercase leading-none mt-0.5">
-              Capsules
-            </span>
+            <span className="font-display font-black text-xs tracking-wider text-[#111827] uppercase leading-none">Career Bridge</span>
+            <span className="font-display font-bold text-[9px] tracking-widest text-[#111827] uppercase leading-none mt-0.5">.Studio</span>
           </div>
         </Link>
         <h2 className="font-display font-extrabold text-3xl sm:text-4xl text-[#111827] tracking-tight">
           Welcome Back
         </h2>
         <p className="text-xs sm:text-sm text-slate-600 font-medium">
-          Sign in to access your English classroom & certificate portal
+          Sign in to access your learning account and courses.
         </p>
       </div>
 
@@ -125,7 +121,7 @@ function LoginPageContent() {
                   required
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
-                  placeholder="student@englishcapsules.com"
+                  placeholder="student@example.com"
                   className="w-full bg-slate-50 border border-slate-200 rounded-xl pl-10 pr-4 py-3 text-xs sm:text-sm text-[#111827] placeholder-slate-400 focus:outline-none focus:border-[#111827] transition-colors font-medium"
                 />
               </div>

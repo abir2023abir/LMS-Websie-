@@ -4,12 +4,15 @@ create table if not exists public.profiles (
   id text primary key,
   email text not null unique,
   name text not null,
+  phone text not null default '',
   password_hash text not null,
   roles text[] not null default '{Student}',
   active_role text not null default 'Student',
   disabled boolean not null default false,
   created_at timestamptz not null default now()
 );
+
+alter table public.profiles add column if not exists phone text not null default '';
 
 create table if not exists public.guardian_links (
   id text primary key,

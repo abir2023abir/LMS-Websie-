@@ -35,7 +35,7 @@ export default function ContactFormSection() {
           </div>
 
           <h2 className="font-display font-extrabold text-3xl sm:text-4xl text-white tracking-tight">
-            Here To Answer Your Questions And Support You Anytime
+            We&apos;re Here to Help You Take the Next Step
           </h2>
         </div>
 
@@ -77,9 +77,12 @@ export default function ContactFormSection() {
                   className="w-full bg-dark-900 border border-white/15 rounded-2xl px-4 py-3.5 text-sm text-white focus:outline-none focus:border-[#FACC15]"
                 >
                   <option value="">Choose the desired program</option>
+                  <option value="bookkeeping">Foundations of Bookkeeping & Accounting</option>
+                  <option value="business-finance">Business Finance & Financial Reporting</option>
+                  <option value="digital-skills">Digital Skills & Career Readiness</option>
                   <option value="general">General English Foundation</option>
                   <option value="spoken">Spoken English & Accent</option>
-                  <option value="business">Business English & Career</option>
+                  <option value="business-english">Business English & Career</option>
                   <option value="ielts">IELTS Band 8+ Masterclass</option>
                 </select>
               </div>
@@ -89,7 +92,7 @@ export default function ContactFormSection() {
                   type="submit"
                   className="group inline-flex items-center bg-[#FACC15] hover:bg-[#eab308] text-[#111827] rounded-full pl-6 pr-1.5 py-3 text-xs font-extrabold shadow-lg shadow-[#FACC15]/20 transition-all"
                 >
-                  <span>Contact Us</span>
+                  <span>Send Enquiry</span>
                   <div className="ml-3 w-7 h-7 rounded-full bg-[#111827] flex items-center justify-center">
                     <ArrowRight className="w-3.5 h-3.5 text-[#FACC15]" />
                   </div>

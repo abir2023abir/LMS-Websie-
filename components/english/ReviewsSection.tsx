@@ -7,24 +7,24 @@ import { motion } from 'framer-motion';
 
 const reviews = [
   {
-    name: 'Ahmed Mohammed',
-    role: 'Software Engineer',
+    name: '[Verified learner name]',
+    role: '[Course or programme]',
     avatar: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=100&h=100&fit=crop',
-    quote: 'I used to feel nervous about learning English, but this course changed everything. The lessons were clear and engaging, and my teacher was always supportive. Now I’ve built a strong foundation.',
+    quote: '[Insert a genuine review from a verified learner.]',
     rating: 5,
   },
   {
-    name: 'Sara Al-Mansoori',
-    role: 'Marketing Manager',
+    name: '[Verified learner name]',
+    role: '[Course or programme]',
     avatar: 'https://images.unsplash.com/photo-1517841905240-472988babdf9?w=100&h=100&fit=crop',
-    quote: 'English Capsules gave me the confidence to present in international business meetings. The practical role-play sessions and personal follow-up were incredible!',
+    quote: '[Insert a genuine review from a verified learner.]',
     rating: 5,
   },
   {
-    name: 'Khaled Hassan',
-    role: 'IELTS Student (Band 8.0)',
+    name: '[Verified learner name]',
+    role: '[Course or programme]',
     avatar: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=100&h=100&fit=crop',
-    quote: 'Achieved Band 8.0 in my first attempt! The strategies for speaking and writing modules saved me months of preparation.',
+    quote: '[Insert a genuine review from a verified learner.]',
     rating: 5,
   },
 ];
@@ -49,12 +49,15 @@ export default function ReviewsSection() {
             <div className="bg-[#FACC15] text-[#111827] p-1 rounded-full flex items-center justify-center">
               <ChevronsRight className="w-3.5 h-3.5" />
             </div>
-            <span className="text-xs font-bold tracking-wide">Reviews</span>
+            <span className="text-xs font-bold tracking-wide">LEARNER FEEDBACK</span>
           </div>
 
           <h2 className="font-display font-extrabold text-3xl sm:text-4xl text-white tracking-tight">
-            What Our Students Say
+            What Our Learners Say
           </h2>
+          <p className="text-slate-400 text-sm sm:text-base max-w-2xl">
+            Real experiences from learners who have used our courses and learning resources.
+          </p>
         </div>
 
         {/* Reviews Cards Row */}
@@ -72,7 +75,7 @@ export default function ReviewsSection() {
 
               <div className="space-y-4">
                 <h3 className="font-display font-bold text-lg text-white">
-                  The Best Start To Your English Journey
+                  A Better Learning Experience
                 </h3>
                 <p className="text-xs text-slate-300 leading-relaxed font-normal">
                   &ldquo;{rev.quote}&rdquo;

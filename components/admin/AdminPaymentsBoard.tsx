@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect, useState } from 'react';
+import Image from 'next/image';
 import { Pencil, Trash2 } from 'lucide-react';
 import AdminModal, { fieldClass } from './AdminModal';
 import { taka } from '@/lib/utils';
@@ -36,9 +37,16 @@ export default function AdminPaymentsBoard() {
   const [open, setOpen] = useState(false);
   const [viewing, setViewing] = useState<Payment | null>(null);
   const [note, setNote] = useState('');
+  const [loading, setLoading] = useState(true);
+  const [loadError, setLoadError] = useState('');
 
-  const load = () => fetch('/api/admin/payment-ledger').then((res) => res.json()).then((data) => setPayments(data.payments || []));
-  useEffect(() => { load(); }, []);
+  const load = async () => {
+    setLoading(true); setLoadError('');
+    try { const res = await fetch('/api/admin/payment-ledger', { cache: 'no-store' }); const data = await res.json(); if (!res.ok) throw new Error(data.message || 'Could not load payment records.'); setPayments(data.payments || []); }
+    catch (error) { setLoadError(error instanceof Error ? error.message : 'Could not load payment records.'); }
+    finally { setLoading(false); }
+  };
+  useEffect(() => { void load(); }, []);
 
   const setStatus = async (id: string, status: Payment['status']) => {
     const res = await fetch('/api/admin/payment-ledger', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ action: 'status', id, status }) });
@@ -76,7 +84,8 @@ export default function AdminPaymentsBoard() {
         </div>
         <button type="button" onClick={() => { setDraft(empty); setFile(null); setNote(''); setOpen(true); }} className="bg-[#FACC15] text-[#111827] text-xs font-bold px-4 py-2 rounded-full">Add manual payment</button>
       </div>
-      <div className="overflow-x-auto">
+      {loadError && <div role="alert" className="rounded-xl border border-rose-200 bg-rose-50 p-4 text-sm text-rose-700">{loadError} <button type="button" onClick={() => void load()} className="ml-2 font-bold underline">Try again</button></div>}
+      {loading ? <div className="py-10 text-center text-sm text-slate-500">Loading payment records…</div> : payments.length === 0 ? <div className="rounded-2xl bg-slate-50 p-10 text-center"><p className="font-semibold text-slate-700">No payment records yet</p><p className="mt-1 text-sm text-slate-500">Verified and manually recorded payments will appear here.</p></div> : <div className="overflow-x-auto">
         <table className="w-full text-left text-xs">
           <thead>
             <tr className="border-b text-slate-400 uppercase">
@@ -111,7 +120,7 @@ export default function AdminPaymentsBoard() {
             ))}
           </tbody>
         </table>
-      </div>
+      </div>}
       {open && (
         <AdminModal title={draft.id ? 'Edit payment' : 'Add manual payment'} onClose={() => setOpen(false)}>
           <div className="space-y-3">
@@ -146,7 +155,7 @@ export default function AdminPaymentsBoard() {
             <p><span className="font-bold">Status:</span> {viewing.status}</p>
             <p><span className="font-bold">Transaction ID:</span> {viewing.transactionId || '—'}</p>
             {viewing.screenshot ? (
-              <img src={`/api/admin/payment-ledger?proof=${encodeURIComponent(viewing.screenshot)}`} alt="Payment screenshot" className="w-full rounded-xl border" />
+              <Image src={`/api/admin/payment-ledger?proof=${encodeURIComponent(viewing.screenshot)}`} alt="Payment screenshot" width={900} height={700} unoptimized className="h-auto w-full rounded-xl border" />
             ) : (
               <p className="text-slate-500">No screenshot attached.</p>
             )}

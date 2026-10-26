@@ -3,24 +3,24 @@
 import { useState } from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
-import { ArrowRight, ChevronsRight, Sparkles, Clock, BookOpen, Star, ChevronRight } from 'lucide-react';
+import { ArrowRight, ChevronsRight, Sparkles, Clock, BookOpen, ChevronRight } from 'lucide-react';
 import { motion } from 'framer-motion';
 import CheckoutModal from '@/components/checkout/CheckoutModal';
-import { featuredCourses } from '@/lib/data';
+import { featuredCourses, homepageFeaturedCourses } from '@/lib/data';
 import type { CourseSchema } from '@/types/course';
 import { takaFromUsd } from '@/lib/utils';
 
-const programCategories = ['All', 'Spoken English', 'IELTS Prep', 'Business English', 'General English'];
+const programCategories = ['All Courses', 'Accounting', 'Business', 'Digital Skills'];
 
 export default function ProgramsSection() {
-  const [activeCategory, setActiveCategory] = useState('All');
+  const [activeCategory, setActiveCategory] = useState('All Courses');
   const [selectedCourse, setSelectedCourse] = useState<CourseSchema | null>(null);
   const [checkoutOpen, setCheckoutOpen] = useState(false);
 
   const filtered = (
-    activeCategory === 'All'
-      ? featuredCourses
-      : featuredCourses.filter((c) => c.category === activeCategory)
+    activeCategory === 'All Courses'
+      ? homepageFeaturedCourses
+      : homepageFeaturedCourses.filter((c) => c.category === activeCategory)
   ).slice(0, 3);
 
   const handleJoinNow = (course: any) => {
@@ -62,15 +62,15 @@ export default function ProgramsSection() {
             <div className="bg-[#FACC15] text-[#111827] p-1 rounded-full flex items-center justify-center">
               <ChevronsRight className="w-3.5 h-3.5" />
             </div>
-            <span className="text-xs font-bold tracking-wide">Featured Capsules</span>
+            <span className="text-xs font-bold tracking-wide">EXPLORE OUR COURSES</span>
           </div>
 
           <h2 className="font-display font-extrabold text-3xl sm:text-4xl text-white tracking-tight leading-tight">
-            Programs Designed To Accelerate Your English Fluency
+            Find the Right Course for Your Next Step
           </h2>
 
           <p className="text-slate-400 text-xs sm:text-sm max-w-xl mx-auto">
-            Practical, capsule-sized lessons engineered for real-life conversations, global job interviews, and IELTS mastery.
+            Explore structured learning programmes designed to build knowledge, develop practical skills, and support your learning goals.
           </p>
         </div>
 
@@ -124,8 +124,8 @@ export default function ProgramsSection() {
                     <span className="flex items-center gap-1">
                       <Clock className="w-3.5 h-3.5 text-[#FACC15]" /> {course.duration}
                     </span>
-                    <span className="flex items-center gap-1 text-amber-400 font-bold">
-                      <Star className="w-3.5 h-3.5 fill-current" /> {course.rating}
+                    <span className="bg-[#FACC15]/20 text-[#FACC15] px-2 py-0.5 rounded-full text-[10px] font-bold">
+                      {course.level}
                     </span>
                   </div>
 
@@ -148,7 +148,7 @@ export default function ProgramsSection() {
                     onClick={() => handleJoinNow(course)}
                     className="group flex items-center gap-2 bg-[#FACC15] hover:bg-[#eab308] text-[#111827] rounded-full pl-4 pr-1 py-1.5 text-xs font-extrabold transition-all shadow-md shadow-[#FACC15]/20"
                   >
-                    <span>Join Now</span>
+                    <span>View Course</span>
                     <div className="w-6 h-6 rounded-full bg-[#111827] flex items-center justify-center">
                       <ArrowRight className="w-3.5 h-3.5 text-[#FACC15]" />
                     </div>
@@ -165,7 +165,7 @@ export default function ProgramsSection() {
             href="/courses"
             className="inline-flex items-center gap-2 bg-white/5 hover:bg-white/10 border border-white/15 text-white text-xs sm:text-sm font-extrabold px-6 py-3.5 rounded-2xl transition-all hover:border-[#FACC15]"
           >
-            <span>Explore All 1,200+ English Capsules</span>
+            <span>Explore All Courses</span>
             <ChevronRight className="w-4 h-4 text-[#FACC15]" />
           </Link>
         </div>

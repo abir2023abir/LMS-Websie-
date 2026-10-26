@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect, useState } from 'react';
+import { toast } from 'sonner';
 import AdminModal, { fieldClass } from './AdminModal';
 import { getFallbackCourseData } from '@/lib/progress';
 import { loadCourseEdits, shrinkImage } from '@/lib/course-edits-client';
@@ -29,7 +30,6 @@ export default function AdminCourseEditor({
   const [videos, setVideos] = useState<Record<string, string>>(
     Object.fromEntries(lessons.map((lesson) => [lesson.id, lesson.videoUrl || ''])),
   );
-  const [note, setNote] = useState('');
   const [busy, setBusy] = useState(false);
 
   useEffect(() => {
@@ -58,15 +58,14 @@ export default function AdminCourseEditor({
     try {
       const thumbnail = await shrinkImage(picked);
       setForm((prev) => ({ ...prev, thumbnail }));
-      setNote('Picture ready. Press Save to keep it.');
+      toast.success('Picture ready! Press Save to keep it.');
     } catch (err: any) {
-      setNote(err.message);
+      toast.error(err.message || 'Failed to process image');
     }
   };
 
   const save = async () => {
     setBusy(true);
-    setNote('');
     const toUsd = (bdt: string) => (bdt === '' ? undefined : Math.round(Number(bdt) / USD_TO_BDT));
     const res = await fetch('/api/courses/edits', {
       method: 'PUT',
@@ -82,12 +81,12 @@ export default function AdminCourseEditor({
     const data = await res.json().catch(() => ({}));
     setBusy(false);
     if (!res.ok || !data.success) {
-      setNote(data.message || 'Could not save.');
+      toast.error(data.message || 'Could not save course details');
       return;
     }
     await loadCourseEdits(true);
     onSaved?.();
-    setNote('Saved. The course page shows the new details.');
+    toast.success('Course saved successfully! The course page now shows the new details.');
   };
 
   return (
@@ -153,7 +152,6 @@ export default function AdminCourseEditor({
           >
             {busy ? 'Saving…' : 'Save'}
           </button>
-          {note && <p className="text-xs font-semibold">{note}</p>}
         </div>
       </div>
     </AdminModal>

@@ -8,7 +8,7 @@ import useSWR from 'swr';
 import {
   Plus, LogOut, Shield, LayoutDashboard, BookOpen, Award, HelpCircle,
   Banknote, Users, FileText, Search, Trash2, RefreshCw, Eye,
-  Sparkles, Inbox, MessageSquare, Pencil
+  Sparkles, Inbox, MessageSquare, Pencil, Globe
 } from 'lucide-react';
 import { applyCourseEdit, useCourseEdits } from '@/lib/course-edits-client';
 import StatsCards from './StatsCards';
@@ -26,6 +26,7 @@ import AdminEarnings from './AdminEarnings';
 import AdminPaymentsBoard from './AdminPaymentsBoard';
 import AdminMessages from './AdminMessages';
 import AdminAccounts from './AdminAccounts';
+import LandingPageCMS from './LandingPageCMS';
 import { takaFromUsd } from '@/lib/utils';
 
 const navTabs = [
@@ -40,6 +41,7 @@ const navTabs = [
   { name: 'Messages', icon: MessageSquare },
   { name: 'Assignments', icon: FileText },
   { name: 'Payments', icon: Banknote },
+  { name: 'Landing Page CMS', icon: Globe },
 ];
 
 const fetcher = (url: string) => fetch(url).then((res) => res.json());
@@ -54,7 +56,7 @@ export default function AdminDashboard() {
 
   // SWR real-time polling every 4 seconds
   const { data, mutate, isLoading } = useSWR('/api/admin/stats', fetcher, {
-    refreshInterval: 4000,
+    refreshInterval: 15000,
     revalidateOnFocus: true,
   });
   const { data: requestData } = useSWR('/api/admin/service-requests', fetcher, {
@@ -96,12 +98,12 @@ export default function AdminDashboard() {
   return (
     <div className="min-h-screen bg-slate-50 font-sans text-slate-900">
       {/* ── TOP HEADER (DARK NAVY / PURPLE #111827) ── */}
-      <header className="bg-[#111827] text-white pt-6 pb-20 px-4 sm:px-6 lg:px-8 relative overflow-hidden">
+      <header className="bg-[#111827] text-white px-4 py-4 sm:px-6 lg:px-8 relative overflow-visible">
         {/* Background Decorative Glows */}
         <div className="absolute top-0 right-0 w-96 h-96 bg-[#FACC15]/10 rounded-full blur-3xl pointer-events-none" />
         <div className="absolute top-0 left-1/3 w-64 h-64 bg-amber-500/5 rounded-full blur-2xl pointer-events-none" />
 
-        <div className="max-w-7xl mx-auto space-y-6 relative z-10">
+        <div className="max-w-7xl mx-auto relative z-10">
           {/* Top Bar */}
           <div className="flex items-center justify-between gap-4 border-b border-white/10 pb-5">
             {/* Logo */}
@@ -164,54 +166,33 @@ export default function AdminDashboard() {
             </div>
           </div>
 
-          {/* Nav Tabs & + Add Course Button */}
-          <div className="flex flex-wrap items-center justify-between gap-4">
-            <nav className="flex items-center gap-1 overflow-x-auto pb-2 sm:pb-0 scrollbar-none">
-              {navTabs.map((tab) => {
-                const isActive = activeTab === tab.name;
-                const Icon = tab.icon;
-                return (
-                  <button
-                    key={tab.name}
-                    onClick={() => setActiveTab(tab.name)}
-                    className={`relative px-4 py-2.5 rounded-xl text-xs font-bold transition-all flex items-center gap-2 whitespace-nowrap ${
-                      isActive
-                        ? 'bg-[#FACC15] text-[#111827] shadow-lg shadow-[#FACC15]/20'
-                        : 'text-slate-300 hover:text-white hover:bg-white/5'
-                    }`}
-                  >
-                    <Icon className="w-3.5 h-3.5" />
-                    <span>{tab.name}</span>
-                    {tab.name === 'Requests' && serviceRequests.length > 0 && (
-                      <span className={`ml-0.5 min-w-[16px] h-4 px-1 rounded-full text-[10px] font-extrabold inline-flex items-center justify-center ${
-                        isActive ? 'bg-[#111827] text-[#FACC15]' : 'bg-[#FACC15] text-[#111827]'
-                      }`}>
-                        {serviceRequests.length}
-                      </span>
-                    )}
-                  </button>
-                );
-              })}
-            </nav>
-
-            {/* + Add Course Button */}
-            <Link
-              href="/teacher"
-              className="flex items-center gap-2 bg-[#FACC15] hover:bg-[#eab308] text-[#111827] font-extrabold text-xs px-5 py-2.5 rounded-full shadow-lg shadow-[#FACC15]/20 transition-all hover:scale-105"
-            >
-              <Plus className="w-4 h-4 stroke-[3]" />
-              <span>Add English Capsule</span>
-            </Link>
-          </div>
         </div>
       </header>
 
       {/* ── MAIN DASHBOARD BODY ── */}
-      <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 -mt-12 pb-16 relative z-20 space-y-8">
+      <main className="mx-auto max-w-[1600px] px-3 py-5 sm:px-5 lg:px-8 lg:py-8 relative z-20">
+        <div className="grid min-w-0 grid-cols-1 gap-6 lg:grid-cols-[250px_minmax(0,1fr)] xl:gap-8">
+        <aside className="h-fit rounded-2xl border border-slate-200 bg-white p-3 shadow-sm lg:sticky lg:top-5">
+          <div className="mb-3 flex items-center justify-between px-3 pt-2"><span className="text-[11px] font-extrabold uppercase tracking-[0.16em] text-slate-400">Admin menu</span><span className="rounded-full bg-slate-100 px-2 py-1 text-[10px] font-bold text-slate-500">{navTabs.length}</span></div>
+          <nav className="grid grid-cols-2 gap-1.5 sm:grid-cols-3 lg:grid-cols-1">
+            {navTabs.map((tab) => {
+              const isActive = activeTab === tab.name;
+              const Icon = tab.icon;
+              return <button key={tab.name} onClick={() => setActiveTab(tab.name)} aria-current={isActive ? 'page' : undefined} className={`flex min-h-10 items-center gap-2.5 rounded-xl px-3 py-2.5 text-left text-xs font-bold transition-colors ${isActive ? 'bg-[#FACC15] text-[#111827] shadow-sm' : 'text-slate-600 hover:bg-slate-100 hover:text-slate-950'}`}>
+                <Icon className="h-4 w-4 shrink-0" /><span className="min-w-0 flex-1">{tab.name}</span>
+                {tab.name === 'Requests' && serviceRequests.length > 0 && <span className="inline-flex h-5 min-w-5 items-center justify-center rounded-full bg-[#111827] px-1 text-[10px] font-extrabold text-[#FACC15]">{serviceRequests.length}</span>}
+              </button>;
+            })}
+          </nav>
+          <Link href="/teacher" className="mt-3 flex min-h-11 items-center justify-center gap-2 rounded-xl bg-[#111827] px-3 text-xs font-extrabold text-white transition hover:bg-slate-800"><Plus className="h-4 w-4 stroke-[3] text-[#FACC15]" /><span>Add English Capsule</span></Link>
+        </aside>
+        <section className="min-w-0 space-y-8">
         
         {/* ── TAB 1: OVERVIEW (REAL DATABASE METRICS) ── */}
         {activeTab === 'Overview' && (
           <div className="space-y-8">
+            {isLoading && !data && <div className="rounded-2xl border border-slate-200 bg-white p-5 text-sm text-slate-500">Loading live dashboard data…</div>}
+            {data?.stats?.dataAvailable === false && <div className="rounded-2xl border border-amber-200 bg-amber-50 p-4 text-sm text-amber-900">Live analytics are unavailable. Check the database connection; demo figures are hidden.</div>}
             {/* Dynamic Recharts KPI Cards */}
             <StatsCards stats={stats} />
 
@@ -362,14 +343,17 @@ export default function AdminDashboard() {
         {activeTab === 'Payments' && (
           <div className="space-y-6">
             <AdminPaymentSetup />
-            <AdminPaymentsBoard />
+            <AdminPaymentsBoard key="payments-board" />
           </div>
         )}
 
         {activeTab === 'Quizzes' && <AdminQuizzes />}
         {activeTab === 'Certificate' && <AdminCertificates />}
         {activeTab === 'Assignments' && <AdminAssignments />}
+        {activeTab === 'Landing Page CMS' && <LandingPageCMS />}
 
+        </section>
+        </div>
       </main>
     </div>
   );

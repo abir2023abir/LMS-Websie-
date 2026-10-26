@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useMemo, useEffect } from 'react';
+import { useState, useMemo, useEffect, useCallback } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
 import FloatingNavbar from '@/components/english/FloatingNavbar';
@@ -8,6 +8,7 @@ import EnglishFooter from '@/components/english/EnglishFooter';
 import CheckoutModal from '@/components/checkout/CheckoutModal';
 import { featuredCourses } from '@/lib/data';
 import { applyCourseEdit, useCourseEdits } from '@/lib/course-edits-client';
+import { useAuth } from '@/context/AuthContext';
 import { takaFromUsd } from '@/lib/utils';
 import type { CourseSchema } from '@/types/course';
 import {
@@ -40,6 +41,7 @@ export default function CoursesCatalogPage() {
   const [hiddenIds, setHiddenIds] = useState<string[]>([]);
   const [discounts, setDiscounts] = useState<Record<string, number>>({});
   const courseEdits = useCourseEdits();
+  const { user, role } = useAuth();
 
   useEffect(() => {
     const cat = new URLSearchParams(window.location.search).get('category');
@@ -97,7 +99,7 @@ export default function CoursesCatalogPage() {
       });
   }, [searchQuery, selectedCategory, selectedLevel, priceFilter, sortBy, hiddenIds, courseEdits]);
 
-  const handleEnroll = (course: any) => {
+  const handleEnroll = useCallback((course: any) => {
     setSelectedCourse({
       id: course.id,
       title: course.title,
@@ -113,7 +115,17 @@ export default function CoursesCatalogPage() {
       lessonCount: course.lessonCount,
     });
     setShowCheckout(true);
-  };
+  }, []);
+
+  useEffect(() => {
+    if (!user || role !== 'Student') return;
+    const courseId = new URLSearchParams(window.location.search).get('enroll');
+    if (!courseId) return;
+    const course = featuredCourses.find((item) => String(item.id) === courseId);
+    if (!course) return;
+    handleEnroll(applyCourseEdit(course, courseEdits[courseId]));
+    window.history.replaceState(null, '', '/courses');
+  }, [user, role, courseEdits, handleEnroll]);
 
   return (
     <div className="min-h-screen bg-slate-50 text-[#111827] flex flex-col justify-between selection:bg-[#FACC15] selection:text-[#111827]">
@@ -127,16 +139,16 @@ export default function CoursesCatalogPage() {
             <div className="bg-[#FACC15] text-[#111827] p-1 rounded-full flex items-center justify-center">
               <ChevronsRight className="w-3.5 h-3.5" />
             </div>
-            <span className="text-xs font-semibold tracking-wide">English Capsules Catalog</span>
+            <span className="text-xs font-semibold tracking-wide">Course Catalog</span>
           </div>
 
           <div className="max-w-3xl space-y-4">
             <h1 className="font-display font-extrabold text-3xl sm:text-5xl lg:text-6xl text-[#111827] leading-[1.08] tracking-tight">
-              Explore Our English Programs & Masterclasses
+              Explore Structured Learning Programmes
             </h1>
 
             <p className="text-base sm:text-lg text-[#111827]/85 font-medium leading-relaxed max-w-2xl">
-              Practical, capsule-sized courses designed to help you speak confidently, ace IELTS, and master professional corporate communication.
+              Build knowledge, develop practical skills, and support your learning goals with our comprehensive course catalogue.
             </p>
           </div>
 
@@ -148,7 +160,7 @@ export default function CoursesCatalogPage() {
                 type="text"
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
-                placeholder="Search spoken English, IELTS, grammar, business, idioms..."
+                placeholder="Search bookkeeping, accounting, digital skills, English..."
                 className="bg-transparent text-sm text-[#111827] placeholder-slate-400 px-3 py-2 w-full focus:outline-none font-medium"
               />
               {searchQuery && (
@@ -250,7 +262,7 @@ export default function CoursesCatalogPage() {
         <div className="space-y-6">
           <div className="flex items-center justify-between">
             <h2 className="font-display font-extrabold text-xl sm:text-2xl text-[#111827]">
-              Showing <span className="text-amber-600">{filteredCourses.length}</span> English Capsules
+              Showing <span className="text-amber-600">{filteredCourses.length}</span> Courses
             </h2>
             {selectedCategory !== 'All' && (
               <button
@@ -267,9 +279,9 @@ export default function CoursesCatalogPage() {
               <div className="w-16 h-16 rounded-2xl bg-amber-50 text-amber-600 flex items-center justify-center mx-auto">
                 <BookOpen className="w-8 h-8" />
               </div>
-              <h3 className="font-display font-bold text-xl text-[#111827]">No English Capsules Found</h3>
+              <h3 className="font-display font-bold text-xl text-[#111827]">No Courses Found</h3>
               <p className="text-slate-500 text-xs sm:text-sm max-w-md mx-auto">
-                We could not find any capsules matching your current search or filters. Try adjusting your query.
+                We could not find any courses matching your current search or filters. Try adjusting your query.
               </p>
               <button
                 onClick={() => {

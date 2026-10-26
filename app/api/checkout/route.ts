@@ -1,93 +1,55 @@
 import { NextResponse } from 'next/server';
-import { doc, updateDoc, addDoc, collection, arrayUnion, serverTimestamp } from 'firebase/firestore';
-import { db } from '@/lib/firebase';
+import { currentProfile } from '@/lib/user-session';
+
+export const dynamic = 'force-dynamic';
+
+const PAYMENT_METHODS = new Set(['BKASH', 'NAGAD', 'CARD', 'SSLCOMMERZ']);
 
 /**
- * POST /api/checkout
- * Processes course enrollment & payment transactions.
- * Checkout is handled by the SSLCommerz payment route.
- * Body requirements: userId, courseId, amount, paymentMethod
+ * Local checkout simulation. This endpoint deliberately does not contact a gateway
+ * or claim that a real payment was received.
  */
 export async function POST(request: Request) {
   try {
+    const profile = await currentProfile();
+    if (!profile) {
+      return NextResponse.json({ success: false, error: 'Sign in with a student account before enrolling.' }, { status: 401 });
+    }
+    if (!profile.roles.includes('Student')) {
+      return NextResponse.json({ success: false, error: 'Course enrollment requires a student account.' }, { status: 403 });
+    }
+
     const body = await request.json();
-    const { userId, courseId, courseTitle, amount, paymentMethod } = body;
-
-    if (!courseId) {
-      return NextResponse.json(
-        { success: false, error: 'Course ID is required for checkout.' },
-        { status: 400 }
-      );
+    const courseId = String(body.courseId || '').trim();
+    const courseTitle = String(body.courseTitle || '').trim();
+    const paymentMethod = String(body.paymentMethod || '').toUpperCase();
+    const amount = Number(body.amount);
+    if (!courseId || !courseTitle) {
+      return NextResponse.json({ success: false, error: 'Choose a course before checkout.' }, { status: 400 });
+    }
+    if (!PAYMENT_METHODS.has(paymentMethod)) {
+      return NextResponse.json({ success: false, error: 'Choose one of the listed payment methods.' }, { status: 400 });
+    }
+    if (!Number.isFinite(amount) || amount < 0) {
+      return NextResponse.json({ success: false, error: 'The course amount is invalid.' }, { status: 400 });
+    }
+    if (body.userId && body.userId !== profile.id) {
+      return NextResponse.json({ success: false, error: 'The signed-in student does not match this checkout.' }, { status: 403 });
     }
 
-    // Generate unique transaction ID
-    const transactionId = `TXN_${Date.now()}_${Math.random().toString(36).substring(2, 7).toUpperCase()}`;
-
-    // Structure gateway payload for SSLCommerz.
-    const gatewayPayload = {
-      store_id: process.env.SSLCOMMERZ_STORE_ID || 'demo_store',
-      store_passwd: process.env.SSLCOMMERZ_STORE_PASSWORD || 'demo_pass',
-      total_amount: amount || 49,
-      currency: 'BDT',
-      tran_id: transactionId,
-      success_url: `${process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000'}/api/checkout/callback?status=success`,
-      fail_url: `${process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000'}/api/checkout/callback?status=fail`,
-      cancel_url: `${process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000'}/api/checkout/callback?status=cancel`,
-    };
-
-    // SIMULATED MOCK TRANSACTION SUCCESS
-    // In production, SSLCommerz returns a redirect URL to the gateway host.
-    const isMockPayment = true;
-
-    if (isMockPayment) {
-      // 1. Update user document in Firestore if userId is provided
-      if (userId && userId !== 'anonymous') {
-        try {
-          const userDocRef = doc(db, 'users', userId);
-          await updateDoc(userDocRef, {
-            enrolledCourses: arrayUnion(courseId),
-            updatedAt: serverTimestamp(),
-          });
-        } catch (err) {
-          console.warn('Could not update user enrolledCourses array in Firestore:', err);
-        }
-      }
-
-      // 2. Record transaction in Firestore 'enrollments' collection
-      try {
-        await addDoc(collection(db, 'enrollments'), {
-          userId: userId || 'anonymous',
-          courseId,
-          courseTitle: courseTitle || 'Enrolled Course',
-          amount: amount || 0,
-          paymentMethod: paymentMethod || 'SSLCommerz (Mock)',
-          transactionId,
-          status: 'PAID',
-          createdAt: serverTimestamp(),
-        });
-      } catch (err) {
-        console.warn('Could not write enrollment transaction record:', err);
-      }
-
-      return NextResponse.json(
-        {
-          success: true,
-          message: 'Payment completed successfully via mock gateway',
-          transactionId,
-          gatewayPayload,
-          redirectUrl: '/student',
-        },
-        { status: 200 }
-      );
-    }
+    const transactionId = `DEMO_${Date.now()}_${Math.random().toString(36).slice(2, 7).toUpperCase()}`;
+    return NextResponse.json({
+      success: true,
+      mode: 'demo',
+      status: 'DEMO',
+      message: 'Test enrollment completed. No payment provider was contacted and no charge was made.',
+      transactionId,
+      paymentMethod,
+      courseId,
+      amount,
+    });
   } catch (error: any) {
     console.error('API POST /api/checkout Error:', error);
-    return NextResponse.json(
-      {
-        success: false,
-        error: error.message || 'Checkout payment processing failed',
-      },
-      { status: 500 }
-    );
+    return NextResponse.json({ success: false, error: error.message || 'Checkout simulation failed.' }, { status: 500 });
   }
 }

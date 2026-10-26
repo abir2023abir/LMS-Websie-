@@ -7,23 +7,23 @@ import { motion } from 'framer-motion';
 const features = [
   {
     icon: ShieldCheck,
-    title: 'Hands-On Learning From Day One',
-    description: 'Forget memorization and repetition. With English Capsules, you’ll speak and use English in real-life situations right from your first session.',
+    title: 'Structured Learning Path',
+    description: 'Know what to study next and follow the course structure.',
   },
   {
     icon: Award,
-    title: 'Internationally Certified Teachers',
-    description: 'Our experienced instructors use proven methods to help you learn effectively and reach your goals faster.',
+    title: 'Measurable Progress',
+    description: 'Review your learning activity and assessment performance.',
   },
   {
     icon: Banknote,
-    title: 'Flexible Plans For Every Budget',
-    description: 'Learn and grow without overspending — our pricing is designed to fit your goals and your wallet.',
+    title: 'Guided Support',
+    description: 'Use available mentor, student, and programme support features.',
   },
   {
     icon: Users,
-    title: 'A Complete Learning Community',
-    description: 'You’ll find an active community full of events and challenges that keep you motivated and help you improve faster.',
+    title: 'Goal-Oriented Practice',
+    description: 'Connect course activities with the skills you want to develop.',
   },
 ];
 
@@ -37,12 +37,15 @@ export default function WhyUsSection() {
             <div className="bg-[#FACC15] text-[#111827] p-1 rounded-full flex items-center justify-center">
               <ChevronsRight className="w-3.5 h-3.5" />
             </div>
-            <span className="text-xs font-bold tracking-wide">Why Us</span>
+            <span className="text-xs font-bold tracking-wide">WHY US</span>
           </div>
 
           <h2 className="font-display font-extrabold text-3xl sm:text-4xl lg:text-5xl text-[#111827] tracking-tight">
-            Your Smartest Move Toward Mastering English
+            A Smarter Way to Learn and Grow
           </h2>
+          <p className="text-slate-600 text-sm sm:text-base max-w-2xl mx-auto">
+            Build a consistent learning routine with organised courses, useful feedback, and clear progress information.
+          </p>
         </div>
 
         {/* Two Column Layout: Left Image, Right 4 Grid Feature Cards */}
@@ -57,7 +60,7 @@ export default function WhyUsSection() {
           >
             <Image
               src="https://images.unsplash.com/photo-1522071820081-009f0129c71c?w=600&h=750&fit=crop"
-              alt="Student mastering English"
+              alt="Learner studying online"
               fill
               className="object-cover"
             />

@@ -35,6 +35,7 @@ yarn-error.log*
 /data/admin-lms.json
 /data/desk-messages.json
 /data/course-edits.json
+/data/orientation-programmes.json
 /data/accounts.json
 /data/admin-payment-proofs/
 /data/assignment-files/

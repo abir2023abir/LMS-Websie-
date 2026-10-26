@@ -3,7 +3,7 @@
 import { useEffect, useState, type FormEvent } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-import { GraduationCap, Mail, Lock, User, ArrowRight, ArrowLeft, AlertCircle } from 'lucide-react';
+import { GraduationCap, Mail, Lock, User, Phone, ArrowRight, ArrowLeft, AlertCircle } from 'lucide-react';
 import { useAuth } from '@/context/AuthContext';
 import { homeForRole } from '@/lib/roles';
 
@@ -13,12 +13,17 @@ export default function SignUpPage() {
 
   const [name, setName] = useState('');
   const [email, setEmail] = useState('');
+  const [phone, setPhone] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   useEffect(() => {
-    if (!authLoading && user && role) router.replace(homeForRole(role));
+    if (!authLoading && user && role) {
+      const next = new URLSearchParams(window.location.search).get('next');
+      const safeNext = next?.startsWith('/') && !next.startsWith('//') ? next : null;
+      router.replace(safeNext || homeForRole(role));
+    }
   }, [authLoading, user, role, router]);
 
   const handleEmailSignUp = async (e: FormEvent) => {
@@ -33,6 +38,10 @@ export default function SignUpPage() {
       setError('Please enter your email address');
       return;
     }
+    if (!phone.trim() || phone.replace(/\D/g, '').length < 7) {
+      setError('Please enter a valid phone number');
+      return;
+    }
     if (password.length < 6) {
       setError('Password must be at least 6 characters');
       return;
@@ -40,8 +49,10 @@ export default function SignUpPage() {
 
     setIsSubmitting(true);
     try {
-      await signUpWithEmail(email, password, name, 'Student');
-      router.push('/student');
+      await signUpWithEmail(email, password, name, 'Student', { phone });
+      const next = new URLSearchParams(window.location.search).get('next');
+      const safeNext = next?.startsWith('/') && !next.startsWith('//') ? next : null;
+      router.push(safeNext || '/student');
     } catch (err: any) {
       console.error('Sign up error:', err);
       if (err.code === 'auth/email-already-in-use') {
@@ -70,19 +81,15 @@ export default function SignUpPage() {
       <div className="sm:mx-auto sm:w-full sm:max-w-md text-center z-10 px-4 space-y-3">
         <Link href="/" className="inline-flex items-center gap-2 group">
           <div className="border-2 border-[#111827] px-3.5 py-1.5 rounded-2xl bg-[#FACC15] shadow-md flex flex-col items-center justify-center">
-            <span className="font-display font-black text-xs tracking-wider text-[#111827] uppercase leading-none">
-              English
-            </span>
-            <span className="font-display font-bold text-[9px] tracking-widest text-[#111827] uppercase leading-none mt-0.5">
-              Capsules
-            </span>
+            <span className="font-display font-black text-xs tracking-wider text-[#111827] uppercase leading-none">Career Bridge</span>
+            <span className="font-display font-bold text-[9px] tracking-widest text-[#111827] uppercase leading-none mt-0.5">.Studio</span>
           </div>
         </Link>
         <h2 className="font-display font-extrabold text-3xl sm:text-4xl text-[#111827] tracking-tight">
           Create Student Account
         </h2>
         <p className="text-xs sm:text-sm text-slate-600 font-medium">
-          Join English Capsules to enroll in courses and earn certificates
+          Create your learner account to enroll in courses and track your progress.
         </p>
       </div>
 
@@ -139,6 +146,26 @@ export default function SignUpPage() {
 
             <div>
               <label htmlFor="signup-password" className="block text-xs font-bold text-slate-700 mb-1.5 uppercase tracking-wider">
+                Phone Number <span aria-hidden="true" className="text-rose-600">*</span>
+              </label>
+              <div className="relative">
+                <Phone className="w-4 h-4 text-slate-400 absolute left-3.5 top-1/2 -translate-y-1/2" />
+                <input
+                  id="signup-phone"
+                  type="tel"
+                  required
+                  minLength={7}
+                  autoComplete="tel"
+                  value={phone}
+                  onChange={(e) => setPhone(e.target.value)}
+                  placeholder="+880 1XXXXXXXXX"
+                  className="w-full bg-slate-50 border border-slate-200 rounded-xl pl-10 pr-4 py-3 text-xs sm:text-sm text-[#111827] placeholder-slate-400 focus:outline-none focus:border-[#111827] transition-colors font-medium"
+                />
+              </div>
+            </div>
+
+            <div>
+              <label htmlFor="signup-phone" className="block text-xs font-bold text-slate-700 mb-1.5 uppercase tracking-wider">
                 Password
               </label>
               <div className="relative">

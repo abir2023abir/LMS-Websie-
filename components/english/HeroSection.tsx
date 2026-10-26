@@ -6,7 +6,7 @@ import { motion } from 'framer-motion';
 
 export default function HeroSection() {
   return (
-    <section className="relative bg-gradient-to-b from-[#FACC15] via-[#FACC15] to-[#EAB308] pt-32 lg:pt-36 overflow-hidden">
+    <section className="relative bg-gradient-to-b from-[#FACC15] via-[#FACC15] to-[#EAB308] pt-24 sm:pt-28 lg:pt-36 overflow-hidden">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-center">
           
@@ -27,7 +27,7 @@ export default function HeroSection() {
               <div className="bg-[#FACC15] text-[#111827] p-1 rounded-full flex items-center justify-center">
                 <ChevronsRight className="w-3.5 h-3.5" />
               </div>
-              <span className="text-xs font-semibold tracking-wide">Welcome</span>
+              <span className="text-xs font-semibold tracking-wide">Start Learning</span>
             </motion.div>
 
             {/* Main Headline */}
@@ -35,9 +35,9 @@ export default function HeroSection() {
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: 0.3 }}
-              className="font-display font-extrabold text-4xl sm:text-5xl lg:text-6xl text-[#111827] leading-[1.08] tracking-tight"
+              className="font-display font-extrabold text-[clamp(2rem,8vw,3rem)] sm:text-5xl lg:text-6xl text-[#111827] leading-[1.08] tracking-tight break-words"
             >
-              The Largest Community For Learning English
+              Build Your Skills. Bridge the Gap to Your Future.
             </motion.h1>
 
             {/* Description */}
@@ -47,22 +47,31 @@ export default function HeroSection() {
               transition={{ delay: 0.4 }}
               className="text-base sm:text-lg text-[#111827]/85 font-medium leading-relaxed max-w-xl"
             >
-              With English Capsules, you&apos;ll learn English in a practical and easy way — no complexity, no boring memorization. Short, effective sessions designed to fit your time and goals.
+              Learn practical skills, follow structured lessons, and turn your knowledge into real-world progress. Career Bridge . Studio brings courses, assessments, and learning progress together in one place.
             </motion.p>
 
-            {/* Contact Us Button */}
+            {/* Action Buttons */}
             <motion.div
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: 0.5 }}
-              className="pt-2"
+              className="pt-2 flex flex-wrap gap-3"
             >
               <a
-                href="#contact"
+                href="#courses"
                 className="group inline-flex items-center bg-[#111827] hover:bg-black text-white rounded-full pl-6 pr-1.5 py-2.5 text-sm font-bold shadow-2xl transition-all hover:scale-105"
               >
-                <span>Contact Us</span>
+                <span>Explore Courses</span>
                 <div className="ml-3 w-8 h-8 rounded-full bg-white/10 group-hover:bg-white/20 flex items-center justify-center transition-colors">
+                  <ArrowRight className="w-4 h-4 text-[#FACC15]" />
+                </div>
+              </a>
+              <a
+                href="#courses"
+                className="group inline-flex items-center bg-white hover:bg-gray-100 text-[#111827] rounded-full pl-6 pr-1.5 py-2.5 text-sm font-bold shadow-xl transition-all hover:scale-105 border-2 border-[#111827]"
+              >
+                <span>Bookkeeping</span>
+                <div className="ml-3 w-8 h-8 rounded-full bg-[#111827] group-hover:bg-black flex items-center justify-center transition-colors">
                   <ArrowRight className="w-4 h-4 text-[#FACC15]" />
                 </div>
               </a>
@@ -80,11 +89,11 @@ export default function HeroSection() {
             <motion.div
               animate={{ y: [0, -12, 0] }}
               transition={{ repeat: Infinity, duration: 5, ease: 'easeInOut' }}
-              className="relative w-full max-w-lg lg:max-w-xl h-[480px] sm:h-[580px] lg:h-[660px] z-20"
+              className="relative w-full max-w-lg lg:max-w-xl h-[min(112vw,420px)] sm:h-[580px] lg:h-[660px] z-20"
             >
               <Image
                 src="/images/student.png"
-                alt="English Student"
+                alt="Learner at the start of a career development journey"
                 fill
                 priority
                 className="object-contain object-bottom drop-shadow-2xl scale-110 origin-bottom"

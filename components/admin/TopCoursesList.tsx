@@ -1,7 +1,6 @@
 'use client';
 
 import Image from 'next/image';
-import { takaFromUsd } from '@/lib/utils';
 import { Award, Star } from 'lucide-react';
 
 interface TopCourseItem {
@@ -18,47 +17,8 @@ interface TopCoursesListProps {
   courses?: TopCourseItem[];
 }
 
-const defaultTopCourses: TopCourseItem[] = [
-  {
-    id: '1',
-    title: 'General English Foundation Capsule',
-    category: 'General English',
-    sales: 1420,
-    rating: 4.9,
-    price: takaFromUsd(39),
-    thumbnail: 'https://images.unsplash.com/photo-1522202176988-66273c2fd55f?w=200&h=150&fit=crop',
-  },
-  {
-    id: '2',
-    title: 'Spoken English & Accent Perfection',
-    category: 'Spoken English',
-    sales: 1150,
-    rating: 4.8,
-    price: takaFromUsd(49),
-    thumbnail: 'https://images.unsplash.com/photo-1543269865-cbf427effbad?w=200&h=150&fit=crop',
-  },
-  {
-    id: '3',
-    title: 'IELTS Band 8+ Masterclass',
-    category: 'IELTS Prep',
-    sales: 980,
-    rating: 4.95,
-    price: takaFromUsd(69),
-    thumbnail: 'https://images.unsplash.com/photo-1434030216411-0b793f4b4173?w=200&h=150&fit=crop',
-  },
-  {
-    id: '4',
-    title: 'Business English & Corporate Skills',
-    category: 'Business English',
-    sales: 840,
-    rating: 4.9,
-    price: takaFromUsd(59),
-    thumbnail: 'https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?w=200&h=150&fit=crop',
-  },
-];
-
 export default function TopCoursesList({ courses }: TopCoursesListProps) {
-  const topCourses = courses && courses.length > 0 ? courses : defaultTopCourses;
+  const topCourses = courses || [];
 
   return (
     <div className="bg-white rounded-3xl p-6 shadow-sm border border-slate-100 space-y-5">
@@ -72,7 +32,7 @@ export default function TopCoursesList({ courses }: TopCoursesListProps) {
         </span>
       </div>
 
-      <div className="space-y-3.5">
+      {topCourses.length === 0 ? <div className="rounded-2xl bg-slate-50 p-8 text-center text-sm text-slate-500">No enrollment data yet.</div> : <div className="space-y-3.5">
         {topCourses.map((course, idx) => (
           <div
             key={course.id}
@@ -97,7 +57,7 @@ export default function TopCoursesList({ courses }: TopCoursesListProps) {
                 </h4>
                 <p className="text-[10px] text-slate-500 flex items-center gap-2 mt-0.5">
                   <span className="text-amber-500 flex items-center gap-0.5 font-semibold">
-                    <Star className="w-3 h-3 fill-amber-400" /> {course.rating}
+                    <Star className="w-3 h-3 fill-amber-400" /> {course.rating || '—'}
                   </span>
                   <span>•</span>
                   <span>{course.sales} learners</span>
@@ -106,13 +66,11 @@ export default function TopCoursesList({ courses }: TopCoursesListProps) {
             </div>
 
             <div className="text-right flex-shrink-0">
-              <span className="font-display font-extrabold text-xs text-slate-900">
-                {course.price}
-              </span>
+              <span className="font-display font-extrabold text-xs text-slate-900">{course.price}</span>
             </div>
           </div>
         ))}
-      </div>
+      </div>}
     </div>
   );
 }

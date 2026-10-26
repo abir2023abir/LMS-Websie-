@@ -307,7 +307,7 @@ export default function TeacherPanelPage() {
             replyUrl="/api/messages"
             replyBody={(id, text) => ({ action: 'reply', id, text })}
             title="Course messages"
-            intro="Messages sent from inside a course show the course name and the student’s rank by progress. Customer care and the admin panel see the same thread."
+            intro="Questions for your courses show the module, lesson, student progress, and your instructor assignment. Admin sees the same thread."
           />
           {/* ── QUICK METRICS ── */}
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">

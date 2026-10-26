@@ -8,6 +8,7 @@ export type UserRole = 'Student' | 'Instructor' | 'Guardian' | 'ServiceCustomer'
 export interface AuthUser {
   uid: string;
   email: string;
+  phone?: string;
   displayName: string;
   photoURL: string;
 }
@@ -16,6 +17,7 @@ export interface UserProfile {
   uid: string;
   name: string;
   email: string;
+  phone?: string;
   role: UserRole;
   roles?: UserRole[];
   linkedStudentEmail?: string;
@@ -35,7 +37,7 @@ interface AuthContextType {
     password: string,
     name: string,
     role: UserRole,
-    extras?: { linkedStudentEmail?: string }
+    extras?: { linkedStudentEmail?: string; phone?: string }
   ) => Promise<void>;
   linkGuardianToStudent: (studentEmail: string) => Promise<void>;
   addRole: (role: UserRole) => Promise<void>;
@@ -49,6 +51,7 @@ type ServerProfile = {
   id: string;
   name: string;
   email: string;
+  phone?: string;
   roles: UserRole[];
   active_role: UserRole;
   mentor_level?: 'lead' | 'assistant';
@@ -69,6 +72,7 @@ function toProfile(server: ServerProfile): UserProfile {
     uid: server.id,
     name: server.name,
     email: server.email,
+    phone: server.phone,
     role: server.active_role,
     roles: server.roles,
     mentorLevel: server.mentor_level || 'lead',
@@ -103,7 +107,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     setRole(profile?.role ?? null);
     setUser(
       profile
-        ? { uid: profile.uid, email: profile.email, displayName: profile.name, photoURL: profile.avatarUrl || '' }
+        ? { uid: profile.uid, email: profile.email, phone: profile.phone, displayName: profile.name, photoURL: profile.avatarUrl || '' }
         : null
     );
     if (typeof window === 'undefined') return;
@@ -145,13 +149,13 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     password: string,
     name: string,
     selectedRole: UserRole,
-    extras?: { linkedStudentEmail?: string }
+    extras?: { linkedStudentEmail?: string; phone?: string }
   ) => {
     setLoading(true);
     try {
       const data = await call('/api/auth/signup', {
         method: 'POST',
-        body: JSON.stringify({ email, password, name, role: selectedRole, linkedStudentEmail: extras?.linkedStudentEmail }),
+        body: JSON.stringify({ email, password, name, role: selectedRole, linkedStudentEmail: extras?.linkedStudentEmail, phone: extras?.phone }),
       });
       apply(toProfile(data.profile));
       recordSession(data.profile.email);

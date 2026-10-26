@@ -79,47 +79,14 @@ function uid(prefix: string) {
 }
 
 function seed(): Db {
-  const students: AdminStudent[] = [
-    { id: 'std-1', name: 'Tanvir Ahmed', email: 'tanvir@gmail.com', program: 'Spoken English & Accent Perfection', status: 'Active', joinedDate: '2026-08-14' },
-    { id: 'std-2', name: 'Nusaiba Rahaman', email: 'nusaiba@yahoo.com', program: 'IELTS Academic & General Band 8+', status: 'Active', joinedDate: '2026-08-15' },
-    { id: 'std-3', name: 'Mahmudul Hasan', email: 'mahmud@gmail.com', program: 'Business English & Corporate Communication', status: 'Active', joinedDate: '2026-08-16' },
-    { id: 'std-4', name: 'Sadia Sultana', email: 'sadia@gmail.com', program: 'Phonics Safari: Alphabet Magic', status: 'Active', joinedDate: '2026-08-17' },
-    { id: 'std-5', name: 'Kamrul Islam', email: 'kamrul@gmail.com', program: 'General English Foundation Capsule', status: 'Active', joinedDate: '2026-08-18' },
-  ];
-  const sample = [
-    { id: 'TXN-8921', studentName: 'Tanvir Ahmed', email: 'tanvir@gmail.com', courseTitle: 'Spoken English & Accent Perfection', amount: 5880, method: 'SSLCommerz (bKash)', date: 'Today, 2:15 PM' },
-    { id: 'TXN-8920', studentName: 'Nusaiba Rahaman', email: 'nusaiba@yahoo.com', courseTitle: 'IELTS Academic Band 8+ Masterclass', amount: 8280, method: 'SSLCommerz (Visa)', date: 'Today, 11:40 AM' },
-    { id: 'TXN-8919', studentName: 'Mahmudul Hasan', email: 'mahmud@gmail.com', courseTitle: 'Business English & Corporate Skills', amount: 7080, method: 'SSLCommerz (Nagad)', date: 'Yesterday, 8:20 PM' },
-    { id: 'TXN-8918', studentName: 'Sadia Sultana', email: 'sadia@gmail.com', courseTitle: 'Phonics Safari: Alphabet Magic', amount: 3480, method: 'SSLCommerz (bKash)', date: 'Aug 17, 2026' },
-  ];
   return {
     quizzes: [],
-    students,
+    students: [],
     certificates: [],
     assignments: [],
     submissions: [],
-    earnings: sample.map((row) => ({
-      id: row.id,
-      studentName: row.studentName,
-      courseTitle: row.courseTitle,
-      amount: row.amount,
-      method: row.method,
-      status: 'Paid',
-      date: row.date,
-    })),
-    payments: sample.map((row) => ({
-      id: row.id,
-      studentName: row.studentName,
-      studentEmail: row.email,
-      courseTitle: row.courseTitle,
-      amount: row.amount,
-      method: row.method,
-      status: 'paid' as const,
-      transactionId: row.id,
-      screenshot: '',
-      source: 'sslcommerz' as const,
-      createdAt: row.date,
-    })),
+    earnings: [],
+    payments: [],
   };
 }
 
@@ -129,12 +96,12 @@ function load(): Db {
     const parsed = JSON.parse(fs.readFileSync(file, 'utf8')) as Partial<Db>;
     return {
       quizzes: Array.isArray(parsed.quizzes) ? parsed.quizzes : [],
-      students: Array.isArray(parsed.students) ? parsed.students : base.students,
+      students: Array.isArray(parsed.students) ? parsed.students.filter((student) => !String(student.id).startsWith('std-')) : base.students,
       certificates: Array.isArray(parsed.certificates) ? parsed.certificates : [],
       assignments: Array.isArray(parsed.assignments) ? parsed.assignments : [],
       submissions: Array.isArray(parsed.submissions) ? parsed.submissions : [],
-      earnings: Array.isArray(parsed.earnings) ? parsed.earnings : base.earnings,
-      payments: Array.isArray(parsed.payments) ? parsed.payments : base.payments,
+      earnings: Array.isArray(parsed.earnings) ? parsed.earnings.filter((earning) => !String(earning.id).startsWith('TXN-')) : base.earnings,
+      payments: Array.isArray(parsed.payments) ? parsed.payments.filter((payment) => !String(payment.id).startsWith('TXN-')) : base.payments,
     };
   } catch {
     return base;

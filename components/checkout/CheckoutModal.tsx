@@ -3,7 +3,9 @@
 import { useState } from 'react';
 import Image from 'next/image';
 import { useRouter } from 'next/navigation';
+import Link from 'next/link';
 import { useAuth } from '@/context/AuthContext';
+import { recordLocalCourseEnrollment } from '@/lib/progress';
 import Button from '@/components/ui/Button';
 import type { CourseSchema } from '@/types/course';
 import {
@@ -31,7 +33,7 @@ export default function CheckoutModal({
   onSuccess,
 }: CheckoutModalProps) {
   const router = useRouter();
-  const { user } = useAuth();
+  const { user, role } = useAuth();
 
   const [paymentMethod, setPaymentMethod] = useState<'sslcommerz' | 'bkash' | 'nagad' | 'card'>('bkash');
   const [loading, setLoading] = useState(false);
@@ -51,7 +53,7 @@ export default function CheckoutModal({
 
     try {
       const payload = {
-        userId: user?.uid || 'anonymous',
+        userId: user?.uid,
         courseId: course.id || 'course-demo',
         courseTitle: course.title,
         amount: finalPrice,
@@ -70,13 +72,14 @@ export default function CheckoutModal({
         throw new Error(data.error || 'Payment transaction failed.');
       }
 
+      if (!user) throw new Error('Please sign in with a student account before enrolling.');
+      recordLocalCourseEnrollment(user.uid, String(course.id || ''));
       setSuccessTxn(data.transactionId);
 
       if (onSuccess) onSuccess();
 
       setTimeout(() => {
         router.push('/student');
-        onClose();
       }, 1800);
     } catch (err: any) {
       console.error('Checkout Error:', err);
@@ -87,12 +90,12 @@ export default function CheckoutModal({
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-md overflow-y-auto">
-      <div className="glass rounded-3xl border border-white/10 w-full max-w-xl my-8 p-6 sm:p-8 shadow-2xl relative">
+    <div className="fixed inset-0 z-50 flex items-start sm:items-center justify-center p-2 sm:p-4 bg-black/80 backdrop-blur-md overflow-y-auto overscroll-contain">
+      <div className="glass rounded-2xl sm:rounded-3xl border border-white/10 w-full max-w-xl my-2 sm:my-8 p-4 sm:p-8 shadow-2xl relative">
         {/* Close Button */}
         <button
           onClick={onClose}
-          className="absolute top-5 right-5 p-2 text-slate-400 hover:text-white rounded-xl hover:bg-white/10 transition-colors"
+          className="absolute top-3 right-3 sm:top-5 sm:right-5 min-h-11 min-w-11 flex items-center justify-center p-2 text-slate-400 hover:text-white rounded-xl hover:bg-white/10 transition-colors"
           aria-label="Close modal"
         >
           <X className="w-5 h-5" />
@@ -105,7 +108,7 @@ export default function CheckoutModal({
           </div>
           <div>
             <h2 className="font-display font-bold text-2xl text-white">Checkout & Enroll</h2>
-            <p className="text-xs text-slate-400">Secure 256-bit Encrypted Checkout</p>
+            <p className="text-xs text-slate-400">Demo checkout · No live payment gateway</p>
           </div>
         </div>
 
@@ -115,13 +118,28 @@ export default function CheckoutModal({
             <div className="w-16 h-16 rounded-full bg-emerald-500/20 text-emerald-400 border border-emerald-500/30 flex items-center justify-center mx-auto shadow-lg shadow-emerald-500/20 animate-bounce">
               <CheckCircle className="w-8 h-8" />
             </div>
-            <h3 className="font-display font-bold text-2xl text-white">Enrollment Successful!</h3>
+            <h3 className="font-display font-bold text-2xl text-white">Demo enrollment complete</h3>
             <p className="text-sm text-slate-300">
-              Transaction ID: <span className="font-mono text-primary-300">{successTxn}</span>
+              Test transaction: <span className="font-mono text-primary-300">{successTxn}</span>
             </p>
-            <p className="text-xs text-slate-400">Redirecting to your Student Dashboard...</p>
+            <p className="text-xs text-slate-400">No payment was charged. Opening your Student Dashboard…</p>
           </div>
         ) : (
+          !user || role !== 'Student' ? (
+            <div className="space-y-4 rounded-2xl border border-[#FACC15]/30 bg-[#FACC15]/10 p-5 text-center">
+              <p className="font-semibold text-white">Create or sign in to a student account before enrolling.</p>
+              <p className="text-xs leading-relaxed text-slate-300">Your full name, email, and phone number are required for student registration.</p>
+              <Link
+                href={`/signup?next=${encodeURIComponent(`/courses?enroll=${course.id || ''}`)}`}
+                className="inline-flex min-h-11 items-center justify-center rounded-xl bg-[#FACC15] px-5 py-2.5 text-sm font-extrabold text-[#111827] hover:bg-[#eab308]"
+              >
+                Create student account
+              </Link>
+              <Link href={`/login?next=${encodeURIComponent(`/courses?enroll=${course.id || ''}`)}`} className="block text-xs font-semibold text-slate-200 underline underline-offset-4">
+                Already registered? Sign in
+              </Link>
+            </div>
+          ) : (
           <div className="space-y-6">
             {/* Error Banner */}
             {error && (
@@ -182,6 +200,10 @@ export default function CheckoutModal({
               </div>
             </div>
 
+            <p className="rounded-xl border border-amber-300/20 bg-amber-300/10 px-3 py-2 text-xs leading-relaxed text-amber-100">
+              Test mode: payment choices are selectable, but no payment provider is connected and no real charge will be made.
+            </p>
+
             {/* Price Calculation Summary */}
             <div className="space-y-2 border-t border-white/10 pt-4 text-xs text-slate-300">
               <div className="flex justify-between">
@@ -211,13 +233,14 @@ export default function CheckoutModal({
                 leftIcon={<Lock className="w-4 h-4" />}
                 rightIcon={<ArrowRight className="w-4 h-4" />}
               >
-                Complete Enrollment ({taka(finalPrice)})
+                Run test enrollment ({taka(finalPrice)})
               </Button>
               <p className="text-[11px] text-slate-500 text-center mt-3">
-                Includes 30-day full refund guarantee. By clicking Complete Enrollment you agree to LearnVerse Terms of Service.
+                This demo records course access in this browser only. It does not process a real payment.
               </p>
             </div>
           </div>
+          )
         )}
       </div>
     </div>

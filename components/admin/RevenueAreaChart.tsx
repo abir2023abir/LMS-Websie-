@@ -3,7 +3,7 @@
 import {
   AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer,
 } from 'recharts';
-import { taka, usdToBdt } from '@/lib/utils';
+import { taka } from '@/lib/utils';
 
 interface ChartDataItem {
   month: string;
@@ -15,15 +15,6 @@ interface ChartDataItem {
 interface RevenueAreaChartProps {
   data?: ChartDataItem[];
 }
-
-const defaultChartData: ChartDataItem[] = [
-  { month: 'Jan', revenue: 4200, sales: 38, signups: 52 },
-  { month: 'Feb', revenue: 5800, sales: 54, signups: 68 },
-  { month: 'Mar', revenue: 4900, sales: 47, signups: 61 },
-  { month: 'Apr', revenue: 7200, sales: 72, signups: 89 },
-  { month: 'May', revenue: 6100, sales: 61, signups: 74 },
-  { month: 'Jun', revenue: 8400, sales: 88, signups: 103 },
-];
 
 function CustomTooltip({ active, payload, label }: { active?: boolean; payload?: any[]; label?: string }) {
   if (!active || !payload || !payload.length) return null;
@@ -46,8 +37,7 @@ function CustomTooltip({ active, payload, label }: { active?: boolean; payload?:
 }
 
 export default function RevenueAreaChart({ data }: RevenueAreaChartProps) {
-  const source = data && data.length > 0 ? data : defaultChartData;
-  const chartData = source.map((item) => ({ ...item, revenue: usdToBdt(item.revenue) }));
+  const chartData = data || [];
 
   return (
     <div className="bg-white rounded-3xl shadow-sm border border-slate-100 p-6 space-y-4">
@@ -57,7 +47,7 @@ export default function RevenueAreaChart({ data }: RevenueAreaChartProps) {
             Real-Time Revenue & Enrollment Analytics
           </h3>
           <p className="text-xs text-slate-500 mt-0.5">
-            Aggregated monthly metrics from live database transactions
+            Live totals from registered learners and successful payment records
           </p>
         </div>
         <div className="flex items-center gap-4 text-xs font-semibold">
@@ -73,7 +63,7 @@ export default function RevenueAreaChart({ data }: RevenueAreaChartProps) {
         </div>
       </div>
 
-      <ResponsiveContainer width="100%" height={290}>
+      {chartData.length ? <ResponsiveContainer width="100%" height={290}>
         <AreaChart data={chartData} margin={{ top: 10, right: 10, left: -10, bottom: 0 }}>
           <defs>
             <linearGradient id="colorRevenue" x1="0" y1="0" x2="0" y2="1">
@@ -111,7 +101,7 @@ export default function RevenueAreaChart({ data }: RevenueAreaChartProps) {
           <Area
             type="monotone"
             dataKey="sales"
-            name="Sales"
+            name="Paid transactions"
             stroke="#FACC15"
             strokeWidth={2.5}
             fill="url(#colorSales)"
@@ -121,7 +111,7 @@ export default function RevenueAreaChart({ data }: RevenueAreaChartProps) {
           <Area
             type="monotone"
             dataKey="signups"
-            name="Signups"
+            name="New learners"
             stroke="#10b981"
             strokeWidth={2.5}
             fill="url(#colorSignups)"
@@ -129,7 +119,7 @@ export default function RevenueAreaChart({ data }: RevenueAreaChartProps) {
             activeDot={{ r: 6 }}
           />
         </AreaChart>
-      </ResponsiveContainer>
+      </ResponsiveContainer> : <div className="flex h-[290px] items-center justify-center rounded-2xl bg-slate-50 text-sm text-slate-500">No enrollment or payment analytics yet.</div>}
     </div>
   );
 }

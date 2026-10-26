@@ -10,6 +10,7 @@ export type Profile = {
   id: string;
   email: string;
   name: string;
+  phone?: string;
   password_hash: string;
   roles: Role[];
   active_role: Role;
@@ -248,11 +249,12 @@ export async function listProfiles() {
   return select('profiles');
 }
 
-export async function createProfile(input: { email: string; name: string; password: string; role: Role }) {
+export async function createProfile(input: { email: string; name: string; password: string; role: Role; phone?: string }) {
   const profile: Profile = {
     id: crypto.randomUUID(),
     email: normalizeEmail(input.email),
     name: input.name.trim(),
+    phone: input.phone?.trim() || '',
     password_hash: hashPassword(input.password),
     roles: [input.role],
     active_role: input.role,
