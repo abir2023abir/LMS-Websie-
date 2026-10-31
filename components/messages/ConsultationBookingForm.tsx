@@ -143,7 +143,7 @@ export default function ConsultationBookingForm({ initialService = '', initialBi
           </div>
         </div>
       </div>
-      <p className="mx-auto mt-4 max-w-4xl text-center text-[11px] text-slate-400">{content.integrationNote}</p>
+      {content.integrationNote && <p className="mx-auto mt-4 max-w-4xl text-center text-[11px] text-slate-400">{content.integrationNote}</p>}
     </div>
   </section>;
 }

@@ -49,7 +49,7 @@ export interface Category {
    Navigation Links
 ───────────────────────────────────────────── */
 export const navLinks: NavLink[] = [
-  { label: 'All Capsules', href: '/courses' },
+  { label: 'All Courses', href: '/courses' },
   { label: 'Spoken English', href: '/courses?category=Spoken+English' },
   { label: 'IELTS Prep', href: '/courses?category=IELTS+Prep' },
   { label: 'Business English', href: '/courses?category=Business+English' },
@@ -61,23 +61,18 @@ export const navLinks: NavLink[] = [
 ───────────────────────────────────────────── */
 export const stats: Stat[] = [
   { value: 500000, suffix: '+', label: 'Active English Learners', icon: 'Users' },
-  { value: 1200,   suffix: '+', label: 'Video Capsules & Lessons', icon: 'BookOpen' },
+  { value: 1200,   suffix: '+', label: 'Video Lessons', icon: 'BookOpen' },
   { value: 45,     suffix: '+', label: 'Certified Native Mentors', icon: 'GraduationCap' },
   { value: 98,     suffix: '%', label: 'Fluency Success Rate', icon: 'Star' },
 ];
 
 /* ─────────────────────────────────────────────
-   English Specialization Categories
+   Course Categories
 ───────────────────────────────────────────── */
 export const categories: Category[] = [
-  { name: 'Spoken English',    icon: '🗣️', color: 'from-amber-500 to-yellow-600',  count: 320 },
-  { name: 'IELTS Prep',        icon: '🎯', color: 'from-blue-600 to-indigo-700',   count: 240 },
-  { name: 'Business English',  icon: '💼', color: 'from-emerald-600 to-teal-700',  count: 180 },
-  { name: 'General English',   icon: '📖', color: 'from-purple-600 to-violet-700', count: 210 },
-  { name: 'Grammar & Writing', icon: '✍️', color: 'from-pink-600 to-rose-700',     count: 150 },
-  { name: 'Career English',    icon: '🚀', color: 'from-orange-500 to-amber-600',  count: 110 },
-  { name: 'Kids English',      icon: '🧸', color: 'from-cyan-500 to-blue-600',     count: 95  },
-  { name: 'TOEFL & Exams',     icon: '📜', color: 'from-rose-600 to-red-700',      count: 85  },
+  { name: 'Accounting',     icon: '📒', color: 'from-emerald-600 to-teal-700', count: 1 },
+  { name: 'Business',       icon: '💼', color: 'from-blue-600 to-indigo-700',  count: 1 },
+  { name: 'Digital Skills', icon: '💻', color: 'from-amber-500 to-yellow-600', count: 1 },
 ];
 
 /* ─────────────────────────────────────────────
@@ -101,16 +96,16 @@ export const featuredCourses: Course[] = [
     categoryColor: 'bg-emerald-500/20 text-emerald-300 border-emerald-500/30',
     price: 49,
     originalPrice: 99,
-    rating: 4.8,
-    reviewCount: 8420,
-    studentCount: 32000,
+    rating: 0,
+    reviewCount: 0,
+    studentCount: 0,
     duration: '20h 00m',
     lessonCount: 30,
     level: 'Beginner',
     tags: ['Bookkeeping', 'Accounting', 'Financial Statements', 'Ledgers'],
     isFeatured: true,
     isNew: false,
-    isBestseller: true,
+    isBestseller: false,
   },
   {
     id: '2',
@@ -129,16 +124,16 @@ export const featuredCourses: Course[] = [
     categoryColor: 'bg-blue-500/20 text-blue-300 border-blue-500/30',
     price: 59,
     originalPrice: 129,
-    rating: 4.85,
-    reviewCount: 6150,
-    studentCount: 24500,
+    rating: 0,
+    reviewCount: 0,
+    studentCount: 0,
     duration: '25h 30m',
     lessonCount: 35,
     level: 'Intermediate',
     tags: ['Business Finance', 'Financial Reporting', 'Cash Flow', 'Decision Making'],
     isFeatured: true,
     isNew: false,
-    isBestseller: true,
+    isBestseller: false,
   },
   {
     id: '3',
@@ -157,9 +152,9 @@ export const featuredCourses: Course[] = [
     categoryColor: 'bg-purple-500/20 text-purple-300 border-purple-500/30',
     price: 39,
     originalPrice: 79,
-    rating: 4.9,
-    reviewCount: 9800,
-    studentCount: 41000,
+    rating: 0,
+    reviewCount: 0,
+    studentCount: 0,
     duration: '18h 00m',
     lessonCount: 28,
     level: 'Beginner',
@@ -167,202 +162,6 @@ export const featuredCourses: Course[] = [
     isFeatured: true,
     isNew: true,
     isBestseller: false,
-  },
-  {
-    id: '4',
-    slug: 'general-english-foundation-capsule',
-    title: 'General English Foundation Capsule: Zero to Confident Speaker',
-    description:
-      'Master essential sentence patterns, 1,000+ core active vocabulary words, practical grammar, and real-life everyday dialogue without tedious memorization.',
-    instructor: {
-      name: 'Sarah Jenkins',
-      avatar: 'https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?w=120&h=120&fit=crop',
-      title: 'Senior English Language Specialist',
-    },
-    thumbnail:
-      'https://images.unsplash.com/photo-1522202176988-66273c2fd55f?w=600&h=340&fit=crop&auto=format',
-    category: 'General English',
-    categoryColor: 'bg-purple-500/20 text-purple-300 border-purple-500/30',
-    price: 39,
-    originalPrice: 99,
-    rating: 4.9,
-    reviewCount: 14250,
-    studentCount: 92400,
-    duration: '24h 30m',
-    lessonCount: 36,
-    level: 'Beginner',
-    tags: ['Vocabulary', 'Everyday English', 'Grammar', 'Confidence'],
-    isFeatured: false,
-    isNew: false,
-    isBestseller: true,
-  },
-  {
-    id: '5',
-    slug: 'spoken-english-accent-perfection',
-    title: 'Spoken English & Accent Perfection: Sound Like a Native',
-    description:
-      'Eliminate mother-tongue influence (MTI), master connected speech, natural sentence stress, and speak effortlessly in professional and social conversations.',
-    instructor: {
-      name: 'David Miller',
-      avatar: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=120&h=120&fit=crop',
-      title: 'Pronunciation & Voice Coach (London, UK)',
-    },
-    thumbnail:
-      'https://images.unsplash.com/photo-1543269865-cbf427effbad?w=600&h=340&fit=crop&auto=format',
-    category: 'Spoken English',
-    categoryColor: 'bg-amber-500/20 text-amber-300 border-amber-500/30',
-    price: 49,
-    originalPrice: 120,
-    rating: 4.95,
-    reviewCount: 18920,
-    studentCount: 104500,
-    duration: '32h 15m',
-    lessonCount: 42,
-    level: 'Intermediate',
-    tags: ['Spoken English', 'Accent Training', 'Fluency', 'Phonetics'],
-    isFeatured: false,
-    isNew: false,
-    isBestseller: true,
-  },
-  {
-    id: '6',
-    slug: 'business-english-corporate-communication',
-    title: 'Business English & Corporate Communication Masterclass',
-    description:
-      'Elevate your global career. Master executive email writing, presentation delivery, high-stakes negotiations, cross-cultural diplomacy, and meeting leadership.',
-    instructor: {
-      name: 'Emma Watson',
-      avatar: 'https://images.unsplash.com/photo-1580489944761-15a19d654956?w=120&h=120&fit=crop',
-      title: 'Corporate Communication Executive',
-    },
-    thumbnail:
-      'https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?w=600&h=340&fit=crop&auto=format',
-    category: 'Business English',
-    categoryColor: 'bg-emerald-500/20 text-emerald-300 border-emerald-500/30',
-    price: 59,
-    originalPrice: 149,
-    rating: 4.88,
-    reviewCount: 11200,
-    studentCount: 68300,
-    duration: '28h 45m',
-    lessonCount: 38,
-    level: 'Advanced',
-    tags: ['Business English', 'Email Writing', 'Presentations', 'Leadership'],
-    isFeatured: false,
-    isNew: true,
-    isBestseller: false,
-  },
-  {
-    id: '7',
-    slug: 'ielts-academic-general-band-8-masterclass',
-    title: 'IELTS Academic & General Band 8+ Ultimate Masterclass',
-    description:
-      'Step-by-step strategies for Band 8+ in Listening, Reading, Task 1 & Task 2 Writing, and the Speaking interview with mock tests and evaluation templates.',
-    instructor: {
-      name: 'Michael Brown',
-      avatar: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=120&h=120&fit=crop',
-      title: 'Former British Council IELTS Examiner',
-    },
-    thumbnail:
-      'https://images.unsplash.com/photo-1434030216411-0b793f4b4173?w=600&h=340&fit=crop&auto=format',
-    category: 'IELTS Prep',
-    categoryColor: 'bg-blue-500/20 text-blue-300 border-blue-500/30',
-    price: 69,
-    originalPrice: 179,
-    rating: 4.96,
-    reviewCount: 22400,
-    studentCount: 125000,
-    duration: '45h 00m',
-    lessonCount: 54,
-    level: 'Intermediate',
-    tags: ['IELTS', 'Band 8+', 'Speaking Interview', 'Writing Task 2'],
-    isFeatured: false,
-    isNew: false,
-    isBestseller: true,
-  },
-  {
-    id: '8',
-    slug: 'english-grammar-mastery-writing-mechanics',
-    title: 'English Grammar Mastery & Advanced Sentence Mechanics',
-    description:
-      'Clear all doubts on tenses, passive voice, conditionals, prepositions, subject-verb agreement, and writing structured, sophisticated English paragraphs.',
-    instructor: {
-      name: 'Dr. Rachel Green',
-      avatar: 'https://images.unsplash.com/photo-1544005313-94ddf0286df2?w=120&h=120&fit=crop',
-      title: 'Professor of Applied Linguistics',
-    },
-    thumbnail:
-      'https://images.unsplash.com/photo-1456513080510-7bf3a84b82f8?w=600&h=340&fit=crop&auto=format',
-    category: 'Grammar & Writing',
-    categoryColor: 'bg-pink-500/20 text-pink-300 border-pink-500/30',
-    price: 35,
-    originalPrice: 89,
-    rating: 4.85,
-    reviewCount: 8900,
-    studentCount: 51200,
-    duration: '22h 10m',
-    lessonCount: 32,
-    level: 'Beginner',
-    tags: ['Grammar', 'Tenses', 'Writing Skills', 'Composition'],
-    isFeatured: false,
-    isNew: false,
-    isBestseller: false,
-  },
-  {
-    id: '9',
-    slug: 'english-job-interviews-career-success',
-    title: 'English for Job Interviews & International Remote Careers',
-    description:
-      'Ace interviews for multinational companies and remote global roles. Learn STAR technique answers, salary negotiation scripts, and spontaneous pitch models.',
-    instructor: {
-      name: 'Jonathan Hayes',
-      avatar: 'https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=120&h=120&fit=crop',
-      title: 'Global HR Talent Advisor',
-    },
-    thumbnail:
-      'https://images.unsplash.com/photo-1521737711867-e3b97375f902?w=600&h=340&fit=crop&auto=format',
-    category: 'Career English',
-    categoryColor: 'bg-orange-500/20 text-orange-300 border-orange-500/30',
-    price: 45,
-    originalPrice: 119,
-    rating: 4.92,
-    reviewCount: 9450,
-    studentCount: 48900,
-    duration: '18h 40m',
-    lessonCount: 26,
-    level: 'Intermediate',
-    tags: ['Interviews', 'Career English', 'STAR Method', 'Remote Work'],
-    isFeatured: false,
-    isNew: true,
-    isBestseller: false,
-  },
-  {
-    id: '10',
-    slug: 'everyday-english-conversation-idiomatic-expressions',
-    title: 'Everyday English: 500+ Natural Idioms & Phrasal Verbs',
-    description:
-      'Stop sounding like a textbook. Learn how native speakers really communicate using everyday idioms, natural phrasal verbs, informal conversational slang, and humor.',
-    instructor: {
-      name: 'Alex Turner',
-      avatar: 'https://images.unsplash.com/photo-1519085360753-af0119f7cbe7?w=120&h=120&fit=crop',
-      title: 'Conversational Fluency Mentor',
-    },
-    thumbnail:
-      'https://images.unsplash.com/photo-1529156069898-49953e39b3ac?w=600&h=340&fit=crop&auto=format',
-    category: 'General English',
-    categoryColor: 'bg-purple-500/20 text-purple-300 border-purple-500/30',
-    price: 0,
-    originalPrice: 69,
-    rating: 4.95,
-    reviewCount: 16500,
-    studentCount: 142000,
-    duration: '14h 50m',
-    lessonCount: 24,
-    level: 'Beginner',
-    tags: ['Idioms', 'Phrasal Verbs', 'Conversational English', 'Free Capsule'],
-    isFeatured: false,
-    isNew: false,
-    isBestseller: true,
   },
 ];
 
@@ -387,16 +186,16 @@ export const homepageFeaturedCourses: Course[] = [
     categoryColor: 'bg-emerald-500/20 text-emerald-300 border-emerald-500/30',
     price: 49,
     originalPrice: 99,
-    rating: 4.8,
-    reviewCount: 8420,
-    studentCount: 32000,
+    rating: 0,
+    reviewCount: 0,
+    studentCount: 0,
     duration: '20h 00m',
     lessonCount: 30,
     level: 'Beginner',
     tags: ['Bookkeeping', 'Accounting', 'Financial Statements', 'Ledgers'],
     isFeatured: true,
     isNew: false,
-    isBestseller: true,
+    isBestseller: false,
   },
   {
     id: '2',
@@ -415,16 +214,16 @@ export const homepageFeaturedCourses: Course[] = [
     categoryColor: 'bg-blue-500/20 text-blue-300 border-blue-500/30',
     price: 59,
     originalPrice: 129,
-    rating: 4.85,
-    reviewCount: 6150,
-    studentCount: 24500,
+    rating: 0,
+    reviewCount: 0,
+    studentCount: 0,
     duration: '25h 30m',
     lessonCount: 35,
     level: 'Intermediate',
     tags: ['Business Finance', 'Financial Reporting', 'Cash Flow', 'Decision Making'],
     isFeatured: true,
     isNew: false,
-    isBestseller: true,
+    isBestseller: false,
   },
   {
     id: '3',
@@ -443,9 +242,9 @@ export const homepageFeaturedCourses: Course[] = [
     categoryColor: 'bg-purple-500/20 text-purple-300 border-purple-500/30',
     price: 39,
     originalPrice: 79,
-    rating: 4.9,
-    reviewCount: 9800,
-    studentCount: 41000,
+    rating: 0,
+    reviewCount: 0,
+    studentCount: 0,
     duration: '18h 00m',
     lessonCount: 28,
     level: 'Beginner',
@@ -483,7 +282,7 @@ export const footerLinks = {
     { label: 'Kids English', href: '/courses?category=Kids+English' },
   ],
   company: [
-    { label: 'About English Capsules', href: '/about' },
+    { label: 'About Career Bridge.Studio', href: '/about' },
     { label: 'Our Learning Method', href: '/#methods' },
     { label: 'Learning Blog & Guides', href: '/blog' },
     { label: 'Student Reviews', href: '/#reviews' },
@@ -499,4 +298,77 @@ export const footerLinks = {
     { label: 'Privacy Policy', href: '/privacy' },
     { label: 'Refund Policy', href: '/refund' },
   ],
+};
+
+/* ─────────────────────────────────────────────
+   Course overview copy (course detail page), keyed by course id.
+   Courses without an entry simply hide these sections.
+───────────────────────────────────────────── */
+export type CourseOverview = {
+  outcomes: string[];
+  prerequisites: string[];
+  audience: string[];
+};
+
+export const courseOverviews: Record<string, CourseOverview> = {
+  '1': {
+    outcomes: [
+      'Record day-to-day business transactions accurately using double-entry bookkeeping',
+      'Set up and maintain a chart of accounts, journals, and general ledgers',
+      'Reconcile bank statements and catch common recording errors',
+      'Prepare a trial balance and adjusting entries at period end',
+      'Read and build a basic income statement, balance sheet, and cash flow statement',
+      'Organise receipts, invoices, and records so your books are always audit-ready',
+    ],
+    prerequisites: [
+      'No accounting background needed — we start from the basics.',
+      'Basic comfort with numbers and simple arithmetic.',
+      'A computer or smartphone with internet access.',
+    ],
+    audience: [
+      'Students and fresh graduates aiming for accounts or finance roles.',
+      'Small business owners who want to keep their own books.',
+      'Office staff who handle payments, invoices, or petty cash.',
+    ],
+  },
+  '2': {
+    outcomes: [
+      'Understand how income, expenses, and profit fit together in a business',
+      'Track and forecast cash flow so you never get caught short',
+      'Read an income statement, balance sheet, and cash flow statement with confidence',
+      'Use key ratios to judge profitability, liquidity, and business health',
+      'Build a simple budget and compare actual results against it',
+      'Present financial results clearly to owners, managers, or investors',
+    ],
+    prerequisites: [
+      'Basic bookkeeping knowledge is helpful but not required.',
+      'Comfort with spreadsheets (Excel or Google Sheets) is a plus.',
+      'A computer with internet access.',
+    ],
+    audience: [
+      'Business owners and managers who make money decisions.',
+      'Accounts and finance staff moving into reporting roles.',
+      'Entrepreneurs preparing to pitch or apply for funding.',
+    ],
+  },
+  '3': {
+    outcomes: [
+      'Work confidently with email, cloud storage, and online collaboration tools',
+      'Create clean documents, spreadsheets, and presentations for the workplace',
+      'Write a professional CV and build a strong LinkedIn profile',
+      'Search and apply for jobs effectively, online and offline',
+      'Prepare for interviews and present yourself with confidence',
+      'Manage your time and tasks using simple productivity habits',
+    ],
+    prerequisites: [
+      'No technical background needed.',
+      'Basic ability to use a computer or smartphone.',
+      'Willingness to practise between lessons.',
+    ],
+    audience: [
+      'Students and fresh graduates preparing for their first job.',
+      'Job seekers returning to work or changing careers.',
+      'Professionals who want to sharpen everyday digital skills.',
+    ],
+  },
 };

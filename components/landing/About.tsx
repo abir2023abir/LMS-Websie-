@@ -52,7 +52,7 @@ export default async function About() {
   // Fallback content if API fails or no content exists
   const aboutData = content || {
     title: 'A Better Learning Journey, Built Around Your Goals',
-    description: 'Career Bridge . Studio helps learners develop knowledge, strengthen practical skills, and follow a structured path toward personal and professional growth. Learn through organised lessons, practise your skills, and track your progress as you move forward.',
+    description: 'Career Bridge.Studio helps learners develop knowledge, strengthen practical skills, and follow a structured path toward personal and professional growth. Learn through organised lessons, practise your skills, and track your progress as you move forward.',
     statCards: [
       { value: '01', lead: 'Structured', detail: 'Learning Programmes', illustration: 'learning', highlighted: false },
       { value: '02', lead: 'Practical', detail: 'Lessons & Activities', illustration: 'practice', highlighted: false },

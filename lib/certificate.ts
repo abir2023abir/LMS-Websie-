@@ -1,3 +1,5 @@
+import { certificateVerifyLabel } from './contact';
+
 export interface CertificateOptions {
   studentName: string;
   courseTitle: string;
@@ -22,7 +24,7 @@ export async function generateCertificatePDF({
 }: CertificateOptions): Promise<void> {
   if (typeof window === 'undefined') return;
 
-  const validCertId = certificateId || `EC-2026-${Math.floor(1000 + Math.random() * 9000)}`;
+  const validCertId = certificateId || `CBS-${new Date().getFullYear()}-${Math.floor(1000 + Math.random() * 9000)}`;
   const validDate =
     issueDate ||
     new Date().toLocaleDateString('en-US', {
@@ -77,7 +79,7 @@ export async function generateCertificatePDF({
   ctx.textAlign = 'center';
   ctx.fillStyle = '#0F172A';
   ctx.font = 'bold 50px "Space Grotesk", system-ui, sans-serif';
-  ctx.fillText('LEARNVERSE • ENGLISH CAPSULES ACADEMY', canvas.width / 2, 330);
+  ctx.fillText('CAREER BRIDGE.STUDIO', canvas.width / 2, 330);
 
   ctx.fillStyle = '#64748B';
   ctx.font = '600 32px "Inter", system-ui, sans-serif';
@@ -129,7 +131,7 @@ export async function generateCertificatePDF({
     1160
   );
   ctx.fillText(
-    'and comprehensive evaluation criteria in the accredited program:',
+    'and evaluation criteria of the course:',
     canvas.width / 2,
     1230
   );
@@ -156,7 +158,7 @@ export async function generateCertificatePDF({
 
   ctx.textAlign = 'right';
   ctx.fillText(`Certificate ID: ${validCertId}`, canvas.width - 350, 1600);
-  ctx.fillText(`Verification: englishcapsules.com/verify`, canvas.width - 350, 1660);
+  ctx.fillText(`Verification: ${certificateVerifyLabel}`, canvas.width - 350, 1660);
 
   // Official Gold Seal Stamp
   const sealX = canvas.width / 2;
@@ -223,7 +225,7 @@ export async function generateCertificatePDF({
   ctx.font = '26px "Inter", system-ui, sans-serif';
   ctx.fillStyle = '#94A3B8';
   ctx.fillText(
-    `Official Digitally Signed Document • Secure Hash: SHA256-${validCertId}-VERIFIED • English Capsules Academic Council`,
+    `Official Digitally Signed Document • Secure Hash: SHA256-${validCertId}-VERIFIED • Career Bridge.Studio Academic Team`,
     canvas.width / 2,
     2350
   );
@@ -266,7 +268,7 @@ export async function generateCertificatePDF({
   // Also trigger direct file download
   const downloadLink = document.createElement('a');
   downloadLink.href = dataUrl;
-  downloadLink.download = `${cleanStudent}_${cleanTitle}_Diploma.png`;
+  downloadLink.download = `${cleanStudent}_${cleanTitle}_Certificate.png`;
   document.body.appendChild(downloadLink);
   downloadLink.click();
   document.body.removeChild(downloadLink);

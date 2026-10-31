@@ -2,6 +2,7 @@
 
 import Image from 'next/image';
 import { Award, Star } from 'lucide-react';
+import { takaFromUsd } from '@/lib/utils';
 
 interface TopCourseItem {
   id: string;
@@ -9,7 +10,7 @@ interface TopCourseItem {
   category: string;
   sales: number;
   rating: number;
-  price: string;
+  price: number | string;
   thumbnail: string;
 }
 
@@ -25,7 +26,7 @@ export default function TopCoursesList({ courses }: TopCoursesListProps) {
       <div className="flex items-center justify-between">
         <h3 className="font-display font-bold text-base text-slate-900 flex items-center gap-2">
           <Award className="w-4 h-4 text-amber-500" />
-          <span>Top Performing English Capsules</span>
+          <span>Top Performing Courses</span>
         </h3>
         <span className="text-xs font-semibold text-purple-600">
           Live Rankings
@@ -66,7 +67,7 @@ export default function TopCoursesList({ courses }: TopCoursesListProps) {
             </div>
 
             <div className="text-right flex-shrink-0">
-              <span className="font-display font-extrabold text-xs text-slate-900">{course.price}</span>
+              <span className="font-display font-extrabold text-xs text-slate-900">{typeof course.price === 'number' ? takaFromUsd(course.price) : course.price}</span>
             </div>
           </div>
         ))}

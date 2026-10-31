@@ -61,7 +61,7 @@ const initialDiscussions: DiscussionComment[] = [
     author: 'Sarah Jenkins',
     role: 'Instructor',
     date: '1 day ago',
-    text: 'Welcome to this capsule! Remember to practice shadow-speaking out loud at 1x speed after watching each dialogue breakdown.',
+    text: 'Welcome to this course! Remember to practice shadow-speaking out loud at 1x speed after watching each dialogue breakdown.',
     likes: 24,
     replies: [
       {
@@ -421,7 +421,7 @@ export default function StudentLearnPage() {
 
             <div className="flex items-center gap-2 max-w-md">
               <span className="hidden md:inline-block bg-[#FACC15] text-[#111827] text-[10px] font-extrabold px-2.5 py-0.5 rounded-full uppercase shadow-xs">
-                {course.category || 'Capsule'}
+                {course.category || 'Course'}
               </span>
               <h1 className="font-display font-bold text-xs sm:text-sm text-[#111827] truncate">
                 {course.title}
@@ -476,7 +476,7 @@ export default function StudentLearnPage() {
                 poster={course.thumbnail}
                 title={currentLesson?.title || course.title}
                 studentName={userProfile?.name || user?.displayName || 'Student Learner'}
-                studentEmail={user?.email || 'student@englishcapsules.com'}
+                studentEmail={user?.email || 'student@example.com'}
                 onEnded={handleVideoEnded}
                 onProgress={(percent) => {
                   if (!currentLesson) return;
@@ -669,14 +669,14 @@ export default function StudentLearnPage() {
                       Lecture Core Takeaways & Drill Focus
                     </h3>
                     <p>
-                      In this capsule lecture, we deconstruct real-life conversation patterns, rhythm cadence, and natural idioms. Focus on mimicking the audio pitch contours and practicing full sentences without mental translation.
+                      In this lecture, we deconstruct real-life conversation patterns, rhythm cadence, and natural idioms. Focus on mimicking the audio pitch contours and practicing full sentences without mental translation.
                     </p>
                   </div>
 
                   <div className="bg-slate-50 border border-slate-200 rounded-2xl p-4 space-y-2">
                     <div className="font-bold text-[#111827] flex items-center gap-2">
                       <Sparkles className="w-4 h-4 text-amber-500" />
-                      <span>Action Step For This Capsule:</span>
+                      <span>Action Step For This Lesson:</span>
                     </div>
                     <ul className="list-disc list-inside space-y-1 text-slate-600">
                       <li>Record yourself repeating the 3 primary situational phrases from minute 03:15.</li>

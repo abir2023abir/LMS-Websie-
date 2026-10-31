@@ -1,14 +1,32 @@
+// Official contact details. Leave a field empty ('') to hide it everywhere it appears
+// (footer, contact page, emails) until the real value is known.
 export const contactInfo = {
-  phoneDisplay: '+880 1711-000000',
-  phoneTel: '+8801711000000',
-  whatsapp: '8801711000000',
-  email: 'support@englishcapsules.com',
-  address: 'Central Campus, Dhaka, Bangladesh',
-  hours: 'Sat–Thu, 10:00 AM – 8:00 PM',
-  facebook: 'https://facebook.com',
-  instagram: 'https://instagram.com',
-  youtube: 'https://youtube.com',
-  mapEmbed:
-    'https://www.openstreetmap.org/export/embed.html?bbox=90.365%2C23.745%2C90.425%2C23.795&layer=mapnik&marker=23.770%2C90.395',
-  mapLink: 'https://www.openstreetmap.org/?mlat=23.770&mlon=90.395#map=14/23.770/90.395',
+  phoneDisplay: '',
+  phoneTel: '',
+  whatsapp: '',
+  email: '',
+  address: '',
+  hours: '',
+  facebook: '',
+  instagram: '',
+  youtube: '',
+  linkedin: '',
+  mapEmbed: '',
+  mapLink: '',
 };
+
+export const socialLinks = [
+  { label: 'Facebook', href: contactInfo.facebook },
+  { label: 'Instagram', href: contactInfo.instagram },
+  { label: 'YouTube', href: contactInfo.youtube },
+  { label: 'LinkedIn', href: contactInfo.linkedin },
+].filter((item) => item.href);
+
+export const hasContactDetails = Boolean(
+  contactInfo.phoneDisplay || contactInfo.whatsapp || contactInfo.email || contactInfo.address || contactInfo.hours,
+);
+
+// Public certificate verification address, e.g. "careerbridge.studio/verify-certificate".
+export const certificateVerifyLabel = `${(process.env.NEXT_PUBLIC_SITE_URL || 'http://localhost:3000')
+  .replace(/^https?:\/\//, '')
+  .replace(/\/$/, '')}/verify-certificate`;

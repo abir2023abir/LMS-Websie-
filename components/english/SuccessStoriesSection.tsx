@@ -12,7 +12,7 @@ const successStories = [
   {
     headline: 'From Learning to New Income Opportunities',
     description: 'A learning journey focused on developing practical skills and exploring ways to apply them to real-world work.',
-    caption: 'Building Practical Skills for New Opportunities | Success Story | Career Bridge .Studio',
+    caption: 'Building Practical Skills for New Opportunities | Success Story | Career Bridge.Studio',
   },
   {
     headline: 'Learning New Skills Beyond the Classroom',

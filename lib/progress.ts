@@ -500,29 +500,12 @@ export function getFallbackCourseData(courseId: string): CourseSchema | null {
     };
   }
 
-  // English capsules fallback courses
-  if (courseId === 'eng-1') {
-    return {
-      id: 'eng-1',
-      title: 'General English Foundation Capsule',
-      description: 'Master practical English grammar, 1,000+ core vocabulary words, and daily conversation.',
-      instructorId: 'Sarah Jenkins',
-      instructorName: 'Sarah Jenkins',
-      price: 39,
-      thumbnail: 'https://images.unsplash.com/photo-1522202176988-66273c2fd55f?w=600&h=340&fit=crop',
-      category: 'General English',
-      level: 'Beginner',
-      lessonCount: 7,
-      modules: defaultModules,
-    };
-  }
-
   return {
     id: courseId,
     title: 'Masterclass Professional Training Program',
     description: 'Comprehensive curriculum designed for maximum hands-on skill acquisition.',
     instructorId: 'Faculty Board',
-    instructorName: 'English Capsules Global Academic Council',
+    instructorName: 'Career Bridge.Studio Academic Team',
     price: 49,
     thumbnail: 'https://images.unsplash.com/photo-1516321318423-f06f85e504b3?w=600&h=340&fit=crop',
     category: 'Professional Skills',

@@ -73,7 +73,8 @@ export default function CoursesSection() {
 
   return (
     <section id="courses" className="space-y-20">
-      {/* ── PART A: LIVE PROGRAMMES & ORIENTATION ── */}
+      {/* ── PART A: LIVE PROGRAMMES & ORIENTATION — only shown when a programme is scheduled ── */}
+      {liveProgrammes.length > 0 && (
       <div className="bg-white py-16 sm:py-24 text-[#111827]">
         <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 space-y-12">
           {/* Header */}
@@ -101,11 +102,6 @@ export default function CoursesSection() {
           </motion.div>
 
           {/* Publish only programmes that have a real upcoming schedule. */}
-          {programmesLoading ? (
-            <div className="rounded-3xl border border-[#FEF9C3] bg-[#FEFCE8]/60 px-6 py-10 text-center text-sm text-slate-500">
-              Loading scheduled programmes…
-            </div>
-          ) : liveProgrammes.length > 0 ? (
             <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
             {liveProgrammes.map((programme, index) => (
               <motion.div
@@ -149,15 +145,9 @@ export default function CoursesSection() {
               </motion.div>
             ))}
             </div>
-          ) : (
-            <div className="rounded-3xl border border-dashed border-[#E9DFA0] bg-[#FEFCE8]/50 px-6 py-10 text-center">
-              <CalendarDays className="mx-auto h-8 w-8 text-[#A16207]" />
-              <h3 className="mt-3 font-display font-bold text-lg text-[#111827]">No live programmes scheduled yet</h3>
-              <p className="mt-2 text-sm text-slate-600">Orientation dates and registration details will appear here as soon as they are announced.</p>
-            </div>
-          )}
         </div>
       </div>
+      )}
 
       {/* ── PART B: FEATURED COURSES ── */}
       <div className="relative bg-[#111827] text-white py-20 overflow-hidden">

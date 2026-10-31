@@ -8,11 +8,10 @@ import RichTextEditor from '../RichTextEditor';
 import type { BlogArticle } from '@/lib/cms-db';
 
 const categories = [
-  'Speaking & Fluency',
-  'IELTS & TOEFL',
-  'Kids English',
-  'Business English',
-  'Grammar Guides',
+  'Bookkeeping',
+  'Business Finance',
+  'Digital Skills',
+  'Career Tips',
 ];
 
 export default function BlogEditor() {

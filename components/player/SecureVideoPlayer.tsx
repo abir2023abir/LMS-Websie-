@@ -43,7 +43,7 @@ export default function SecureVideoPlayer({
   poster,
   title = 'Lesson Video',
   studentName = 'Student Learner',
-  studentEmail = 'student@englishcapsules.com',
+  studentEmail = 'student@example.com',
   autoPlayNext = true,
   onEnded,
   onNextLesson,
@@ -321,7 +321,7 @@ export default function SecureVideoPlayer({
         <div className="flex items-center justify-between text-white text-xs">
           <div className="flex items-center gap-2 max-w-[70%]">
             <span className="bg-[#FACC15] text-[#111827] text-[10px] font-extrabold px-2.5 py-0.5 rounded-full uppercase tracking-wider">
-              Capsule Player
+              Course Player
             </span>
             <h3 className="font-display font-semibold text-white truncate text-xs sm:text-sm">
               {title}

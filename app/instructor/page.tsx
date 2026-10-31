@@ -6,7 +6,7 @@ export default function InstructorLoginPage() {
       config={{
         requiredRole: 'Instructor',
         title: 'Mentor Sign In',
-        subtitle: 'Sign in to manage English Capsules, lessons, and student messages',
+        subtitle: 'Sign in to manage courses, lessons, and student messages',
         submitLabel: 'Sign In to Teacher Panel',
         idPrefix: 'instructor',
       }}

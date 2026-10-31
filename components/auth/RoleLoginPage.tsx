@@ -97,10 +97,10 @@ function RoleLoginContent({ config }: { config: RoleLoginConfig }) {
         <Link href="/" className="inline-flex items-center gap-2 group">
           <div className="border-2 border-[#111827] px-3.5 py-1.5 rounded-2xl bg-[#FACC15] shadow-md flex flex-col items-center justify-center">
             <span className="font-display font-black text-xs tracking-wider text-[#111827] uppercase leading-none">
-              English
+              Career Bridge
             </span>
             <span className="font-display font-bold text-[9px] tracking-widest text-[#111827] uppercase leading-none mt-0.5">
-              Capsules
+              .Studio
             </span>
           </div>
         </Link>
@@ -133,7 +133,7 @@ function RoleLoginContent({ config }: { config: RoleLoginConfig }) {
                   required
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
-                  placeholder="you@englishcapsules.com"
+                  placeholder="you@example.com"
                   className="w-full bg-slate-50 border border-slate-200 rounded-xl pl-10 pr-4 py-3 text-xs sm:text-sm text-[#111827] placeholder-slate-400 focus:outline-none focus:border-[#111827] transition-colors font-medium"
                 />
               </div>

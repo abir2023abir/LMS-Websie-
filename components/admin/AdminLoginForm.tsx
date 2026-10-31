@@ -63,7 +63,7 @@ export default function AdminLoginForm() {
               Admin Panel
             </h1>
             <p className="text-purple-300/70 text-sm mt-1">
-              English Capsules LMS · Restricted Access
+              Career Bridge.Studio · Restricted Access
             </p>
           </div>
         </div>

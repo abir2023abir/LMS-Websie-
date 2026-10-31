@@ -38,7 +38,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
 
   if (!post) {
     return {
-      title: 'Article Not Found | English Capsules',
+      title: 'Article Not Found | Career Bridge.Studio',
       description: 'The requested English learning guide could not be found.',
     };
   }
@@ -47,7 +47,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const postUrl = `${siteUrl}/blog/${post.slug}`;
 
   return {
-    title: `${post.title} | English Capsules Blog`,
+    title: `${post.title} | Career Bridge.Studio Blog`,
     description: post.metaDescription,
     keywords: post.keywords,
     alternates: {
@@ -57,7 +57,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
       title: post.title,
       description: post.metaDescription,
       url: postUrl,
-      siteName: 'English Capsules',
+      siteName: 'Career Bridge.Studio',
       images: [
         {
           url: post.coverImage,
@@ -78,7 +78,6 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
       title: post.title,
       description: post.metaDescription,
       images: [post.coverImage],
-      creator: '@englishcapsules',
     },
   };
 }
@@ -111,7 +110,7 @@ export default function BlogPostPage({ params }: Props) {
     },
     publisher: {
       '@type': 'Organization',
-      name: 'English Capsules Academy',
+      name: 'Career Bridge.Studio',
       logo: {
         '@type': 'ImageObject',
         url: 'https://images.unsplash.com/photo-1522202176988-66273c2fd55f?w=200&h=200&fit=crop',
@@ -323,7 +322,7 @@ export default function BlogPostPage({ params }: Props) {
               Ready to Practice What You Learned?
             </h3>
             <p className="text-xs sm:text-sm text-slate-300 font-normal">
-              Join our certified English Capsules program with video lectures, speech drills, and accredited certificate verification.
+              Join our certified Career Bridge.Studio program with video lectures, speech drills, and accredited certificate verification.
             </p>
           </div>
 
@@ -332,7 +331,7 @@ export default function BlogPostPage({ params }: Props) {
               href="/courses"
               className="inline-flex items-center gap-2 bg-[#FACC15] hover:bg-[#eab308] text-[#111827] font-extrabold text-xs sm:text-sm px-6 py-3.5 rounded-xl shadow-lg transition-all"
             >
-              <span>Explore All English Capsules</span>
+              <span>Explore All Courses</span>
               <ArrowRight className="w-4 h-4" />
             </Link>
           </div>

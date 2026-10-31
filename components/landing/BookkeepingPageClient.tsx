@@ -6,11 +6,14 @@ import { Check, ChevronsRight } from 'lucide-react';
 import FloatingNavbar from '@/components/english/FloatingNavbar';
 import EnglishFooter from '@/components/english/EnglishFooter';
 import type { BookkeepingPageContent } from '@/lib/bookkeeping-types';
+import { taka } from '@/lib/utils';
 
 export default function BookkeepingPageClient({ content }: { content: BookkeepingPageContent }) {
   const [activeTab, setActiveTab] = useState(content.tabs[0] || 'Services');
   const visiblePlans = useMemo(() => content.plans.filter((plan) => plan.categories.includes(activeTab)), [activeTab, content]);
   const discountMultiplier = 1 - content.annualDiscount / 100;
+  // Plans priced at 0 show "Request pricing" instead of a number; annual offers only appear for priced plans.
+  const pricedPlans = visiblePlans.filter((plan) => plan.price > 0);
   const quoteLink = (plan: string, billing: 'month' | 'year') => `/contact?service=${encodeURIComponent(plan)}&billing=${billing}#contact`;
 
   return (
@@ -41,23 +44,23 @@ export default function BookkeepingPageClient({ content }: { content: Bookkeepin
             <h2 className="font-display text-xl font-bold text-[#16324f]">{plan.name}</h2>
             <p className="mt-1 min-h-11 text-sm leading-relaxed text-slate-600">{plan.description}</p>
             {plan.note && <p className="mt-3 min-h-10 text-xs leading-relaxed text-slate-500">{plan.note}</p>}
-            <p className="mt-7 font-display text-4xl font-extrabold tracking-tight text-[#16324f]">${plan.price}<span className="ml-1 text-base font-semibold text-slate-500">{content.monthlySuffix}</span></p>
-            <Link href={quoteLink(plan.name, 'month')} className={`mt-6 flex min-h-12 items-center justify-center rounded-lg border-2 px-4 text-sm font-bold transition-colors ${plan.popular ? 'border-[#2f9d78] text-[#16324f] hover:bg-[#2f9d78] hover:text-white' : 'border-[#16324f] text-[#16324f] hover:bg-[#16324f] hover:text-white'}`}>{content.monthlyCta}</Link>
+            {plan.price > 0 ? <p className="mt-7 font-display text-4xl font-extrabold tracking-tight text-[#16324f]">{taka(plan.price)}<span className="ml-1 text-base font-semibold text-slate-500">{content.monthlySuffix}</span></p> : <p className="mt-7 font-display text-2xl font-extrabold tracking-tight text-[#16324f]">Custom pricing<span className="mt-1 block text-sm font-medium text-slate-500">Quoted after a free consultation</span></p>}
+            <Link href={quoteLink(plan.name, 'month')} className={`mt-6 flex min-h-12 items-center justify-center rounded-lg border-2 px-4 text-sm font-bold transition-colors ${plan.popular ? 'border-[#2f9d78] text-[#16324f] hover:bg-[#2f9d78] hover:text-white' : 'border-[#16324f] text-[#16324f] hover:bg-[#16324f] hover:text-white'}`}>{plan.price > 0 ? content.monthlyCta : content.quoteCta}</Link>
             <div className="mt-6 text-sm font-bold text-[#16324f]">{content.includedHeading}</div>
             <ul className="mt-3 space-y-3">{plan.features.map((feature, index) => <li key={`${plan.id}-${index}`} className="flex items-start gap-2 text-sm leading-snug text-slate-600"><Check className="mt-0.5 h-4 w-4 shrink-0 text-emerald-600" strokeWidth={2.5} /><span>{feature}</span></li>)}</ul>
           </article>)}
           {visiblePlans.length === 0 && <article className="rounded-2xl border border-slate-200 bg-white p-7 text-center shadow-sm"><h2 className="font-display text-xl font-bold text-[#16324f]">{activeTab} services</h2><p className="mt-2 text-sm leading-relaxed text-slate-600">Tell us what your business needs and our team will prepare a suitable quote.</p><Link href={quoteLink(activeTab, 'month')} className="mt-6 inline-flex min-h-12 items-center justify-center rounded-lg bg-[#16324f] px-6 text-sm font-bold text-white hover:bg-[#244765]">{content.quoteCta}</Link></article>}
         </div>
 
-        <section className="mt-14">
+        {pricedPlans.length > 0 && <section className="mt-14">
           <h2 className="text-center font-display text-xl font-bold text-[#16324f] sm:text-2xl">{content.annualHeading}</h2>
-          <div className={`mx-auto mt-6 grid max-w-5xl grid-cols-1 gap-5 ${visiblePlans.length === 3 ? 'lg:grid-cols-3' : visiblePlans.length === 2 ? 'md:grid-cols-2 lg:max-w-4xl' : 'max-w-xl'}`}>
-            {visiblePlans.map((plan) => {
+          <div className={`mx-auto mt-6 grid max-w-5xl grid-cols-1 gap-5 ${pricedPlans.length === 3 ? 'lg:grid-cols-3' : pricedPlans.length === 2 ? 'md:grid-cols-2 lg:max-w-4xl' : 'max-w-xl'}`}>
+            {pricedPlans.map((plan) => {
               const annual = Math.round(plan.price * 12 * discountMultiplier);
-              return <article key={`${plan.id}-annual`} className="rounded-2xl border border-slate-200 bg-white px-6 py-6 shadow-sm sm:px-7"><h3 className="font-display text-lg font-bold text-[#16324f]">{plan.name}</h3><p className="mt-4 text-sm text-slate-400 line-through">${plan.price * 12}{content.annualSuffix}</p><p className="mt-1 font-display text-3xl font-extrabold text-[#16324f]">${annual}<span className="ml-1 text-base font-semibold">{content.annualSuffix}</span></p><p className="mt-2 text-sm font-semibold text-emerald-700">{content.annualDiscount}{content.annualDiscountCaption}</p><Link href={quoteLink(plan.name, 'year')} className="mt-5 flex min-h-12 items-center justify-center rounded-lg border-2 border-[#16324f] text-sm font-bold text-[#16324f] hover:bg-[#16324f] hover:text-white">{content.annualCta}</Link></article>;
+              return <article key={`${plan.id}-annual`} className="rounded-2xl border border-slate-200 bg-white px-6 py-6 shadow-sm sm:px-7"><h3 className="font-display text-lg font-bold text-[#16324f]">{plan.name}</h3><p className="mt-4 text-sm text-slate-400 line-through">{taka(plan.price * 12)}{content.annualSuffix}</p><p className="mt-1 font-display text-3xl font-extrabold text-[#16324f]">{taka(annual)}<span className="ml-1 text-base font-semibold">{content.annualSuffix}</span></p><p className="mt-2 text-sm font-semibold text-emerald-700">{content.annualDiscount}{content.annualDiscountCaption}</p><Link href={quoteLink(plan.name, 'year')} className="mt-5 flex min-h-12 items-center justify-center rounded-lg border-2 border-[#16324f] text-sm font-bold text-[#16324f] hover:bg-[#16324f] hover:text-white">{content.annualCta}</Link></article>;
             })}
           </div>
-        </section>
+        </section>}
       </main>
       <EnglishFooter />
     </div>

@@ -24,7 +24,7 @@ export default function LearningMethodsSection() {
             Choose The Learning Style That Fits You Best
           </h2>
           <p className="text-slate-600 text-sm sm:text-base">
-            Whether from the comfort of your home or join face-to-face sessions — English Capsules gives you both with equal quality and care.
+            Whether from the comfort of your home or join face-to-face sessions — Career Bridge.Studio gives you both with equal quality and care.
           </p>
         </div>
 

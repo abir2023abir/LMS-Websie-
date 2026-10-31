@@ -26,10 +26,10 @@ export async function POST(request: Request) {
     let resolvedTitle = courseTitle;
     if (!resolvedTitle && courseId) {
       const course = await getCourseById(courseId);
-      resolvedTitle = course?.title || 'English Capsule Program';
+      resolvedTitle = course?.title || 'Career Bridge.Studio Course';
     }
     if (!resolvedTitle) {
-      resolvedTitle = 'General English Foundation Capsule';
+      resolvedTitle = 'Career Bridge.Studio Course';
     }
 
     const certificateId = body.certificateId || generateUniqueCertificateId();
@@ -55,7 +55,7 @@ export async function POST(request: Request) {
       courseId: courseId || '1',
       issueDate: formattedDate,
       grade: grade || 'Pass with Distinction (100% Complete)',
-      instructorName: instructorName || 'English Capsules Global Academic Council',
+      instructorName: instructorName || 'Career Bridge.Studio Academic Team',
       verificationUrl,
       createdAt: new Date().toISOString(),
       status: 'VALID',

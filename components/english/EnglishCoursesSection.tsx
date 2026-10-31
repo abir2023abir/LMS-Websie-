@@ -94,7 +94,7 @@ export default function EnglishCoursesSection() {
             Popular Programs
           </span>
           <h2 className="font-display font-extrabold text-3xl sm:text-4xl text-[#111827] tracking-tight">
-            Explore Our Special English Capsules
+            Explore Our Special Career Bridge.Studio
           </h2>
           <p className="text-slate-600 text-sm sm:text-base">
             Short, goal-oriented courses tailored for fast results and real-world confidence.

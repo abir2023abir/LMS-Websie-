@@ -27,7 +27,7 @@ export async function getHeroContent(): Promise<HeroContent | null> {
   if (isDemoMode()) {
     return {
       headline: 'Build Your Skills. Bridge the Gap to Your Future.',
-      description: 'Learn practical skills, follow structured lessons, and turn your knowledge into real-world progress. Career Bridge . Studio brings courses, assessments, and learning progress together in one place.',
+      description: 'Learn practical skills, follow structured lessons, and turn your knowledge into real-world progress. Career Bridge.Studio brings courses, assessments, and learning progress together in one place.',
       cta1Text: 'Explore Courses',
       cta1Link: '#courses',
       cta2Text: 'Bookkeeping',
@@ -105,7 +105,7 @@ export async function getAboutContent(): Promise<AboutContent | null> {
   if (isDemoMode()) {
     return {
       title: 'A Better Learning Journey, Built Around Your Goals',
-      description: 'Career Bridge . Studio helps learners develop knowledge, strengthen practical skills, and follow a structured path toward personal and professional growth. Learn through organised lessons, practise your skills, and track your progress as you move forward.',
+      description: 'Career Bridge.Studio helps learners develop knowledge, strengthen practical skills, and follow a structured path toward personal and professional growth. Learn through organised lessons, practise your skills, and track your progress as you move forward.',
       statCards: [
         { value: '01', lead: 'Structured', detail: 'Learning Programmes', illustration: 'learning', highlighted: false },
         { value: '02', lead: 'Practical', detail: 'Lessons & Activities', illustration: 'practice', highlighted: false },
@@ -176,33 +176,8 @@ export type SuccessStory = {
 
 export async function getSuccessStories(): Promise<SuccessStory[]> {
   if (isDemoMode()) {
-    return [
-      {
-        headline: 'From Student to Software Developer',
-        description: "A learner's journey of developing practical programming skills, building projects, and preparing for software development opportunities.",
-        caption: 'From Learning MERN Stack to Building a Career | Success Story | Career Bridge.Studio',
-        order: 1,
-      },
-      {
-        headline: 'From Learning to New Income Opportunities',
-        description: 'A learning journey focused on developing practical skills and exploring ways to apply them to real-world work.',
-        caption: 'Building Practical Skills for New Opportunities | Success Story | Career Bridge .Studio',
-        order: 2,
-      },
-      {
-        headline: 'Learning New Skills Beyond the Classroom',
-        description: 'A learner develops technical knowledge through structured lessons, practice, and independent projects.',
-        caption: 'From Learning to Practical Projects | Success Story | Career Bridge .Studio',
-        order: 3,
-      },
-      {
-        headline: 'Taking the First Step Toward a Global Career',
-        description: "A learner's journey of building professional skills, improving confidence, and preparing for wider career opportunities.",
-        caption: 'Building Skills for International Opportunities | Success Story | Career Bridge.Studio',
-        order: 4,
-      },
-    ];
-  }
+    // No real learner stories in demo mode; the home page hides the section when this is empty.
+    return [];  }
 
   try {
     const fb = await firestore();

@@ -37,7 +37,7 @@ export default function StatsSection() {
 
           {/* Description */}
           <p className="text-slate-600 text-sm sm:text-base leading-relaxed font-normal">
-            Career Bridge . Studio helps learners develop knowledge, strengthen practical skills, and follow a structured path toward personal and professional growth. Learn through organised lessons, practise your skills, and track your progress as you move forward.
+            Career Bridge.Studio helps learners develop knowledge, strengthen practical skills, and follow a structured path toward personal and professional growth. Learn through organised lessons, practise your skills, and track your progress as you move forward.
           </p>
         </motion.div>
 

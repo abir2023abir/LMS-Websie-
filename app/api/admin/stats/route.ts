@@ -82,7 +82,7 @@ export async function GET() {
     // Category inventory shows real course documents only.
     const categoryDistributionMap: Record<string, { count: number; students: number; revenue: number }> = {};
     courses.forEach((c) => {
-      const cat = c.category || 'General English';
+      const cat = c.category || 'Accounting';
       if (!categoryDistributionMap[cat]) {
         categoryDistributionMap[cat] = { count: 0, students: 0, revenue: 0 };
       }
@@ -110,7 +110,7 @@ export async function GET() {
         courses: courses.map((c) => ({
           id: c.id,
           title: c.title,
-          category: c.category || 'General English',
+          category: c.category || 'Accounting',
           price: c.price,
           duration: c.duration || '',
           lessonCount: c.lessonCount || 0,

@@ -96,7 +96,7 @@ export async function POST(request: Request) {
       price: parsedPrice,
       originalPrice: originalPrice && !isNaN(Number(originalPrice)) ? Number(originalPrice) : parsedPrice * 1.5,
       thumbnail: thumbnail && typeof thumbnail === 'string' ? thumbnail.trim() : 'https://images.unsplash.com/photo-1517694712202-14dd9538aa97?w=600&h=340&fit=crop',
-      category: category && typeof category === 'string' ? category.slice(0, 50) : 'General English',
+      category: category && typeof category === 'string' ? category.slice(0, 50) : 'Accounting',
       level: level && ['Beginner', 'Intermediate', 'Advanced'].includes(level) ? level : 'Beginner',
       duration: duration && typeof duration === 'string' ? duration.slice(0, 30) : '12h 30m',
       lessonCount: computedLessonCount > 0 ? computedLessonCount : 15,

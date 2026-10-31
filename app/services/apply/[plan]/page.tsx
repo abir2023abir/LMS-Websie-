@@ -12,10 +12,10 @@ function billingOf(offerPeriod: string, raw?: string): Billing {
 
 export function generateMetadata({ params, searchParams }: Props): Metadata {
   const offer = getOffer(params.plan);
-  if (!offer) return { title: 'Service — English Capsules' };
+  if (!offer) return { title: 'Service — Career Bridge.Studio' };
   const billing = billingOf(offer.period, searchParams.billing);
   return {
-    title: `${offer.name} — ${priceLabel(offer, billing)} — English Capsules`,
+    title: `${offer.name} — ${priceLabel(offer, billing)} — Career Bridge.Studio`,
     description: offer.tagline,
   };
 }

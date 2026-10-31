@@ -107,7 +107,7 @@ export default function StudentDashboardPage() {
                   Welcome back, {userProfile?.name || user?.displayName || 'Learner'}!
                 </h1>
                 <p className="text-xs sm:text-sm text-[#111827]/80 font-medium break-all sm:break-normal">
-                  {user?.email || 'Logged in to English Capsules Learning Environment'}
+                  {user?.email || 'Logged in to Career Bridge.Studio'}
                 </p>
               </div>
             </div>
@@ -119,7 +119,7 @@ export default function StudentDashboardPage() {
                 className="min-h-11 flex-1 sm:flex-none justify-center bg-[#111827] hover:bg-black text-white font-extrabold text-xs sm:text-sm px-4 sm:px-6 py-3.5 rounded-full transition-all shadow-lg shadow-black/20 flex items-center gap-2"
               >
                 <Sparkles className="w-4 h-4 text-[#FACC15]" />
-                <span>Explore Capsules</span>
+                <span>Explore Courses</span>
               </Link>
               <button
                 onClick={logout}
@@ -145,7 +145,7 @@ export default function StudentDashboardPage() {
               <div className="font-display font-extrabold text-3xl text-[#111827]">
                 {enrolledCourses.length}
               </div>
-              <div className="text-xs text-slate-500">Active English Capsules</div>
+              <div className="text-xs text-slate-500">Active Courses</div>
             </div>
 
             <div className="bg-white rounded-3xl border border-slate-200/80 p-6 space-y-2 shadow-sm">
@@ -285,7 +285,7 @@ export default function StudentDashboardPage() {
                   type="text"
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
-                  placeholder="Filter my capsules..."
+                  placeholder="Filter my courses..."
                   className="w-full bg-white border border-slate-200 rounded-2xl pl-10 pr-4 py-2 text-xs text-[#111827] placeholder-slate-400 focus:outline-none focus:border-[#111827] shadow-sm font-medium"
                 />
               </div>
@@ -299,7 +299,7 @@ export default function StudentDashboardPage() {
                 <BookOpen className="w-12 h-12 text-slate-300 mx-auto" />
                 <h4 className="font-bold text-lg text-[#111827]">No Courses Found</h4>
                 <p className="text-xs text-slate-500 max-w-sm mx-auto">
-                  {searchQuery ? 'No courses match your filter query.' : 'You have not enrolled in any capsules in this section yet.'}
+                  {searchQuery ? 'No courses match your filter query.' : 'You have not enrolled in any courses in this section yet.'}
                 </p>
                 <Link
                   href="/courses"
@@ -327,7 +327,7 @@ export default function StudentDashboardPage() {
                           className="object-cover group-hover:scale-105 transition-transform duration-500"
                         />
                         <span className="absolute top-3.5 left-3.5 bg-[#111827]/90 text-[#FACC15] text-[10px] font-extrabold px-2.5 py-1 rounded-full shadow">
-                          {item.course.category || 'English Capsule'}
+                          {item.course.category || 'Course'}
                         </span>
                         {is100 && (
                           <span className="absolute top-3.5 right-3.5 bg-emerald-500 text-white text-[10px] font-extrabold px-2.5 py-1 rounded-full shadow flex items-center gap-1">

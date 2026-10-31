@@ -18,6 +18,16 @@ const nextConfig = {
       },
     ],
   },
+  // Temporarily hidden pages the blog until real articles exist,
+  // and the old English coaching plans, now replaced by the bookkeeping service.
+  async redirects() {
+    return [
+      { source: '/blog', destination: '/', permanent: false },
+      { source: '/blog/:slug*', destination: '/', permanent: false },
+      { source: '/services', destination: '/bookkeeping', permanent: false },
+      { source: '/services/:path*', destination: '/bookkeeping', permanent: false },
+    ];
+  },
   async headers() {
     return [
       {

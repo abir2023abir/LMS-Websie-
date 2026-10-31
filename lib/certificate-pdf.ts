@@ -20,7 +20,7 @@ export async function buildCertificatePdf(input: { id: string; studentName: stri
 
   const title = 'Certificate of Completion';
   const titleWidth = bold.widthOfTextAtSize(title, 36);
-  page.drawText('ENGLISH CAPSULES', { x: 70, y: height - 110, size: 13, font: bold, color: ink });
+  page.drawText('CAREER BRIDGE.STUDIO', { x: 70, y: height - 110, size: 13, font: bold, color: ink });
   page.drawText(title, { x: (width - titleWidth) / 2, y: height - 180, size: 36, font: bold, color: ink });
 
   const intro = 'This certifies that';
@@ -33,7 +33,7 @@ export async function buildCertificatePdf(input: { id: string; studentName: stri
   const line = 'has completed the course';
   page.drawText(line, { x: (width - regular.widthOfTextAtSize(line, 16)) / 2, y: height - 330, size: 16, font: regular, color: rgb(0.3, 0.33, 0.38) });
 
-  const course = latin(input.course, 'English Capsule');
+  const course = latin(input.course, 'Course');
   const courseSize = course.length > 48 ? 16 : 22;
   page.drawText(course, { x: (width - bold.widthOfTextAtSize(course, courseSize)) / 2, y: height - 375, size: courseSize, font: bold, color: ink });
 

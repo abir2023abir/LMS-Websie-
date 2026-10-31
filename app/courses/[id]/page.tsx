@@ -12,6 +12,7 @@ import { getCourseById } from '@/lib/db';
 import { getFallbackCourseData } from '@/lib/progress';
 import { applyCourseEdit, loadCourseEdits } from '@/lib/course-edits-client';
 import { takaFromUsd } from '@/lib/utils';
+import { courseOverviews } from '@/lib/data';
 import type { CourseSchema, LessonSchema } from '@/types/course';
 import {
   Star,
@@ -36,11 +37,11 @@ export default function CourseDetailsPage() {
 
   const [course, setCourse] = useState<CourseSchema | null>(null);
   const [loading, setLoading] = useState(true);
-  const [activeTab, setActiveTab] = useState<'overview' | 'curriculum' | 'reviews'>('overview');
+  const [activeTab, setActiveTab] = useState<'overview' | 'curriculum'>('overview');
   const [showCheckoutModal, setShowCheckoutModal] = useState(false);
   const [activeVideoUrl, setActiveVideoUrl] = useState<string | undefined>(undefined);
   const [lessonVideos, setLessonVideos] = useState<Record<string, string>>({});
-  const [activeLessonTitle, setActiveLessonTitle] = useState<string>('Introduction & Capsule Orientation');
+  const [activeLessonTitle, setActiveLessonTitle] = useState<string>('Introduction & Course Orientation');
   const [openModules, setOpenModules] = useState<Record<string, boolean>>({ 'mod-1': true, 'mod-0': true });
 
   useEffect(() => {
@@ -94,7 +95,7 @@ export default function CourseDetailsPage() {
       <div className="min-h-screen bg-slate-50 text-[#111827] flex items-center justify-center p-4">
         <div className="flex items-center gap-3 bg-white border border-slate-200 px-6 py-4 rounded-2xl shadow-xl">
           <div className="w-5 h-5 border-2 border-[#111827] border-t-transparent rounded-full animate-spin" />
-          <span className="font-semibold text-[#111827]">Loading English Capsule Details...</span>
+          <span className="font-semibold text-[#111827]">Loading Course Details...</span>
         </div>
       </div>
     );
@@ -105,13 +106,13 @@ export default function CourseDetailsPage() {
       <div className="min-h-screen bg-slate-50 text-[#111827] flex flex-col justify-between">
         <FloatingNavbar />
         <main className="max-w-4xl mx-auto px-4 py-36 text-center space-y-4">
-          <h1 className="text-2xl font-bold font-display text-[#111827]">English Capsule Not Found</h1>
-          <p className="text-sm text-slate-600">The requested capsule might have been updated or moved.</p>
+          <h1 className="text-2xl font-bold font-display text-[#111827]">Course Not Found</h1>
+          <p className="text-sm text-slate-600">The requested course might have been updated or moved.</p>
           <Link
             href="/courses"
             className="inline-block bg-[#FACC15] text-[#111827] font-bold text-xs px-6 py-3 rounded-xl shadow"
           >
-            Explore All English Capsules
+            Explore All Courses
           </Link>
         </main>
         <EnglishFooter />
@@ -124,6 +125,8 @@ export default function CourseDetailsPage() {
   modules.forEach((m) => {
     totalLessons += m.lessons?.length || 0;
   });
+
+  const overview = courseOverviews[String(course.id)];
 
   const discount =
     course.originalPrice && course.price
@@ -143,19 +146,19 @@ export default function CourseDetailsPage() {
               className="inline-flex items-center gap-2 text-xs font-extrabold text-[#111827]/80 hover:text-[#111827] transition-colors bg-black/5 px-3 py-1.5 rounded-full"
             >
               <ArrowLeft className="w-4 h-4" />
-              <span>Back to All English Capsules</span>
+              <span>Back to All Courses</span>
             </Link>
           </div>
 
           <div className="flex flex-wrap items-center gap-2.5 pt-2">
             <span className="bg-[#111827] text-white text-xs font-extrabold px-3 py-1 rounded-full uppercase tracking-wider">
-              {course.category || 'English Capsule'}
+              {course.category || 'Course'}
             </span>
             <span className="bg-white/80 text-[#111827] text-xs font-bold px-3 py-1 rounded-full border border-black/10">
               {course.level || 'Intermediate'}
             </span>
             <span className="bg-black/10 text-[#111827] text-xs font-extrabold px-3 py-1 rounded-full flex items-center gap-1">
-              <CheckCircle className="w-3.5 h-3.5" /> Certified Diploma Included
+              <CheckCircle className="w-3.5 h-3.5" /> Certificate of Completion
             </span>
           </div>
 
@@ -167,25 +170,23 @@ export default function CourseDetailsPage() {
             {course.description}
           </p>
 
-          <div className="flex flex-wrap items-center gap-6 pt-2 text-xs text-[#111827]/80 font-semibold">
-            <div className="flex items-center gap-1.5 text-[#111827] font-bold">
-              <Star className="w-4 h-4 fill-[#111827]" />
-              <span className="text-sm">{course.rating || 4.9}</span>
-              <span className="text-[#111827]/70 font-normal">
-                ({(course.reviewCount || 12400).toLocaleString()} reviews)
-              </span>
+          {((course.reviewCount || 0) > 0 || (course.studentCount || 0) > 0) && (
+            <div className="flex flex-wrap items-center gap-6 pt-2 text-xs text-[#111827]/80 font-semibold">
+              {(course.reviewCount || 0) > 0 && (
+                <div className="flex items-center gap-1.5 text-[#111827] font-bold">
+                  <Star className="w-4 h-4 fill-[#111827]" />
+                  <span className="text-sm">{course.rating}</span>
+                  <span className="text-[#111827]/70 font-normal">({course.reviewCount?.toLocaleString()} reviews)</span>
+                </div>
+              )}
+              {(course.studentCount || 0) > 0 && (
+                <div className="flex items-center gap-1.5">
+                  <Users className="w-4 h-4" />
+                  <span>{course.studentCount?.toLocaleString()} Students Enrolled</span>
+                </div>
+              )}
             </div>
-
-            <div className="flex items-center gap-1.5">
-              <Users className="w-4 h-4" />
-              <span>{(course.studentCount || 85000).toLocaleString()} Students Enrolled</span>
-            </div>
-
-            <div className="flex items-center gap-1.5">
-              <Globe className="w-4 h-4" />
-              <span>English (Native Audio + Practice Drills)</span>
-            </div>
-          </div>
+          )}
         </div>
       </section>
 
@@ -200,9 +201,9 @@ export default function CourseDetailsPage() {
                 {course.instructorName ? course.instructorName.charAt(0) : 'S'}
               </div>
               <div>
-                <div className="text-xs text-slate-500 font-semibold uppercase tracking-wider">Master Instructor</div>
+                <div className="text-xs text-slate-500 font-semibold uppercase tracking-wider">Instructor</div>
                 <div className="font-display font-bold text-base text-[#111827]">{course.instructorName || 'Lead Academic Faculty'}</div>
-                <div className="text-xs text-slate-500">English Capsules Senior Language Faculty</div>
+                <div className="text-xs text-slate-500">Career Bridge.Studio Faculty</div>
               </div>
             </div>
 
@@ -212,7 +213,6 @@ export default function CourseDetailsPage() {
                 {[
                   { key: 'overview', label: 'Overview & Outcomes', icon: BookOpen },
                   { key: 'curriculum', label: `Curriculum (${modules.length} Modules)`, icon: FileCheck },
-                  { key: 'reviews', label: 'Reviews', icon: Star },
                 ].map(({ key, label, icon: Icon }) => (
                   <button
                     key={key}
@@ -231,22 +231,16 @@ export default function CourseDetailsPage() {
 
               {/* TAB 1: OVERVIEW */}
               {activeTab === 'overview' && (
+                overview ? (
                 <div className="space-y-8">
                   <div className="space-y-4">
                     <h3 className="font-display font-bold text-xl text-[#111827] flex items-center gap-2">
                       <Sparkles className="w-5 h-5 text-amber-500" />
-                      <span>What You Will Master in This Capsule</span>
+                      <span>What You Will Learn</span>
                     </h3>
 
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                      {[
-                        'Speak fluently without translating word-for-word from your native language',
-                        'Master sentence chunking, stress rhythms, and natural British/American intonation',
-                        'Expand your active vocabulary with 1,000+ practical phrases and idioms',
-                        'Overcome speech hesitation and nervousness in meetings and interviews',
-                        'Construct sophisticated compound and complex sentences with correct grammar',
-                        'Pass formal English evaluations and earn an accredited completion diploma',
-                      ].map((item, idx) => (
+                      {overview.outcomes.map((item, idx) => (
                         <div
                           key={idx}
                           className="bg-slate-50 border border-slate-200/80 rounded-2xl p-4 flex items-start gap-3 text-xs sm:text-sm text-slate-700 font-medium"
@@ -263,22 +257,21 @@ export default function CourseDetailsPage() {
                     <div className="space-y-3 bg-slate-50 p-6 rounded-2xl border border-slate-200/80">
                       <h4 className="font-display font-bold text-[#111827] text-base">Course Prerequisites</h4>
                       <ul className="space-y-2 text-slate-600 list-disc list-inside">
-                        <li>Basic understanding of simple English words.</li>
-                        <li>Smartphone or computer with internet access.</li>
-                        <li>20–30 minutes of vocal practice each day.</li>
+                        {overview.prerequisites.map((item) => <li key={item}>{item}</li>)}
                       </ul>
                     </div>
 
                     <div className="space-y-3 bg-slate-50 p-6 rounded-2xl border border-slate-200/80">
-                      <h4 className="font-display font-bold text-[#111827] text-base">Who is This Capsule For?</h4>
+                      <h4 className="font-display font-bold text-[#111827] text-base">Who is This Course For?</h4>
                       <ul className="space-y-2 text-slate-600 list-disc list-inside">
-                        <li>Working professionals aiming for career advancement.</li>
-                        <li>Students preparing for IELTS, TOEFL, or study abroad.</li>
-                        <li>Anyone looking to speak naturally and confidently.</li>
+                        {overview.audience.map((item) => <li key={item}>{item}</li>)}
                       </ul>
                     </div>
                   </div>
                 </div>
+                ) : (
+                  <p className="text-sm text-slate-600 leading-relaxed">{course.description}</p>
+                )
               )}
 
               {/* TAB 2: CURRICULUM */}
@@ -344,53 +337,6 @@ export default function CourseDetailsPage() {
                 </div>
               )}
 
-              {/* TAB 3: REVIEWS */}
-              {activeTab === 'reviews' && (
-                <div className="space-y-6">
-                  <div className="flex items-center justify-between border-b border-slate-100 pb-4">
-                    <div>
-                      <h3 className="font-display font-bold text-xl text-[#111827]">Student Reviews & Ratings</h3>
-                      <div className="flex items-center gap-2 mt-1">
-                        <div className="flex items-center text-amber-500 text-sm">
-                          <Star className="w-4 h-4 fill-current" />
-                          <span className="ml-1 font-bold text-[#111827]">{course.rating || 4.9} out of 5</span>
-                        </div>
-                        <span className="text-xs text-slate-500">• 98% Positive Feedback</span>
-                      </div>
-                    </div>
-                  </div>
-
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    {[
-                      {
-                        name: 'Nusaiba Rahaman',
-                        rating: 5,
-                        date: '2 days ago',
-                        review: 'The practice dialogues in this capsule are top tier. I was terrified of speaking during client calls, but after Module 2 my confidence skyrocketed!',
-                      },
-                      {
-                        name: 'Tanvir Ahmed',
-                        rating: 5,
-                        date: '1 week ago',
-                        review: 'Clear pronunciation drills and actionable explanations. The instructor makes even complex grammatical rules feel natural and effortless.',
-                      },
-                    ].map((rev, idx) => (
-                      <div key={idx} className="bg-slate-50 border border-slate-200/80 rounded-2xl p-5 space-y-3">
-                        <div className="flex items-center justify-between">
-                          <div className="font-bold text-[#111827] text-sm">{rev.name}</div>
-                          <div className="text-[10px] text-slate-400">{rev.date}</div>
-                        </div>
-                        <div className="flex items-center text-amber-500 text-xs">
-                          {[...Array(rev.rating)].map((_, i) => (
-                            <Star key={i} className="w-3.5 h-3.5 fill-current" />
-                          ))}
-                        </div>
-                        <p className="text-xs text-slate-600 leading-relaxed font-medium">{rev.review}</p>
-                      </div>
-                    ))}
-                  </div>
-                </div>
-              )}
             </div>
           </div>
 
@@ -436,7 +382,7 @@ export default function CourseDetailsPage() {
                   className="w-full bg-[#FACC15] hover:bg-[#eab308] text-[#111827] font-extrabold text-sm py-4 px-6 rounded-2xl flex items-center justify-center gap-2 transition-all shadow-lg shadow-[#FACC15]/25"
                 >
                   <PlayCircle className="w-5 h-5 fill-current" />
-                  <span>Enroll in Capsule Now</span>
+                  <span>Enroll Now</span>
                 </button>
 
                 <Link
@@ -455,15 +401,15 @@ export default function CourseDetailsPage() {
                 </div>
                 <div className="flex items-center gap-2">
                   <Check className="w-4 h-4 text-amber-500 stroke-[3]" />
-                  <span>Downloadable Study Notes & Practice Audio</span>
+                  <span>Downloadable Study Notes & Practice Files</span>
                 </div>
                 <div className="flex items-center gap-2">
                   <Check className="w-4 h-4 text-amber-500 stroke-[3]" />
-                  <span>Official English Capsules Diploma</span>
+                  <span>Career Bridge.Studio Certificate of Completion</span>
                 </div>
                 <div className="flex items-center gap-2">
                   <Check className="w-4 h-4 text-amber-500 stroke-[3]" />
-                  <span>30-Day Money-Back Guarantee</span>
+                  <Link href="/refund" className="hover:underline">7-Day Refund Policy</Link>
                 </div>
               </div>
             </div>

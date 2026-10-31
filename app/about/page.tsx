@@ -1,36 +1,36 @@
 import type { Metadata } from 'next';
 import Link from 'next/link';
-import { ArrowRight, BookOpen, GraduationCap, Users } from 'lucide-react';
+import { ArrowRight, BookOpen, Briefcase, GraduationCap } from 'lucide-react';
 import FloatingNavbar from '@/components/english/FloatingNavbar';
 import EnglishFooter from '@/components/english/EnglishFooter';
 
 export const metadata: Metadata = {
-  title: 'About Us — English Capsules',
-  description: 'English Capsules is a learning site for spoken English, IELTS, and live classes. Started in 2015.',
+  title: 'About Us — Career Bridge.Studio',
+  description: 'Career Bridge.Studio offers practical courses in accounting, business finance, and digital skills, plus bookkeeping services for businesses.',
 };
 
 const points = [
   {
     icon: BookOpen,
-    title: 'Short lessons',
-    text: 'Each course is a capsule: a video, notes, a short quiz, and an assignment. The next lesson opens after you watch the one before it.',
+    title: 'Structured courses',
+    text: 'Each course is broken into short lessons with videos, notes, quizzes, and assignments, so you always know what to do next.',
   },
   {
-    icon: Users,
-    title: 'A teacher on the other side',
-    text: 'Students write to their instructor. Guardians see only the learner linked to them. Service messages go to customer care and the admin.',
+    icon: Briefcase,
+    title: 'Bookkeeping for businesses',
+    text: 'Alongside our courses, our team keeps the books for small and growing businesses, so owners can focus on running the business.',
   },
   {
     icon: GraduationCap,
     title: 'A result you can check',
-    text: 'Exams are marked, rank follows course progress, and a finished course can issue a certificate you can verify.',
+    text: 'Quizzes and assignments track your progress, and every completed course earns a certificate that anyone can verify online.',
   },
 ];
 
 const figures = [
-  { value: '2015', label: 'Teaching since' },
-  { value: '10+', label: 'English programs' },
-  { value: '4', label: 'Roles on one account' },
+  { value: '3', label: 'Course tracks: Accounting, Business, Digital Skills' },
+  { value: 'Verified', label: 'Certificates anyone can check online' },
+  { value: '15 min', label: 'Consultation with our team' },
 ];
 
 export default function AboutPage() {
@@ -42,10 +42,10 @@ export default function AboutPage() {
         <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
           <p className="text-xs font-bold uppercase tracking-wider">About us</p>
           <h1 className="mt-2 font-display font-extrabold text-4xl sm:text-5xl tracking-tight max-w-3xl">
-            English, taught in pieces you can finish.
+            Practical skills for your next career step.
           </h1>
           <p className="mt-3 max-w-xl text-sm sm:text-base font-medium text-[#111827]/80">
-            English Capsules started in 2015. The site is a classroom: courses, live coaching, and a record of how far each student has gone.
+            Career Bridge.Studio helps learners build job-ready skills in accounting, business finance, and digital work — and helps businesses keep their books in order.
           </p>
         </div>
       </section>
@@ -62,10 +62,10 @@ export default function AboutPage() {
 
         <div className="max-w-3xl space-y-4 text-sm sm:text-base leading-relaxed text-slate-600">
           <p>
-            The goal is not a long lecture. A student opens one lesson, watches it, writes a note, and answers a short question. Mentors review written work. A guardian can follow one linked student, and only that student.
+            We believe practical skills open doors. Our courses focus on what people actually use at work: recording transactions, reading financial reports, and working confidently with everyday digital tools. Mentors review assignments and answer questions, and guardians can follow the progress of a linked student.
           </p>
           <p>
-            Beside the courses, the same site books live speaking, fluency, and IELTS sessions. Those requests and messages stay with customer care and the admin, so the class and the service desk can both be checked.
+            Beside the courses, we offer bookkeeping services for businesses — from monthly bookkeeping to catch-up work. Book a free consultation and our team will recommend the right plan.
           </p>
         </div>
 
@@ -93,7 +93,7 @@ export default function AboutPage() {
             href="/contact"
             className="inline-flex items-center gap-2 bg-[#FACC15] text-[#111827] font-bold text-sm px-5 py-3 rounded-full"
           >
-            Contact the campus
+            Book a consultation
           </Link>
         </div>
       </section>

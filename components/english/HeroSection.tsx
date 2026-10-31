@@ -47,7 +47,7 @@ export default function HeroSection() {
               transition={{ delay: 0.4 }}
               className="text-base sm:text-lg text-[#111827]/85 font-medium leading-relaxed max-w-xl"
             >
-              Learn practical skills, follow structured lessons, and turn your knowledge into real-world progress. Career Bridge . Studio brings courses, assessments, and learning progress together in one place.
+              Learn practical skills, follow structured lessons, and turn your knowledge into real-world progress. Career Bridge.Studio brings courses, assessments, and learning progress together in one place.
             </motion.p>
 
             {/* Action Buttons */}

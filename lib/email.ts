@@ -1,4 +1,5 @@
 import nodemailer from 'nodemailer';
+import { contactInfo } from './contact';
 
 export interface WelcomeEmailPayload {
   toEmail: string;
@@ -10,7 +11,7 @@ export interface WelcomeEmailPayload {
 }
 
 /**
- * Generates the luxury branded HTML template for the English Capsules Welcome & Getting Started email.
+ * Generates the luxury branded HTML template for the Career Bridge.Studio Welcome & Getting Started email.
  */
 export function generateWelcomeEmailHTML(payload: WelcomeEmailPayload): string {
   const { studentName, courseTitle, courseId, transactionId, amountPaid } = payload;
@@ -24,7 +25,7 @@ export function generateWelcomeEmailHTML(payload: WelcomeEmailPayload): string {
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Welcome to English Capsules</title>
+  <title>Welcome to Career Bridge.Studio</title>
   <style>
     body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; background-color: #f8fafc; margin: 0; padding: 0; color: #1e293b; }
     .container { max-width: 600px; margin: 30px auto; background: #ffffff; border-radius: 24px; overflow: hidden; box-shadow: 0 10px 25px rgba(0,0,0,0.05); border: 1px solid #e2e8f0; }
@@ -50,7 +51,7 @@ export function generateWelcomeEmailHTML(payload: WelcomeEmailPayload): string {
 <body>
   <div class="container">
     <div class="header">
-      <div class="logo-badge">ENGLISH CAPSULES ACADEMY</div>
+      <div class="logo-badge">CAREER BRIDGE.STUDIO</div>
       <h1 class="title">You're Enrolled & Ready to Speak! 🚀</h1>
       <p class="subtitle">Your learning journey begins today</p>
     </div>
@@ -58,7 +59,7 @@ export function generateWelcomeEmailHTML(payload: WelcomeEmailPayload): string {
     <div class="content">
       <div class="greeting">Hi ${studentName},</div>
       <p class="text">
-        Congratulations on taking a decisive step toward English fluency! We are thrilled to welcome you to the <strong>English Capsules</strong> learning community. Your enrollment has been confirmed.
+        Congratulations on taking a decisive step toward English fluency! We are thrilled to welcome you to the <strong>Career Bridge.Studio</strong> learning community. Your enrollment has been confirmed.
       </p>
 
       <div class="course-card">
@@ -91,13 +92,13 @@ export function generateWelcomeEmailHTML(payload: WelcomeEmailPayload): string {
       </div>
 
       <p class="text" style="font-size: 13px;">
-        Need help or have questions? Our student advisors are available 24/7 at <a href="mailto:support@englishcapsules.com" style="color: #ca8a04; font-weight: 700; text-decoration: none;">support@englishcapsules.com</a> or via your <a href="${dashboardUrl}" style="color: #0f172a; font-weight: 700;">Student Dashboard</a>.
+        Need help or have questions? Reach us${contactInfo.email ? ` at <a href="mailto:${contactInfo.email}" style="color: #ca8a04; font-weight: 700; text-decoration: none;">${contactInfo.email}</a> or` : ""} via your <a href="${dashboardUrl}" style="color: #0f172a; font-weight: 700;">Student Dashboard</a>.
       </p>
     </div>
 
     <div class="footer">
-      © ${new Date().getFullYear()} English Capsules Academy. All rights reserved.<br>
-      Dhaka, Bangladesh • Certified English Learning & Fluency Programs
+      © ${new Date().getFullYear()} Career Bridge.Studio. All rights reserved.<br>
+      Practical learning for your next step
     </div>
   </div>
 </body>
@@ -115,7 +116,7 @@ export async function sendWelcomeEmail(payload: WelcomeEmailPayload): Promise<{ 
   const smtpPort = parseInt(process.env.SMTP_PORT || '587', 10);
   const smtpUser = process.env.SMTP_USER;
   const smtpPass = process.env.SMTP_PASS;
-  const emailFrom = process.env.EMAIL_FROM || '"English Capsules Academy" <admissions@englishcapsules.com>';
+  const emailFrom = process.env.EMAIL_FROM || (contactInfo.email ? `"Career Bridge.Studio" <${contactInfo.email}>` : smtpUser);
 
   const htmlContent = generateWelcomeEmailHTML(payload);
 
@@ -135,7 +136,7 @@ export async function sendWelcomeEmail(payload: WelcomeEmailPayload): Promise<{ 
       const info = await transporter.sendMail({
         from: emailFrom,
         to: toEmail,
-        subject: `Welcome to ${courseTitle} — Your English Capsules Journey Begins! 🎓`,
+        subject: `Welcome to ${courseTitle} — Your Career Bridge.Studio Journey Begins! 🎓`,
         html: htmlContent,
       });
 

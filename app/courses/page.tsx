@@ -37,7 +37,7 @@ export default function CoursesCatalogPage() {
   const [selectedCourse, setSelectedCourse] = useState<CourseSchema | null>(null);
   const [showCheckout, setShowCheckout] = useState(false);
 
-  // Honor deep links like /courses?category=Spoken+English from nav/footer
+  // Honor deep links like /courses?category=Accounting from nav/footer
   const [hiddenIds, setHiddenIds] = useState<string[]>([]);
   const [discounts, setDiscounts] = useState<Record<string, number>>({});
   const courseEdits = useCourseEdits();
@@ -160,7 +160,7 @@ export default function CoursesCatalogPage() {
                 type="text"
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
-                placeholder="Search bookkeeping, accounting, digital skills, English..."
+                placeholder="Search bookkeeping, accounting, digital skills..."
                 className="bg-transparent text-sm text-[#111827] placeholder-slate-400 px-3 py-2 w-full focus:outline-none font-medium"
               />
               {searchQuery && (
@@ -249,10 +249,9 @@ export default function CoursesCatalogPage() {
                 className="bg-transparent text-[#111827] focus:outline-none cursor-pointer font-bold"
               >
                 <option value="popular">Most Popular</option>
-                <option value="rating">Highest Rated</option>
                 <option value="price-low">Price: Low to High</option>
                 <option value="price-high">Price: High to Low</option>
-                <option value="newest">Newest Capsules</option>
+                <option value="newest">Newest Courses</option>
               </select>
             </div>
           </div>
@@ -338,8 +337,10 @@ export default function CoursesCatalogPage() {
                     {/* Details Content */}
                     <div className="p-6 flex-1 flex flex-col justify-between space-y-5">
                       <div className="space-y-2.5">
-                        {/* Rating & Students */}
+                        {/* Rating & Students — only shown once real numbers exist */}
+                        {(course.reviewCount > 0 || course.studentCount > 0) && (
                         <div className="flex items-center justify-between text-xs">
+                          {course.reviewCount > 0 && (
                           <div className="flex items-center gap-1.5 text-amber-500 font-bold">
                             <Star className="w-4 h-4 fill-current" />
                             <span className="text-[#111827]">{course.rating}</span>
@@ -347,12 +348,16 @@ export default function CoursesCatalogPage() {
                               ({course.reviewCount.toLocaleString()})
                             </span>
                           </div>
+                          )}
 
+                          {course.studentCount > 0 && (
                           <div className="text-slate-500 text-[11px] flex items-center gap-1">
                             <Users className="w-3.5 h-3.5 text-slate-400" />
                             <span>{course.studentCount.toLocaleString()} learners</span>
                           </div>
+                          )}
                         </div>
+                        )}
 
                         {/* Title */}
                         <Link href={`/courses/${course.id}`}>

@@ -10,7 +10,7 @@ export default async function Hero() {
   const heroData = {
     ...(content || {
     headline: 'Build Your Skills. Bridge the Gap to Your Future.',
-    description: 'Learn practical skills, follow structured lessons, and turn your knowledge into real-world progress. Career Bridge . Studio brings courses, assessments, and learning progress together in one place.',
+    description: 'Learn practical skills, follow structured lessons, and turn your knowledge into real-world progress. Career Bridge.Studio brings courses, assessments, and learning progress together in one place.',
     cta1Text: 'Explore Courses',
     cta1Link: '#courses',
     cta2Text: 'Bookkeeping',
@@ -23,7 +23,7 @@ export default async function Hero() {
   };
 
   return (
-    <section className="relative flex h-screen h-[100svh] min-h-[100vh] flex-col overflow-hidden bg-gradient-to-b from-[#FACC15] via-[#FACC15] to-[#EAB308] pt-20 sm:pt-28 lg:h-auto lg:pt-36">
+    <section className="relative flex flex-col overflow-hidden bg-gradient-to-b from-[#FACC15] via-[#FACC15] to-[#EAB308] pt-24 sm:h-screen sm:h-[100svh] sm:min-h-[100vh] sm:pt-28 lg:h-auto lg:pt-36">
       <div className="relative z-10 flex flex-1 flex-col max-w-7xl mx-auto w-full px-4 sm:px-6 lg:px-8">
         <div className="grid flex-1 grid-cols-2 grid-rows-1 gap-2 sm:gap-4 lg:grid-cols-12 lg:gap-6 items-center">
 
@@ -31,16 +31,16 @@ export default async function Hero() {
           <HeroAnimations heroData={heroData} />
           
           {/* ── RIGHT COLUMN: LEARNER VISUAL - BRIDGE TO CAREER ── */}
-          <div className="min-w-0 lg:col-span-6 relative min-h-0 h-full flex justify-center lg:justify-end items-end">
+          <div className="min-w-0 lg:col-span-6 relative min-h-0 h-full self-end sm:self-auto flex justify-center lg:justify-end items-end">
             {/* Infinite Subtle Floating Image Container */}
-            <div className="relative w-full max-w-lg lg:max-w-xl h-full min-h-0 max-h-[clamp(13rem,46svh,32rem)] sm:max-h-none sm:h-[580px] lg:h-[660px] z-20 animate-float">
+            <div className="relative w-full max-w-lg lg:max-w-xl h-[clamp(15rem,74vw,22rem)] min-h-0 sm:h-[580px] lg:h-[660px] z-20 animate-float">
               <Image
                 src={heroData.imageUrl}
                 alt="Learner at the start of a career development journey"
                 fill
                 priority
                 className="object-contain object-bottom drop-shadow-2xl scale-100 sm:scale-110 origin-bottom"
-                sizes="(max-width: 768px) 50vw, 50vw"
+                sizes="(max-width: 640px) 60vw, 50vw"
               />
             </div>
 

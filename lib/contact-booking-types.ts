@@ -27,7 +27,7 @@ export const defaultContactBookingContent: ContactBookingContent = {
   inboxNote: 'Your request will appear in the admin message inbox. The team will confirm your time by replying there.',
   confirmLabel: 'Confirm request', sendingLabel: 'Sending…', successTitle: 'Your request is with our team',
   successBody: 'We saved your preferred time for {date} at {time}. It is pending confirmation; our team can reply in the admin message inbox.',
-  noInvitationNote: 'No email or calendar invitation was sent.',
-  integrationNote: 'This is a consultation request form. No external calendar, email, or payment service is connected.',
+  noInvitationNote: 'Our team will contact you to confirm your slot.',
+  integrationNote: '',
   weekdayLabels: ['Sun','Mon','Tue','Wed','Thu','Fri','Sat'],
 };

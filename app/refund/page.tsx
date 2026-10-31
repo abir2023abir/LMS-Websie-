@@ -5,7 +5,7 @@ import EnglishFooter from '@/components/english/EnglishFooter';
 const sections = [
   {
     heading: '1. 7-Day Money-Back Window',
-    body: 'If you are not satisfied with a paid English Capsule, you may request a full refund within 7 days of purchase, provided you have completed less than 20% of the course lessons (as tracked automatically by your student dashboard progress).',
+    body: 'If you are not satisfied with a paid course, you may request a full refund within 7 days of purchase, provided you have completed less than 20% of the course lessons (as tracked automatically by your student dashboard progress).',
   },
   {
     heading: '2. How to Request a Refund',
@@ -17,11 +17,11 @@ const sections = [
   },
   {
     heading: '4. When Refunds Are Not Applicable',
-    body: 'Refunds cannot be issued after the 7-day window, after more than 20% of lessons have been completed, for free capsules, or in cases where course access was shared, recorded, or redistributed in violation of our Terms of Service.',
+    body: 'Refunds cannot be issued after the 7-day window, after more than 20% of lessons have been completed, for free courses, or in cases where course access was shared, recorded, or redistributed in violation of our Terms of Service.',
   },
   {
     heading: '5. Course Cancellations & Changes',
-    body: 'If English Capsules permanently discontinues a course you purchased, you may choose an equivalent replacement capsule or a full prorated refund, at your discretion.',
+    body: 'If Career Bridge.Studio permanently discontinues a course you purchased, you may choose an equivalent replacement course or a full prorated refund, at your discretion.',
   },
   {
     heading: '6. Certificate & Progress Impact',
@@ -30,8 +30,8 @@ const sections = [
 ];
 
 export const metadata = {
-  title: 'Refund Policy | English Capsules',
-  description: 'English Capsules refund terms for paid course capsules.',
+  title: 'Refund Policy | Career Bridge.Studio',
+  description: 'Career Bridge.Studio refund terms for paid courses.',
 };
 
 export default function RefundPage() {

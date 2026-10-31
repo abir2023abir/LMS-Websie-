@@ -18,7 +18,7 @@ export async function POST(request: Request) {
     let resolvedTitle = courseTitle;
     if (!resolvedTitle) {
       const course = await getCourseById(courseId);
-      resolvedTitle = course?.title || 'English Capsule Program';
+      resolvedTitle = course?.title || 'Career Bridge.Studio Course';
     }
 
     const payload: WelcomeEmailPayload = {

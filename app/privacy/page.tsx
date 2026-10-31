@@ -9,7 +9,7 @@ const sections = [
   },
   {
     heading: '2. How We Use Your Information',
-    body: 'Your data is used to deliver course access, track and display your learning progress, issue verifiable certificates, send enrollment and important service emails, and improve our English programs. We never sell your personal information to third parties.',
+    body: 'Your data is used to deliver course access, track and display your learning progress, issue verifiable certificates, send enrollment and important service emails, and improve our courses and services. We never sell your personal information to third parties.',
   },
   {
     heading: '3. Cookies & Local Storage',
@@ -29,7 +29,7 @@ const sections = [
   },
   {
     heading: '7. Your Rights',
-    body: 'You can access, correct, or request deletion of your personal data by contacting us. If you are under 13, a parent or guardian should enroll you in our Kids English program and manage account data on your behalf.',
+    body: 'You can access, correct, or request deletion of your personal data by contacting us. If you are under 13, a parent or guardian should create and manage your account on your behalf.',
   },
   {
     heading: '8. Policy Updates',
@@ -38,8 +38,8 @@ const sections = [
 ];
 
 export const metadata = {
-  title: 'Privacy Policy | English Capsules',
-  description: 'How English Capsules collects, uses, and protects your personal data.',
+  title: 'Privacy Policy | Career Bridge.Studio',
+  description: 'How Career Bridge.Studio collects, uses, and protects your personal data.',
 };
 
 export default function PrivacyPage() {

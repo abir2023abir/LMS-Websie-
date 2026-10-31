@@ -54,7 +54,6 @@ export default function AdminDashboard() {
   const [editsVersion, setEditsVersion] = useState(0);
   const courseEdits = useCourseEdits(editsVersion);
 
-  // SWR real-time polling every 4 seconds
   const { data, mutate, isLoading } = useSWR('/api/admin/stats', fetcher, {
     refreshInterval: 15000,
     revalidateOnFocus: true,
@@ -113,7 +112,7 @@ export default function AdminDashboard() {
               </div>
               <div>
                 <span className="font-display font-extrabold text-lg text-white tracking-wide block leading-none">
-                  English Capsules
+                  Career Bridge.Studio
                 </span>
                 <span className="text-[10px] font-bold text-[#FACC15] uppercase tracking-widest leading-none">
                   Admin Panel • Live Database
@@ -184,7 +183,7 @@ export default function AdminDashboard() {
               </button>;
             })}
           </nav>
-          <Link href="/teacher" className="mt-3 flex min-h-11 items-center justify-center gap-2 rounded-xl bg-[#111827] px-3 text-xs font-extrabold text-white transition hover:bg-slate-800"><Plus className="h-4 w-4 stroke-[3] text-[#FACC15]" /><span>Add English Capsule</span></Link>
+          <Link href="/teacher" className="mt-3 flex min-h-11 items-center justify-center gap-2 rounded-xl bg-[#111827] px-3 text-xs font-extrabold text-white transition hover:bg-slate-800"><Plus className="h-4 w-4 stroke-[3] text-[#FACC15]" /><span>Add Course</span></Link>
         </aside>
         <section className="min-w-0 space-y-8">
         
@@ -212,7 +211,7 @@ export default function AdminDashboard() {
                 <div className="flex items-center justify-between">
                   <h3 className="font-display font-bold text-base text-slate-900 flex items-center gap-2">
                     <Sparkles className="w-4 h-4 text-amber-500" />
-                    <span>Live English Category Distribution (Database)</span>
+                    <span>Courses by Category</span>
                   </h3>
                   <span className="text-xs text-slate-500 font-semibold">
                     {coursesList.length} Active Courses
@@ -239,7 +238,7 @@ export default function AdminDashboard() {
             <div className="flex items-center justify-between">
               <div>
                 <h2 className="font-display font-extrabold text-xl text-slate-900">Manage Courses ({filteredCourses.length})</h2>
-                <p className="text-xs text-slate-500">Live database inventory of all published English Capsules.</p>
+                <p className="text-xs text-slate-500">Live database inventory of all published courses.</p>
               </div>
               <Link
                 href="/teacher"

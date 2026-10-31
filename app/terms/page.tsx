@@ -5,19 +5,19 @@ import EnglishFooter from '@/components/english/EnglishFooter';
 const sections = [
   {
     heading: '1. Acceptance of Terms',
-    body: 'By accessing English Capsules, registering an account, purchasing a course capsule, or using any of our learning materials, you agree to be bound by these Terms of Service and our Privacy Policy. If you do not agree, please discontinue use of the platform.',
+    body: 'By accessing Career Bridge.Studio, registering an account, purchasing a course, or using any of our learning materials, you agree to be bound by these Terms of Service and our Privacy Policy. If you do not agree, please discontinue use of the platform.',
   },
   {
     heading: '2. Accounts & Enrollment',
-    body: 'You are responsible for maintaining the confidentiality of your login credentials and for all activity under your account. Course enrollment is confirmed only after successful payment (or confirmation of a free capsule) and is personal to the enrolled student. Sharing accounts, credentials, or purchased course access with third parties is prohibited.',
+    body: 'You are responsible for maintaining the confidentiality of your login credentials and for all activity under your account. Course enrollment is confirmed only after successful payment (or confirmation of a free course) and is personal to the enrolled student. Sharing accounts, credentials, or purchased course access with third parties is prohibited.',
   },
   {
     heading: '3. Course Content & Intellectual Property',
-    body: 'All video capsules, lessons, quizzes, worksheets, certificates, and materials provided through English Capsules are protected by copyright and remain the property of English Capsules and its instructors. You may use purchased content for personal learning only. Downloading, recording, reproducing, reselling, or redistributing any course material without written permission is not allowed.',
+    body: 'All video lessons, lessons, quizzes, worksheets, certificates, and materials provided through Career Bridge.Studio are protected by copyright and remain the property of Career Bridge.Studio and its instructors. You may use purchased content for personal learning only. Downloading, recording, reproducing, reselling, or redistributing any course material without written permission is not allowed.',
   },
   {
     heading: '4. Certificates',
-    body: 'Completion certificates are issued to students who reach 100% module completion and pass the required assessments. Certificates can be verified publicly through our Verify Certificate page using the certificate ID. English Capsules may revoke a certificate in cases of academic dishonesty.',
+    body: 'Completion certificates are issued to students who reach 100% module completion and pass the required assessments. Certificates can be verified publicly through our Verify Certificate page using the certificate ID. Career Bridge.Studio may revoke a certificate in cases of academic dishonesty.',
   },
   {
     heading: '5. Payments',
@@ -29,7 +29,7 @@ const sections = [
   },
   {
     heading: '7. Limitation of Liability',
-    body: 'English Capsules provides language training services and makes no guarantee of specific exam scores, employment outcomes, or immigration results. To the maximum extent permitted by law, our liability is limited to the amount paid by you for the relevant course.',
+    body: 'Career Bridge.Studio provides skills training and bookkeeping services and makes no guarantee of specific employment, income, or business outcomes. To the maximum extent permitted by law, our liability is limited to the amount paid by you for the relevant course.',
   },
   {
     heading: '8. Changes to These Terms',
@@ -38,8 +38,8 @@ const sections = [
 ];
 
 export const metadata = {
-  title: 'Terms of Service | English Capsules',
-  description: 'The terms that govern the use of the English Capsules learning platform.',
+  title: 'Terms of Service | Career Bridge.Studio',
+  description: 'The terms that govern the use of the Career Bridge.Studio learning platform.',
 };
 
 export default function TermsPage() {

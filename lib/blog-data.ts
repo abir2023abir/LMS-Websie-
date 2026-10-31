@@ -84,7 +84,7 @@ export const blogPosts: BlogPost[] = [
             'Shadowing is an advanced audio drill where you listen to a native English recording and repeat the words simultaneously with only a split-second delay.',
             'This trains your tongue, lips, and vocal cords to match native pitch contours, syllable stress, and rhythm.',
           ],
-          proTip: 'Use short 1-minute TED Talk clips or English Capsules video drills for daily shadowing sessions.',
+          proTip: 'Use short 1-minute TED Talk clips or Career Bridge.Studio video drills for daily shadowing sessions.',
         },
         {
           heading: '4. Embrace Fillers and Natural Conversational Signposts',

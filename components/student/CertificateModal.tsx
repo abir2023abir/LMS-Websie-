@@ -16,6 +16,7 @@ import {
   FileCheck,
 } from 'lucide-react';
 import { generateCertificatePDF } from '@/lib/certificate';
+import { certificateVerifyLabel } from '@/lib/contact';
 
 interface CertificateModalProps {
   isOpen: boolean;
@@ -146,7 +147,7 @@ export default function CertificateModal({
             <div>
               <div className="flex items-center gap-2">
                 <span className="text-[#FACC15] text-xs font-extrabold uppercase tracking-wider">
-                  Official Diploma
+                  Certificate of Completion
                 </span>
                 <span className="bg-emerald-500/20 text-emerald-300 text-[10px] font-bold px-2 py-0.5 rounded-full flex items-center gap-1 border border-emerald-500/30">
                   <CheckCircle2 className="w-3 h-3" /> 100% Completed
@@ -182,10 +183,10 @@ export default function CertificateModal({
               {/* Top Crest / Academy Header */}
               <div className="space-y-1">
                 <div className="text-[11px] sm:text-xs font-bold tracking-widest text-[#0f172a] uppercase">
-                  LearnVerse • English Capsules Global Academy
+                  Career Bridge.Studio
                 </div>
                 <div className="text-[9px] sm:text-[10px] text-slate-500 uppercase tracking-wider font-semibold">
-                  Accredited Continuing Education & Skill Mastery Council
+                  Practical Learning for Your Next Step
                 </div>
                 <div className="w-24 h-0.5 bg-[#d4af37] mx-auto mt-2" />
               </div>
@@ -257,7 +258,7 @@ export default function CertificateModal({
                     {certificateId}
                   </div>
                   <div className="text-[10px] text-slate-500">
-                    Verify at: englishcapsules.com/verify
+                    Verify at: {certificateVerifyLabel}
                   </div>
                 </div>
               </div>
@@ -309,7 +310,7 @@ export default function CertificateModal({
               className="px-4 py-2.5 rounded-xl bg-white/10 hover:bg-white/20 text-white border border-white/20 text-xs font-semibold flex items-center gap-1.5 transition-all"
             >
               <Printer className="w-3.5 h-3.5 text-[#FACC15]" />
-              <span>Print Diploma</span>
+              <span>Print Certificate</span>
             </button>
 
             <button

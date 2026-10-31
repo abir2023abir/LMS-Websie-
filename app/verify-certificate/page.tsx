@@ -41,7 +41,7 @@ export default function VerifyCertificatePage() {
 
 function VerifyCertificateContent() {
   const searchParams = useSearchParams();
-  const initialId = searchParams.get('id') || searchParams.get('certificateId') || 'EC-2026-8921';
+  const initialId = searchParams.get('id') || searchParams.get('certificateId') || '';
 
   const [certInput, setCertInput] = useState(initialId);
   const [currentCert, setCurrentCert] = useState<CertificateRecord | null>(null);
@@ -72,7 +72,7 @@ function VerifyCertificateContent() {
         setErrorMsg(null);
       } else {
         setCurrentCert(null);
-        setErrorMsg(data.message || `No certificate record was found for ID "${cleanId}". Please verify the code on your diploma.`);
+        setErrorMsg(data.message || `No certificate record was found for ID "${cleanId}". Please check the code printed on your certificate.`);
       }
     } catch (err: any) {
       console.error('Verification query error:', err);
@@ -121,11 +121,11 @@ function VerifyCertificateContent() {
           </div>
 
           <h1 className="font-display font-extrabold text-3xl sm:text-5xl text-[#111827] tracking-tight leading-tight">
-            Verify & Authenticate Diplomas
+            Verify a Certificate
           </h1>
 
           <p className="text-[#111827]/85 text-sm sm:text-base max-w-xl mx-auto font-medium">
-            Enter the unique Certificate ID printed on any English Capsules diploma to validate its accreditation directly against our database.
+            Enter the unique Certificate ID printed on any Career Bridge.Studio certificate to confirm it was issued by us.
           </p>
 
           {/* Search Form */}
@@ -135,7 +135,7 @@ function VerifyCertificateContent() {
                 type="text"
                 value={certInput}
                 onChange={(e) => setCertInput(e.target.value)}
-                placeholder="Enter Certificate ID (e.g. EC-2026-8921)..."
+                placeholder="Enter Certificate ID (e.g. CBS-2026-K9P2W7)..."
                 className="w-full bg-white text-[#111827] placeholder-slate-400 font-mono font-bold text-xs sm:text-sm px-4 py-3.5 rounded-2xl border-2 border-black/10 shadow-xl focus:outline-none focus:border-[#111827]"
               />
             </div>
@@ -153,23 +153,6 @@ function VerifyCertificateContent() {
             </button>
           </form>
 
-          {/* Sample ID suggestions */}
-          <div className="flex flex-wrap items-center justify-center gap-2 pt-1 text-xs text-[#111827]/70 font-semibold">
-            <span>Try sample records:</span>
-            {['EC-2026-8921', 'EC-2026-5542', 'EC-2026-7731'].map((id) => (
-              <button
-                key={id}
-                type="button"
-                onClick={() => {
-                  setCertInput(id);
-                  verifyCertificate(id);
-                }}
-                className="font-mono bg-black/10 hover:bg-black/20 text-[#111827] px-2.5 py-0.5 rounded-md font-bold transition-colors"
-              >
-                {id}
-              </button>
-            ))}
-          </div>
         </div>
       </section>
 
@@ -201,17 +184,6 @@ function VerifyCertificateContent() {
                 {errorMsg}
               </p>
             </div>
-            <div className="pt-2">
-              <button
-                onClick={() => {
-                  setCertInput('EC-2026-8921');
-                  verifyCertificate('EC-2026-8921');
-                }}
-                className="inline-flex items-center gap-1.5 bg-[#111827] text-white text-xs font-bold px-5 py-2.5 rounded-xl shadow"
-              >
-                <span>Load Verified Sample (EC-2026-8921)</span>
-              </button>
-            </div>
           </motion.div>
         )}
 
@@ -238,7 +210,7 @@ function VerifyCertificateContent() {
                     </span>
                   </div>
                   <p className="text-xs text-emerald-800 font-medium mt-0.5">
-                    Issued by English Capsules Academy • Cryptographically Validated
+                    Issued by Career Bridge.Studio
                   </p>
                 </div>
               </div>
@@ -264,7 +236,7 @@ function VerifyCertificateContent() {
               </div>
             </div>
 
-            {/* ── LUXURY PRINTABLE DIPLOMA CARD ── */}
+            {/* ── PRINTABLE CERTIFICATE CARD ── */}
             <div className="bg-[#FCFBF7] border-8 border-[#111827] rounded-3xl p-6 sm:p-12 shadow-2xl relative overflow-hidden print:p-0 print:border-none print:shadow-none">
               {/* Inner Decorative Gold Border */}
               <div className="border-4 border-[#D4AF37] rounded-2xl p-6 sm:p-10 relative space-y-8 text-center bg-white/60">
@@ -272,7 +244,7 @@ function VerifyCertificateContent() {
                 <div className="space-y-2">
                   <div className="inline-flex items-center gap-2 bg-[#111827] text-[#FACC15] border border-[#D4AF37] text-[11px] font-extrabold px-4 py-1 rounded-full uppercase tracking-widest shadow">
                     <Sparkles className="w-3.5 h-3.5 fill-[#FACC15]" />
-                    <span>English Capsules Academy</span>
+                    <span>Career Bridge.Studio</span>
                   </div>
                   <h2 className="font-display font-black text-2xl sm:text-4xl text-[#111827] tracking-tight uppercase pt-2">
                     Certificate of Completion

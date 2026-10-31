@@ -42,6 +42,9 @@ export default function Testimonials() {
     if (reviews.length > 1) setCurrentIndex((index) => (index + direction + reviews.length) % reviews.length);
   };
 
+  // Hide the whole section until at least one verified review is published.
+  if (loading || reviews.length === 0) return null;
+
   return (
     <section id="testimonials" className="relative overflow-hidden border-t border-white/10 bg-[#111827] py-16 text-white sm:py-20">
       <div className="mx-auto max-w-6xl space-y-9 px-4 sm:space-y-12 sm:px-6 lg:px-8">

@@ -24,51 +24,8 @@ const LOCAL_CERTIFICATES_KEY = 'english_capsules_certificate_registry';
 const SERVER_DATA_DIR = dataPath();
 const SERVER_CERTS_FILE = path.join(SERVER_DATA_DIR, 'certificates.json');
 
-// Seed initial verified certificates for instant demonstration & testing
-const seedCertificates: Record<string, CertificateRecord> = {
-  'EC-2026-8921': {
-    certificateId: 'EC-2026-8921',
-    studentName: 'Md. Saiful Islam',
-    studentEmail: 'saiful.islam@example.com',
-    courseTitle: 'General English Foundation Capsule: Zero to Confident Speaker',
-    courseId: '1',
-    issueDate: 'August 18, 2026',
-    grade: 'A+ (Distinction - 96%)',
-    instructorName: 'English Capsules Global Academic Council',
-    verificationUrl: 'http://localhost:3000/verify-certificate?id=EC-2026-8921',
-    createdAt: new Date('2026-08-18').toISOString(),
-    status: 'VALID',
-    verified: true,
-  },
-  'EC-2026-5542': {
-    certificateId: 'EC-2026-5542',
-    studentName: 'Tanvir Ahmed',
-    studentEmail: 'tanvir.ahmed@example.com',
-    courseTitle: 'Business English & Corporate Communication Masterclass',
-    courseId: '3',
-    issueDate: 'July 24, 2026',
-    grade: 'A (Excellence - 92%)',
-    instructorName: 'Corporate Faculty Board',
-    verificationUrl: 'http://localhost:3000/verify-certificate?id=EC-2026-5542',
-    createdAt: new Date('2026-07-24').toISOString(),
-    status: 'VALID',
-    verified: true,
-  },
-  'EC-2026-7731': {
-    certificateId: 'EC-2026-7731',
-    studentName: 'Nusaiba Rahaman',
-    studentEmail: 'nusaiba@example.com',
-    courseTitle: 'IELTS Academic & General Band 8+ Ultimate Masterclass',
-    courseId: '4',
-    issueDate: 'August 10, 2026',
-    grade: 'Band 8.5 (Distinction)',
-    instructorName: 'British & Australian Council Faculty',
-    verificationUrl: 'http://localhost:3000/verify-certificate?id=EC-2026-7731',
-    createdAt: new Date('2026-08-10').toISOString(),
-    status: 'VALID',
-    verified: true,
-  },
-};
+// No built-in demo certificates: only certificates actually issued can be verified.
+const seedCertificates: Record<string, CertificateRecord> = {};
 
 // Helper to load file store
 function loadFileCertStore(): Record<string, CertificateRecord> {
@@ -96,7 +53,7 @@ function saveFileCertStore(store: Record<string, CertificateRecord>) {
 }
 
 /**
- * Generates a unique, random alphanumeric Certificate ID (e.g. EC-2026-K9P2W7)
+ * Generates a unique, random alphanumeric Certificate ID (e.g. CBS-2026-K9P2W7)
  */
 export function generateUniqueCertificateId(): string {
   const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
@@ -104,7 +61,7 @@ export function generateUniqueCertificateId(): string {
   for (let i = 0; i < 6; i++) {
     token += chars.charAt(Math.floor(Math.random() * chars.length));
   }
-  return `EC-2026-${token}`;
+  return `CBS-${new Date().getFullYear()}-${token}`;
 }
 
 /**

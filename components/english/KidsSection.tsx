@@ -139,7 +139,7 @@ export default function KidsSection() {
           {/* Playful Kids Pill Badge */}
           <div className="inline-flex items-center gap-2 bg-[#FACC15] text-[#111827] rounded-full px-4 py-1.5 border border-amber-300 shadow-md font-extrabold text-xs uppercase tracking-wider">
             <Sparkles className="w-4 h-4 fill-current" />
-            <span>English Capsules For Kids & Young Learners</span>
+            <span>Career Bridge.Studio For Kids & Young Learners</span>
           </div>
 
           <h2 className="font-display font-extrabold text-3xl sm:text-5xl text-[#111827] tracking-tight leading-tight">

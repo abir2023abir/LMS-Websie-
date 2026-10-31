@@ -4,6 +4,7 @@ import { getSuccessStories } from '@/lib/cms-db';
 
 export default async function SuccessStories() {
   const stories = await getSuccessStories();
+  if (stories.length === 0) return null;
 
   return (
     <section className="bg-white py-16 sm:py-24 text-[#111827]">
@@ -66,13 +67,6 @@ export default async function SuccessStories() {
           </a>
         </div>
 
-        {/* ── Compliance Note ── */}
-        <div className="mt-8 text-center">
-          <p className="text-xs text-slate-400 italic max-w-2xl mx-auto">
-            * Content templates shown above. Actual learner stories and outcomes will be published when available. 
-            No invented salary figures, income results, or achievements are displayed.
-          </p>
-        </div>
       </div>
     </section>
   );

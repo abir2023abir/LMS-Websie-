@@ -32,7 +32,7 @@ export default function Navbar() {
           <Link
             href="/"
             className="flex items-center gap-2.5 group focus-ring rounded-lg"
-            aria-label="LearnVerse home"
+            aria-label="Career Bridge.Studio home"
           >
             <div className="w-9 h-9 rounded-xl bg-primary-gradient flex items-center justify-center shadow-lg shadow-primary-600/40 group-hover:shadow-primary-600/60 group-hover:scale-105 transition-all duration-200">
               <Zap className="w-5 h-5 text-white" />

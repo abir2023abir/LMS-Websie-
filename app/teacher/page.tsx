@@ -40,7 +40,7 @@ export default function TeacherPanelPage() {
   const [title, setTitle] = useState('');
   const [description, setDescription] = useState('');
   const [price, setPrice] = useState(String(usdToBdt(49)));
-  const [category, setCategory] = useState('General English');
+  const [category, setCategory] = useState('Accounting');
   const [level, setLevel] = useState<'Beginner' | 'Intermediate' | 'Advanced'>('Beginner');
   const [thumbnailUrl, setThumbnailUrl] = useState('');
   const [thumbnailPreview, setThumbnailPreview] = useState<string | null>(null);
@@ -53,7 +53,7 @@ export default function TeacherPanelPage() {
       lessons: [
         {
           id: 'les-1',
-          title: 'Welcome to English Capsules',
+          title: 'Welcome to Career Bridge.Studio',
           videoUrl: 'https://www.youtube.com/watch?v=dQw4w9WgXcQ',
           duration: '05:30',
         },
@@ -275,7 +275,7 @@ export default function TeacherPanelPage() {
                   Welcome, {userProfile?.name || user?.displayName || 'Teacher'}!
                 </h1>
                 <p className="text-xs sm:text-sm text-[#111827]/80 font-medium">
-                  {user?.email || 'Manage your English Capsules, modules & students'}
+                  {user?.email || 'Manage your courses, modules & students'}
                 </p>
               </div>
             </div>
@@ -343,7 +343,7 @@ export default function TeacherPanelPage() {
               <div className="font-display font-extrabold text-3xl text-[#111827]">
                 {courses.length}
               </div>
-              <div className="text-xs text-slate-500">Published English Capsules</div>
+              <div className="text-xs text-slate-500">Published Courses</div>
             </div>
 
             <div className="bg-white rounded-3xl border border-slate-200/80 p-6 space-y-2 shadow-sm">
@@ -368,7 +368,7 @@ export default function TeacherPanelPage() {
                   Your Uploaded Courses
                 </h2>
                 <p className="text-xs text-slate-500 mt-1">
-                  Manage your English Capsules and track student enrollment
+                  Manage your courses and track student enrollment
                 </p>
               </div>
               <button
@@ -389,7 +389,7 @@ export default function TeacherPanelPage() {
                 <BookOpen className="w-8 h-8 text-slate-300 mx-auto mb-2" />
                 <p>
                   No courses published yet. Click &quot;Upload New Course&quot; to create your
-                  first English Capsule!
+                  first course!
                 </p>
               </div>
             ) : (
@@ -433,7 +433,7 @@ export default function TeacherPanelPage() {
                         </td>
                         <td className="py-4 px-4">
                           <span className="text-[10px] font-extrabold uppercase px-2.5 py-1 rounded-full bg-amber-50 text-amber-700 border border-amber-100">
-                            {c.category || 'General English'}
+                            {c.category || 'Accounting'}
                           </span>
                         </td>
                         <td className="py-4 px-4 font-bold text-[#111827]">{takaFromUsd(c.price)}</td>
@@ -482,7 +482,7 @@ export default function TeacherPanelPage() {
                     Upload New Course
                   </h2>
                   <p className="text-xs text-slate-500">
-                    Create &amp; publish your English Capsule syllabus with video modules
+                    Create &amp; publish your course syllabus with video modules
                   </p>
                 </div>
               </div>
@@ -528,14 +528,9 @@ export default function TeacherPanelPage() {
                       onChange={(e) => setCategory(e.target.value)}
                       className="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-3 text-sm text-[#111827] focus:outline-none focus:border-[#111827] transition-colors"
                     >
-                      <option value="Spoken English">Spoken English</option>
-                      <option value="General English">General English</option>
-                      <option value="IELTS Prep">IELTS Prep</option>
-                      <option value="Business English">Business English</option>
-                      <option value="Grammar & Writing">Grammar &amp; Writing</option>
-                      <option value="Career English">Career English</option>
-                      <option value="Kids English">Kids English</option>
-                      <option value="TOEFL & Exams">TOEFL &amp; Exams</option>
+                      <option value="Accounting">Accounting</option>
+                      <option value="Business">Business</option>
+                      <option value="Digital Skills">Digital Skills</option>
                     </select>
                   </div>
 
