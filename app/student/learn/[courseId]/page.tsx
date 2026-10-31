@@ -17,7 +17,9 @@ import {
 } from '@/lib/progress';
 import { getCourseById } from '@/lib/db';
 import { useCourseEdits } from '@/lib/course-edits-client';
-import { addQuestion, lessonNote, lessonVideo, recordWatch, saveLessonNote, sendMessage, submitAssignment, watchPercent } from '@/lib/workspace';
+import LessonQuestions from '@/components/student/LessonQuestions';
+import LessonQuiz from '@/components/student/LessonQuiz';
+import { addQuestion, lessonNote, lessonVideo, recordWatch, saveLessonNote, submitAssignment, watchPercent } from '@/lib/workspace';
 import type { CourseSchema, ModuleSchema, LessonSchema } from '@/types/course';
 import {
   BookOpen,
@@ -44,103 +46,6 @@ import {
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 
-interface DiscussionComment {
-  id: string;
-  author: string;
-  avatar?: string;
-  role: 'Student' | 'Instructor' | 'Mentor';
-  date: string;
-  text: string;
-  likes: number;
-  replies?: DiscussionComment[];
-}
-
-const initialDiscussions: DiscussionComment[] = [
-  {
-    id: 'c-1',
-    author: 'Sarah Jenkins',
-    role: 'Instructor',
-    date: '1 day ago',
-    text: 'Welcome to this course! Remember to practice shadow-speaking out loud at 1x speed after watching each dialogue breakdown.',
-    likes: 24,
-    replies: [
-      {
-        id: 'c-1-1',
-        author: 'Md. Saiful Islam',
-        role: 'Student',
-        date: '18 hours ago',
-        text: 'The connected speech drill at 04:30 really helped me understand how native speakers link consonant to vowel sounds!',
-        likes: 8,
-      },
-    ],
-  },
-  {
-    id: 'c-2',
-    author: 'Tanvir Ahmed',
-    role: 'Student',
-    date: '2 days ago',
-    text: 'Should we memorize all the idioms in the resource sheet or focus on the top 10 first?',
-    likes: 5,
-    replies: [
-      {
-        id: 'c-2-1',
-        author: 'Sarah Jenkins',
-        role: 'Instructor',
-        date: '1 day ago',
-        text: 'Great question! Focus on the top 5–10 high-frequency expressions and practice using them in your own daily voice notes.',
-        likes: 12,
-      },
-    ],
-  },
-];
-
-interface QuizQuestion {
-  id: number;
-  question: string;
-  options: string[];
-  correctIndex: number;
-  explanation: string;
-}
-
-const classroomQuizQuestions: QuizQuestion[] = [
-  {
-    id: 1,
-    question: 'What is the primary benefit of active listening and sentence chunking in spoken English?',
-    options: [
-      'It eliminates the need for any vocabulary building.',
-      'It improves natural rhythm, intonation, and spontaneous thought formation.',
-      'It allows speaking without proper grammar.',
-      'It only applies to written English emails.',
-    ],
-    correctIndex: 1,
-    explanation: 'Chunking words into natural rhythmic thought groups trains the brain to speak smoothly without translating word-for-word.',
-  },
-  {
-    id: 2,
-    question: 'In professional presentations, which phrase most effectively transitions between key arguments?',
-    options: [
-      'Moving on to our next critical point...',
-      'Forget what I just said...',
-      'Whatever comes next...',
-      'Let’s stop here...',
-    ],
-    correctIndex: 0,
-    explanation: '"Moving on to our next critical point" provides a structured, professional signpost for your audience.',
-  },
-  {
-    id: 3,
-    question: 'How should one handle spontaneous questions during an executive discussion?',
-    options: [
-      'Remain silent until the meeting ends.',
-      'Acknowledge the question, pause briefly to frame your thoughts, and answer directly.',
-      'Interrupt the speaker immediately.',
-      'Leave the room.',
-    ],
-    correctIndex: 1,
-    explanation: 'Acknowledging the prompt with a brief framing pause demonstrates composure, confidence, and clarity.',
-  },
-];
-
 export default function StudentLearnPage() {
   const params = useParams();
   const router = useRouter();
@@ -156,8 +61,6 @@ export default function StudentLearnPage() {
   const [noteText, setNoteText] = useState('');
   const [assignmentText, setAssignmentText] = useState('');
   const [shortText, setShortText] = useState('');
-  const [discussion, setDiscussion] = useState('');
-  const [messageNote, setMessageNote] = useState('');
   const courseEdits = useCourseEdits();
   const [watchTick, setWatchTick] = useState(0);
   const [expandedModules, setExpandedModules] = useState<Record<string, boolean>>({
@@ -172,12 +75,6 @@ export default function StudentLearnPage() {
   const [isCertModalOpen, setIsCertModalOpen] = useState(false);
 
   // Discussion state
-  const [discussions, setDiscussions] = useState<DiscussionComment[]>(initialDiscussions);
-  const [newCommentText, setNewCommentText] = useState('');
-
-  // Quiz state
-  const [selectedAnswers, setSelectedAnswers] = useState<Record<number, number>>({});
-  const [quizSubmitted, setQuizSubmitted] = useState(false);
 
   // Load Course and Progress
   useEffect(() => {
@@ -333,44 +230,12 @@ export default function StudentLearnPage() {
     setExpandedModules((prev) => ({ ...prev, [moduleId]: !prev[moduleId] }));
   };
 
-  // Quiz evaluation
-  const handleAnswerOption = (questionId: number, optionIdx: number) => {
-    if (quizSubmitted) return;
-    setSelectedAnswers((prev) => ({ ...prev, [questionId]: optionIdx }));
-  };
-
-  const calculateQuizScore = () => {
-    let correct = 0;
-    classroomQuizQuestions.forEach((q) => {
-      if (selectedAnswers[q.id] === q.correctIndex) correct++;
-    });
-    return correct;
-  };
-
-  // Submit comment
-  const handlePostComment = (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!newCommentText.trim()) return;
-
-    const newComment: DiscussionComment = {
-      id: `c-${Date.now()}`,
-      author: userProfile?.name || user?.displayName || 'Learner',
-      role: 'Student',
-      date: 'Just now',
-      text: newCommentText.trim(),
-      likes: 0,
-    };
-
-    setDiscussions((prev) => [newComment, ...prev]);
-    setNewCommentText('');
-  };
-
   if (loading) {
     return (
       <div className="min-h-screen bg-slate-50 text-[#111827] flex items-center justify-center p-4">
         <div className="flex items-center gap-3 bg-white border border-slate-200 px-6 py-4 rounded-2xl shadow-xl">
           <div className="w-5 h-5 border-2 border-[#111827] border-t-transparent rounded-full animate-spin" />
-          <span className="font-semibold text-[#111827]">Preparing Secure English Classroom...</span>
+          <span className="font-semibold text-[#111827]">Preparing your classroom...</span>
         </div>
       </div>
     );
@@ -537,56 +402,6 @@ export default function StudentLearnPage() {
                 >
                   Save short question
                 </button>
-                <label className="block text-xs font-bold text-slate-500">Ask your instructor about this lesson</label>
-                <textarea value={discussion} onChange={(e) => setDiscussion(e.target.value)} rows={3} className="w-full border border-slate-200 rounded-xl px-3 py-2 text-sm" placeholder="Ask a question about the lesson or module" />
-                <p className="text-[11px] text-slate-500">
-                  {course?.title || 'This course'} · {currentModule?.title} · {currentLesson.title} · Rank {standing.rank} of {standing.total} · {standing.progress}% progress
-                </p>
-                <button
-                  type="button"
-                  className="text-xs font-bold px-3 py-2 rounded-full bg-slate-100"
-                  onClick={async () => {
-                    const text = discussion.trim();
-                    if (!text) return;
-                    const email = user?.email || '';
-                    const courseTitle = course?.title || 'This course';
-                    const context = `${courseTitle} · ${currentModule?.title || 'Module'} · ${currentLesson.title} · Rank ${standing.rank} of ${standing.total} · ${standing.progress}%`;
-                    sendMessage(email || 'student@local', text, context);
-                    if (!email) {
-                      setMessageNote('Sign in with an email so the instructor, customer care, and admin can open this message.');
-                      return;
-                    }
-                    const res = await fetch('/api/messages', {
-                      method: 'POST',
-                      headers: { 'Content-Type': 'application/json' },
-                      body: JSON.stringify({
-                        kind: 'student',
-                        name: userProfile?.name || user?.displayName || 'Student',
-                        email,
-                        text,
-                        courseId,
-                        courseTitle,
-                        moduleTitle: currentModule?.title || '',
-                        lessonId: currentLesson.id,
-                        lessonTitle: currentLesson.title,
-                        instructorId: course?.instructorId || '',
-                        rank: standing.rank,
-                        rankTotal: standing.total,
-                        progress: standing.progress,
-                      }),
-                    });
-                    const data = await res.json();
-                    if (!res.ok || !data.success) {
-                      setMessageNote(data.message || 'Could not send.');
-                      return;
-                    }
-                    setDiscussion('');
-                    setMessageNote('Sent to your course instructor and the admin inbox with this lesson and your progress attached.');
-                  }}
-                >
-                  Send question
-                </button>
-                {messageNote && <p className="text-xs font-semibold">{messageNote}</p>}
               </div>
             )}
 
@@ -643,7 +458,7 @@ export default function StudentLearnPage() {
                 {[
                   { key: 'overview', label: 'Overview & Study Notes', icon: FileText },
                   { key: 'quiz', label: 'Knowledge Drill Quiz', icon: HelpCircle },
-                  { key: 'discussion', label: `Community Q&A (${discussions.length})`, icon: MessageSquare },
+                  { key: 'discussion', label: 'Ask Instructor', icon: MessageSquare },
                   { key: 'resources', label: 'Downloadable Resources', icon: Download },
                 ].map(({ key, label, icon: Icon }) => (
                   <button
@@ -688,224 +503,30 @@ export default function StudentLearnPage() {
               )}
 
               {/* TAB 2: KNOWLEDGE QUIZ */}
-              {activeTab === 'quiz' && (
-                <div className="space-y-6">
-                  {/* Timed Assessment Launcher Banner */}
-                  <div className="bg-gradient-to-r from-[#111827] via-[#1a2234] to-[#111827] text-white p-5 rounded-2xl flex flex-col sm:flex-row sm:items-center justify-between gap-4 shadow-md">
-                    <div className="space-y-1">
-                      <div className="flex items-center gap-2 text-xs font-bold text-[#FACC15]">
-                        <Clock className="w-3.5 h-3.5" />
-                        <span>Official Timed Assessment (5 Minutes)</span>
-                      </div>
-                      <h4 className="font-display font-bold text-sm text-white">
-                        {currentModule?.title}: Mastery Quiz
-                      </h4>
-                      <p className="text-[11px] text-slate-300">
-                        Score 80%+ on the timed assessment to automatically unlock the next module.
-                      </p>
-                    </div>
-
-                    <Link
-                      href={`/student/quiz/${currentModule?.id || 'mod-1'}?courseId=${courseId}`}
-                      className="inline-flex items-center gap-2 bg-[#FACC15] hover:bg-[#eab308] text-[#111827] font-extrabold text-xs px-5 py-2.5 rounded-xl transition-all shadow-md flex-shrink-0"
-                    >
-                      <Sparkles className="w-3.5 h-3.5 fill-current" />
-                      <span>Start Timed Quiz →</span>
-                    </Link>
-                  </div>
-
-                  <div className="flex items-center justify-between pb-2 border-b border-slate-100">
-                    <div>
-                      <h3 className="font-display font-bold text-base text-[#111827]">
-                        Practice Knowledge Check
-                      </h3>
-                      <p className="text-xs text-slate-500">Quick practice questions before attempting the official timed quiz.</p>
-                    </div>
-
-                    {quizSubmitted && (
-                      <span className="bg-[#FACC15] text-[#111827] font-extrabold text-xs px-3.5 py-1 rounded-full shadow-xs">
-                        Score: {calculateQuizScore()} / {classroomQuizQuestions.length}
-                      </span>
-                    )}
-                  </div>
-
-                  <div className="space-y-6">
-                    {classroomQuizQuestions.map((q, qIdx) => (
-                      <div key={q.id} className="bg-slate-50 border border-slate-200 rounded-2xl p-5 space-y-3">
-                        <div className="font-bold text-[#111827] text-xs sm:text-sm">
-                          {qIdx + 1}. {q.question}
-                        </div>
-
-                        <div className="space-y-2">
-                          {q.options.map((opt, oIdx) => {
-                            const isSelected = selectedAnswers[q.id] === oIdx;
-                            const isCorrect = q.correctIndex === oIdx;
-
-                            let optionClasses = 'bg-white border-slate-200 text-slate-700 hover:bg-slate-100';
-
-                            if (quizSubmitted) {
-                              if (isCorrect) {
-                                optionClasses = 'bg-emerald-50 border-emerald-400 text-emerald-900 font-bold';
-                              } else if (isSelected && !isCorrect) {
-                                optionClasses = 'bg-rose-50 border-rose-400 text-rose-900 line-through';
-                              }
-                            } else if (isSelected) {
-                              optionClasses = 'bg-[#FACC15] border-[#111827] text-[#111827] font-bold shadow-sm';
-                            }
-
-                            return (
-                              <button
-                                key={oIdx}
-                                onClick={() => handleAnswerOption(q.id, oIdx)}
-                                className={`w-full text-left p-3 rounded-xl border text-xs sm:text-sm transition-all flex items-center justify-between ${optionClasses}`}
-                              >
-                                <span>{opt}</span>
-                                {quizSubmitted && isCorrect && <Check className="w-4 h-4 text-emerald-600" />}
-                              </button>
-                            );
-                          })}
-                        </div>
-
-                        {quizSubmitted && (
-                          <div className="text-xs text-slate-600 bg-white p-3 rounded-xl border border-slate-200 font-medium">
-                            <strong>Explanation:</strong> {q.explanation}
-                          </div>
-                        )}
-                      </div>
-                    ))}
-                  </div>
-
-                  {!quizSubmitted ? (
-                    <button
-                      onClick={() => setQuizSubmitted(true)}
-                      className="bg-[#FACC15] hover:bg-[#eab308] text-[#111827] font-extrabold text-xs sm:text-sm px-6 py-3 rounded-xl transition-all shadow-md shadow-[#FACC15]/20"
-                    >
-                      Submit Quiz & Check Answers
-                    </button>
-                  ) : (
-                    <button
-                      onClick={() => {
-                        setQuizSubmitted(false);
-                        setSelectedAnswers({});
-                      }}
-                      className="bg-slate-100 hover:bg-slate-200 text-[#111827] font-bold text-xs px-5 py-2.5 rounded-xl border border-slate-200"
-                    >
-                      Retake Quiz
-                    </button>
-                  )}
-                </div>
+              {activeTab === 'quiz' && currentLesson && (
+                <LessonQuiz courseId={courseId} lessonId={currentLesson.id} />
               )}
 
               {/* TAB 3: DISCUSSION COMMUNITY */}
-              {activeTab === 'discussion' && (
-                <div className="space-y-6">
-                  {/* Post Comment Form */}
-                  <form onSubmit={handlePostComment} className="flex gap-2">
-                    <input
-                      type="text"
-                      value={newCommentText}
-                      onChange={(e) => setNewCommentText(e.target.value)}
-                      placeholder="Ask a question or share your learning progress..."
-                      className="flex-1 bg-slate-50 border border-slate-200 rounded-2xl px-4 py-3 text-xs sm:text-sm text-[#111827] placeholder-slate-400 focus:outline-none focus:border-[#111827] shadow-sm font-medium"
-                    />
-                    <button
-                      type="submit"
-                      className="bg-[#FACC15] hover:bg-[#eab308] text-[#111827] font-extrabold text-xs px-5 py-3 rounded-2xl flex items-center gap-1.5 shadow-sm"
-                    >
-                      <Send className="w-3.5 h-3.5" />
-                      <span>Post</span>
-                    </button>
-                  </form>
-
-                  {/* Comment List */}
-                  <div className="space-y-4">
-                    {discussions.map((c) => (
-                      <div key={c.id} className="bg-slate-50 border border-slate-200/80 rounded-2xl p-4 space-y-3">
-                        <div className="flex items-center justify-between">
-                          <div className="flex items-center gap-2.5">
-                            <div className="w-7 h-7 rounded-full bg-[#FACC15] text-[#111827] font-extrabold text-xs flex items-center justify-center shadow-xs">
-                              {c.author.charAt(0)}
-                            </div>
-                            <div>
-                              <div className="font-bold text-[#111827] text-xs flex items-center gap-1.5">
-                                <span>{c.author}</span>
-                                {c.role === 'Instructor' && (
-                                  <span className="bg-[#111827] text-[#FACC15] text-[9px] font-extrabold px-2 py-0.5 rounded-full uppercase">
-                                    Mentor
-                                  </span>
-                                )}
-                              </div>
-                              <span className="text-[10px] text-slate-400">{c.date}</span>
-                            </div>
-                          </div>
-
-                          <div className="flex items-center gap-1 text-xs text-slate-500">
-                            <ThumbsUp className="w-3 h-3" />
-                            <span>{c.likes}</span>
-                          </div>
-                        </div>
-
-                        <p className="text-xs sm:text-sm text-slate-700 leading-relaxed font-medium pl-9">
-                          {c.text}
-                        </p>
-
-                        {/* Nested Replies */}
-                        {c.replies?.map((rep) => (
-                          <div key={rep.id} className="ml-9 mt-3 bg-white border border-slate-200 rounded-xl p-3 space-y-2">
-                            <div className="flex items-center justify-between">
-                              <div className="flex items-center gap-2">
-                                <div className="w-5 h-5 rounded-full bg-slate-200 text-[#111827] font-bold text-[10px] flex items-center justify-center">
-                                  {rep.author.charAt(0)}
-                                </div>
-                                <span className="font-bold text-[#111827] text-xs">{rep.author}</span>
-                                {rep.role === 'Instructor' && (
-                                  <span className="bg-[#111827] text-[#FACC15] text-[8px] font-extrabold px-1.5 py-0.5 rounded-full">
-                                    Mentor
-                                  </span>
-                                )}
-                              </div>
-                              <span className="text-[10px] text-slate-400">{rep.date}</span>
-                            </div>
-                            <p className="text-xs text-slate-700 pl-7 font-medium">{rep.text}</p>
-                          </div>
-                        ))}
-                      </div>
-                    ))}
-                  </div>
-                </div>
+              {activeTab === 'discussion' && currentLesson && (
+                <LessonQuestions
+                  courseId={courseId}
+                  courseTitle={course?.title || 'This course'}
+                  moduleTitle={currentModule?.title || ''}
+                  lessonId={currentLesson.id}
+                  lessonTitle={currentLesson.title}
+                  studentName={userProfile?.name || user?.displayName || 'Student'}
+                  studentEmail={user?.email || ''}
+                  rank={standing.rank}
+                  rankTotal={standing.total}
+                  progress={standing.progress}
+                />
               )}
 
               {/* TAB 4: RESOURCES */}
               {activeTab === 'resources' && (
-                <div className="space-y-4">
-                  {[
-                    { title: 'Lecture Study Notes & Vocabulary Cheat Sheet (PDF)', size: '2.4 MB', type: 'PDF' },
-                    { title: 'Native Audio Dialogue & Pronunciation Practice Drill (MP3)', size: '8.1 MB', type: 'MP3' },
-                    { title: 'Accredited Curriculum Syllabus & Completion Checklist', size: '1.1 MB', type: 'PDF' },
-                  ].map((res, idx) => (
-                    <div
-                      key={idx}
-                      className="bg-slate-50 border border-slate-200 rounded-2xl p-4 flex items-center justify-between gap-4"
-                    >
-                      <div className="flex items-center gap-3">
-                        <div className="w-10 h-10 rounded-xl bg-amber-50 text-amber-600 font-extrabold text-xs flex items-center justify-center border border-amber-200 flex-shrink-0">
-                          {res.type}
-                        </div>
-                        <div>
-                          <div className="font-bold text-[#111827] text-xs sm:text-sm">{res.title}</div>
-                          <div className="text-[10px] text-slate-400">{res.size}</div>
-                        </div>
-                      </div>
-
-                      <button
-                        onClick={() => alert(`Downloading ${res.title}...`)}
-                        className="p-2.5 rounded-xl bg-white hover:bg-slate-100 text-[#111827] border border-slate-200 text-xs font-bold transition-colors flex items-center gap-1.5 shadow-xs"
-                      >
-                        <Download className="w-3.5 h-3.5" />
-                        <span className="hidden sm:inline">Download</span>
-                      </button>
-                    </div>
-                  ))}
+                <div className="rounded-2xl border border-dashed border-slate-200 py-10 text-center text-sm text-slate-500">
+                  No downloadable resources for this lesson yet.
                 </div>
               )}
             </div>

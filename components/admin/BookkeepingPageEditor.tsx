@@ -46,7 +46,6 @@ export default function BookkeepingPageEditor() {
   if (loading) return <div className="py-12 text-center text-slate-500">Loading Bookkeeping page content…</div>;
 
   return <div className="space-y-8">
-    <div><h3 className="text-lg font-bold text-slate-900">Bookkeeping page content</h3><p className="mt-1 text-sm text-slate-500">Changes saved here appear on the public Bookkeeping page.</p></div>
     <section className="grid gap-4 sm:grid-cols-2">
       <label><span className={labelClass}>Eyebrow</span><input className={fieldClass} value={content.eyebrow} onChange={(e) => updateField('eyebrow', e.target.value)} /></label>
       <label><span className={labelClass}>Headline</span><input className={fieldClass} value={content.headline} onChange={(e) => updateField('headline', e.target.value)} /></label>

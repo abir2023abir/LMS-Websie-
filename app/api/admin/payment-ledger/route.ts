@@ -1,21 +1,22 @@
 import { NextResponse } from 'next/server';
-import fs from 'fs';
 import { requireAdmin } from '@/lib/admin-guard';
-import { deletePayment, listPayments, proofFilePath, savePayment, setPaymentStatus, type PaymentStatus } from '@/lib/admin-studio';
+import { deletePayment, listPayments, readProof, saveProof, savePayment, setPaymentStatus, type PaymentStatus } from '@/lib/payments';
+
+export const dynamic = 'force-dynamic';
+
+const STATUSES = new Set<PaymentStatus>(['pending', 'approved', 'rejected', 'paid', 'failed']);
+const asStatus = (value: unknown) => (STATUSES.has(value as PaymentStatus) ? (value as PaymentStatus) : undefined);
 
 export async function GET(request: Request) {
   const denied = requireAdmin();
   if (denied) return denied;
   const proof = new URL(request.url).searchParams.get('proof') || '';
   if (proof) {
-    const target = proofFilePath(proof);
-    if (!fs.existsSync(target)) return NextResponse.json({ success: false }, { status: 404 });
-    const bytes = fs.readFileSync(target);
-    const ext = proof.toLowerCase();
-    const type = ext.endsWith('.png') ? 'image/png' : ext.endsWith('.webp') ? 'image/webp' : ext.endsWith('.gif') ? 'image/gif' : 'image/jpeg';
-    return new NextResponse(new Uint8Array(bytes), { headers: { 'Content-Type': type } });
+    const file = await readProof(proof);
+    if (!file) return NextResponse.json({ success: false }, { status: 404 });
+    return new NextResponse(new Uint8Array(file.bytes), { headers: { 'Content-Type': file.type, 'Cache-Control': 'private, max-age=300' } });
   }
-  return NextResponse.json({ success: true, payments: listPayments() });
+  return NextResponse.json({ success: true, payments: await listPayments() });
 }
 
 export async function POST(request: Request) {
@@ -26,8 +27,8 @@ export async function POST(request: Request) {
     if (type.includes('multipart/form-data')) {
       const form = await request.formData();
       const file = form.get('screenshot');
-      const bytes = file instanceof File && file.size > 0 ? Buffer.from(await file.arrayBuffer()) : undefined;
-      savePayment({
+      const screenshot = file instanceof File && file.size > 0 ? await saveProof(file) : undefined;
+      await savePayment({
         id: String(form.get('id') || '') || undefined,
         studentName: String(form.get('studentName') || ''),
         studentEmail: String(form.get('studentEmail') || ''),
@@ -35,35 +36,24 @@ export async function POST(request: Request) {
         amount: Number(form.get('amount')) || 0,
         method: String(form.get('method') || ''),
         transactionId: String(form.get('transactionId') || ''),
-        status: (String(form.get('status') || '') || undefined) as PaymentStatus | undefined,
+        status: asStatus(form.get('status')),
         source: String(form.get('source') || 'manual') === 'sslcommerz' ? 'sslcommerz' : 'manual',
-        fileName: file instanceof File ? file.name : '',
-        bytes,
+        ...(screenshot ? { screenshot } : {}),
       });
-      return NextResponse.json({ success: true, payments: listPayments() });
+      return NextResponse.json({ success: true, payments: await listPayments() });
     }
 
     const body = await request.json();
     if (body.action === 'delete') {
-      deletePayment(String(body.id || ''));
-      return NextResponse.json({ success: true, payments: listPayments() });
+      await deletePayment(String(body.id || ''));
+      return NextResponse.json({ success: true, payments: await listPayments() });
     }
     if (body.action === 'status') {
-      setPaymentStatus(String(body.id || ''), String(body.status || 'pending') as PaymentStatus);
-      return NextResponse.json({ success: true, payments: listPayments() });
+      // Approving (or marking paid) opens the course for the student automatically.
+      await setPaymentStatus(String(body.id || ''), asStatus(body.status) || 'pending');
+      return NextResponse.json({ success: true, payments: await listPayments() });
     }
-    savePayment({
-      id: body.id ? String(body.id) : undefined,
-      studentName: String(body.studentName || ''),
-      studentEmail: String(body.studentEmail || ''),
-      courseTitle: String(body.courseTitle || ''),
-      amount: Number(body.amount) || 0,
-      method: String(body.method || ''),
-      transactionId: String(body.transactionId || ''),
-      status: body.status ? (String(body.status) as PaymentStatus) : undefined,
-      source: body.source === 'sslcommerz' ? 'sslcommerz' : 'manual',
-    });
-    return NextResponse.json({ success: true, payments: listPayments() });
+    return NextResponse.json({ success: false, message: 'Unknown action.' }, { status: 400 });
   } catch (error) {
     const message = error instanceof Error ? error.message : 'Could not save the payment.';
     return NextResponse.json({ success: false, message }, { status: 400 });

@@ -121,20 +121,23 @@ export default function SuccessStoriesEditor() {
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between">
-        <h3 className="text-sm font-bold text-slate-900">Success Stories ({stories.length})</h3>
+        <p className="text-sm text-slate-600">{stories.length ? `${stories.length} stor${stories.length === 1 ? 'y' : 'ies'} on the home page.` : 'Add a real learner story to show this section on the home page.'}</p>
         <button
           onClick={() => {
             setEditingStory(null);
             setFormData({ headline: '', description: '', caption: '' });
             setIsModalOpen(true);
           }}
-          className="flex items-center gap-2 bg-[#FACC15] text-[#111827] px-3 py-1.5 rounded-lg text-xs font-medium hover:bg-[#eab308] transition-colors"
+          className="flex shrink-0 items-center gap-1.5 rounded-xl bg-[#111827] px-4 py-2 text-sm font-bold text-white hover:bg-slate-800"
         >
           <Plus className="w-4 h-4" />
           Add Story
         </button>
       </div>
 
+      {stories.length === 0 && (
+        <div className="rounded-2xl border border-dashed border-slate-200 py-12 text-center text-sm text-slate-500">No stories yet. The section is hidden on the home page until you add one.</div>
+      )}
       <div className="space-y-3">
         {stories.map((story, index) => (
           <div key={story.id} className="bg-white border border-slate-200 rounded-lg p-4 space-y-3">

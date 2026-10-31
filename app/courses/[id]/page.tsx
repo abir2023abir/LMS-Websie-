@@ -344,8 +344,10 @@ export default function CourseDetailsPage() {
           <div className="lg:col-span-5 bg-white rounded-3xl border border-slate-200/80 p-6 sm:p-7 shadow-xl space-y-6 lg:sticky lg:top-28">
             {/* Trailer Video Player */}
             <div className="relative aspect-video rounded-2xl overflow-hidden bg-black border border-slate-200 shadow-inner">
+              {/* Uploaded class videos are for enrolled students only, so the public page shows a lock card. */}
               <VideoPlayer
-                videoUrl={activeVideoUrl}
+                videoUrl={activeVideoUrl?.startsWith('r2:') ? undefined : activeVideoUrl}
+                emptyMessage={activeVideoUrl?.startsWith('r2:') ? 'Enroll to watch this lesson' : undefined}
                 poster={course.thumbnail}
                 title={activeLessonTitle}
                 isEnrolled={true}

@@ -13,7 +13,7 @@ import {
   Settings,
 } from 'lucide-react';
 import Button from '@/components/ui/Button';
-import YoutubeLesson, { youtubeId } from '@/components/player/YoutubeLesson';
+import YoutubeLesson, { directVideoSrc, youtubeId } from '@/components/player/YoutubeLesson';
 
 interface VideoPlayerProps {
   videoUrl?: string;
@@ -21,6 +21,7 @@ interface VideoPlayerProps {
   title?: string;
   isEnrolled?: boolean;
   onEnrollClick?: () => void;
+  emptyMessage?: string;
 }
 
 export default function VideoPlayer({
@@ -29,6 +30,7 @@ export default function VideoPlayer({
   title = 'Course Video Lesson',
   isEnrolled = false,
   onEnrollClick,
+  emptyMessage = 'Video coming soon',
 }: VideoPlayerProps) {
   const videoRef = useRef<HTMLVideoElement>(null);
   const containerRef = useRef<HTMLDivElement>(null);
@@ -41,11 +43,7 @@ export default function VideoPlayer({
   const [playbackSpeed, setPlaybackSpeed] = useState(1);
   const [showSpeedMenu, setShowSpeedMenu] = useState(false);
 
-  // Default fallback sample video if no url is provided
-  const src =
-    videoUrl && (videoUrl.endsWith('.mp4') || videoUrl.includes('sample') || videoUrl.includes('commondatastorage'))
-      ? videoUrl
-      : 'https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/BigBuckBunny.mp4';
+  const src = directVideoSrc(videoUrl);
 
   useEffect(() => {
     const video = videoRef.current;
@@ -137,6 +135,21 @@ export default function VideoPlayer({
     return (
       <div className="relative aspect-video rounded-3xl overflow-hidden bg-black border border-white/10 shadow-2xl">
         <YoutubeLesson id={yt} title={title} />
+      </div>
+    );
+  }
+
+  if (!src) {
+    return (
+      <div className="relative aspect-video w-full rounded-3xl overflow-hidden bg-[#111827] border border-white/10 shadow-2xl flex items-center justify-center">
+        {poster && <img src={poster} alt="" className="absolute inset-0 h-full w-full object-cover opacity-30" />}
+        <div className="relative z-10 px-6 text-center text-white">
+          <div className="mx-auto mb-3 flex h-12 w-12 items-center justify-center rounded-2xl bg-[#FACC15] text-[#111827]">
+            <Play className="h-5 w-5 fill-current" />
+          </div>
+          <p className="font-display text-base font-bold">{emptyMessage}</p>
+          <p className="mt-1 text-xs text-white/70">{title}</p>
+        </div>
       </div>
     );
   }

@@ -3,6 +3,7 @@
 import { useEffect, useState } from 'react';
 import { toast } from 'sonner';
 import AdminModal, { fieldClass } from './AdminModal';
+import LessonVideoField from './LessonVideoField';
 import { getFallbackCourseData } from '@/lib/progress';
 import { loadCourseEdits, shrinkImage } from '@/lib/course-edits-client';
 import { usdToBdt, USD_TO_BDT } from '@/lib/utils';
@@ -130,16 +131,17 @@ export default function AdminCourseEditor({
         </label>
 
         <div className="space-y-2">
-          <p className="text-xs font-bold text-slate-500">Lesson videos (YouTube or mp4 link)</p>
+          <p className="text-xs font-bold text-slate-500">Lesson videos — upload the recorded class or paste a YouTube link</p>
           {lessons.map((lesson) => (
-            <label key={lesson.id} className="block space-y-1 text-[11px] font-semibold text-slate-600">
-              {lesson.title}
-              <input
+            <div key={lesson.id} className="space-y-1 text-[11px] font-semibold text-slate-600">
+              <span>{lesson.title}</span>
+              <LessonVideoField
+                courseId={courseId}
+                lessonId={lesson.id}
                 value={videos[lesson.id] || ''}
-                onChange={(e) => setVideos((prev) => ({ ...prev, [lesson.id]: e.target.value }))}
-                className={`${fieldClass} text-xs`}
+                onChange={(value) => setVideos((prev) => ({ ...prev, [lesson.id]: value }))}
               />
-            </label>
+            </div>
           ))}
         </div>
 

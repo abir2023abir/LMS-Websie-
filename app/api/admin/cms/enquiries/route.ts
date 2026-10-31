@@ -4,6 +4,11 @@ import { verifyAdminSession } from '@/lib/auth-server';
 
 export async function GET() {
   try {
+    // Enquiries contain names, emails and phone numbers: admin only.
+    const cookieStore = await import('next/headers').then(m => m.cookies());
+    if (!verifyAdminSession(cookieStore.get('admin_session')?.value)) {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    }
     const enquiries = await getContactEnquiries();
     return NextResponse.json({ enquiries });
   } catch (error) {

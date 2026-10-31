@@ -2,20 +2,21 @@
 
 import { useState, useEffect } from 'react';
 import { toast } from 'sonner';
-import { Plus, Trash2, Pencil, ArrowUp, ArrowDown } from 'lucide-react';
+import { Plus, Trash2, Pencil, ArrowUp, ArrowDown, ShieldCheck, Award, Banknote, Users, BookOpen, Clock, CheckCircle, Star, Sparkles, type LucideIcon } from 'lucide-react';
 import AdminModal from '../AdminModal';
 import type { Feature } from '@/lib/cms-db';
 
-const iconOptions = [
-  { value: 'ShieldCheck', label: 'Shield Check' },
-  { value: 'Award', label: 'Award' },
-  { value: 'Banknote', label: 'Banknote' },
-  { value: 'Users', label: 'Users' },
-  { value: 'BookOpen', label: 'Book Open' },
-  { value: 'Clock', label: 'Clock' },
-  { value: 'CheckCircle', label: 'Check Circle' },
-  { value: 'Star', label: 'Star' },
+const iconOptions: { value: string; label: string; Icon: LucideIcon }[] = [
+  { value: 'ShieldCheck', label: 'Shield', Icon: ShieldCheck },
+  { value: 'Award', label: 'Award', Icon: Award },
+  { value: 'Banknote', label: 'Money', Icon: Banknote },
+  { value: 'Users', label: 'People', Icon: Users },
+  { value: 'BookOpen', label: 'Book', Icon: BookOpen },
+  { value: 'Clock', label: 'Clock', Icon: Clock },
+  { value: 'CheckCircle', label: 'Check', Icon: CheckCircle },
+  { value: 'Star', label: 'Star', Icon: Star },
 ];
+const iconFor = (name: string) => iconOptions.find((option) => option.value === name)?.Icon || Sparkles;
 
 export default function FeaturesEditor() {
   const [loading, setLoading] = useState(true);
@@ -132,77 +133,44 @@ export default function FeaturesEditor() {
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between">
-        <h3 className="text-sm font-bold text-slate-900">Features ({features.length})</h3>
+        <p className="text-sm text-slate-600">{features.length} reason{features.length === 1 ? '' : 's'} shown on the home page. Use the arrows to change the order.</p>
         <button
           onClick={() => {
             setEditingFeature(null);
             setFormData({ title: '', description: '', icon: 'ShieldCheck' });
             setIsModalOpen(true);
           }}
-          className="flex items-center gap-2 bg-[#FACC15] text-[#111827] px-3 py-1.5 rounded-lg text-xs font-medium hover:bg-[#eab308] transition-colors"
+          className="flex shrink-0 items-center gap-1.5 rounded-xl bg-[#111827] px-4 py-2 text-sm font-bold text-white hover:bg-slate-800"
         >
           <Plus className="w-4 h-4" />
           Add Feature
         </button>
       </div>
 
-      <div className="space-y-3">
-        {features.map((feature, index) => (
-          <div key={feature.id} className="bg-white border border-slate-200 rounded-lg p-4 space-y-3">
-            <div className="flex items-start justify-between gap-3">
-              <div className="flex-1 space-y-2">
-                <div className="flex items-center gap-2">
-                  <span className="px-2 py-1 bg-slate-100 rounded text-xs font-mono">{feature.icon}</span>
-                  <input
-                    type="text"
-                    value={feature.title}
-                    readOnly
-                    className="flex-1 px-3 py-1.5 border border-slate-200 rounded text-sm font-bold bg-slate-50"
-                  />
-                </div>
-                <textarea
-                  value={feature.description}
-                  readOnly
-                  rows={2}
-                  className="w-full px-3 py-1.5 border border-slate-200 rounded text-xs bg-slate-50 resize-none"
-                />
-              </div>
-              <div className="flex flex-col gap-1">
-                <button
-                  onClick={() => moveFeature(index, -1)}
-                  disabled={index === 0}
-                  className="p-1 hover:bg-slate-100 rounded disabled:opacity-30"
-                  title="Move up"
-                >
-                  <ArrowUp className="w-4 h-4" />
-                </button>
-                <button
-                  onClick={() => moveFeature(index, 1)}
-                  disabled={index === features.length - 1}
-                  className="p-1 hover:bg-slate-100 rounded disabled:opacity-30"
-                  title="Move down"
-                >
-                  <ArrowDown className="w-4 h-4" />
-                </button>
-                <button
-                  onClick={() => handleEdit(feature)}
-                  className="p-1 hover:bg-amber-50 rounded text-slate-500 hover:text-amber-600"
-                  title="Edit"
-                >
-                  <Pencil className="w-4 h-4" />
-                </button>
-                <button
-                  onClick={() => handleDelete(feature.id!)}
-                  className="p-1 hover:bg-red-50 rounded text-slate-400 hover:text-red-600"
-                  title="Delete"
-                >
-                  <Trash2 className="w-4 h-4" />
-                </button>
-              </div>
+      {features.length === 0 ? (
+        <div className="rounded-2xl border border-dashed border-slate-200 py-12 text-center text-sm text-slate-500">No reasons yet. Add the first one.</div>
+      ) : (
+      <div className="grid gap-3 md:grid-cols-2">
+        {features.map((feature, index) => {
+          const Icon = iconFor(feature.icon);
+          return (
+          <div key={feature.id} className="flex gap-3 rounded-2xl border border-slate-200 p-4">
+            <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-[#FEF9C3] text-[#A16207]"><Icon className="h-5 w-5" /></span>
+            <div className="min-w-0 flex-1">
+              <p className="font-bold text-slate-900">{feature.title}</p>
+              <p className="mt-0.5 text-sm text-slate-600">{feature.description}</p>
+            </div>
+            <div className="flex shrink-0 flex-col gap-0.5">
+              <button onClick={() => moveFeature(index, -1)} disabled={index === 0} className="rounded-lg p-1.5 text-slate-500 hover:bg-slate-100 disabled:opacity-30" title="Move up"><ArrowUp className="h-4 w-4" /></button>
+              <button onClick={() => moveFeature(index, 1)} disabled={index === features.length - 1} className="rounded-lg p-1.5 text-slate-500 hover:bg-slate-100 disabled:opacity-30" title="Move down"><ArrowDown className="h-4 w-4" /></button>
+              <button onClick={() => handleEdit(feature)} className="rounded-lg p-1.5 text-slate-500 hover:bg-amber-50 hover:text-amber-700" title="Edit"><Pencil className="h-4 w-4" /></button>
+              <button onClick={() => handleDelete(feature.id!)} className="rounded-lg p-1.5 text-slate-400 hover:bg-rose-50 hover:text-rose-600" title="Delete"><Trash2 className="h-4 w-4" /></button>
             </div>
           </div>
-        ))}
+          );
+        })}
       </div>
+      )}
 
       {isModalOpen && (
         <AdminModal
@@ -234,17 +202,13 @@ export default function FeaturesEditor() {
             </div>
             <div className="space-y-2">
               <label className="block text-xs font-bold text-slate-500 uppercase">Icon</label>
-              <select
-                value={formData.icon}
-                onChange={(e) => setFormData({ ...formData, icon: e.target.value })}
-                className="w-full px-4 py-2 border border-slate-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#FACC15]"
-              >
-                {iconOptions.map((opt) => (
-                  <option key={opt.value} value={opt.value}>
-                    {opt.label}
-                  </option>
+              <div className="grid grid-cols-4 gap-2">
+                {iconOptions.map(({ value, label, Icon }) => (
+                  <button key={value} type="button" onClick={() => setFormData({ ...formData, icon: value })} className={`flex flex-col items-center gap-1 rounded-xl border p-2.5 text-[11px] font-semibold ${formData.icon === value ? 'border-[#FACC15] bg-[#FEF9C3] text-[#111827]' : 'border-slate-200 text-slate-600 hover:bg-slate-50'}`}>
+                    <Icon className="h-5 w-5" />{label}
+                  </button>
                 ))}
-              </select>
+              </div>
             </div>
             <div className="flex justify-end gap-3 pt-4">
               <button

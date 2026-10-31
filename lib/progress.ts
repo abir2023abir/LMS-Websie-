@@ -337,12 +337,21 @@ export async function getEnrolledCoursesWithProgress(
   const localStore = getLocalProgressStore();
 
   // Enrollment is explicit; only courses purchased or manually granted to this student appear here.
+  // The server list (paid / approved payments) is the source of truth; it is cached in this browser.
   let enrolledIds: string[] = [];
   if (typeof window !== 'undefined') {
     try {
       const raw = localStorage.getItem(`${LOCAL_ENROLLMENTS_KEY}_${userId}`);
       if (raw) {
         enrolledIds = JSON.parse(raw);
+      }
+    } catch {}
+    try {
+      const res = await fetch('/api/student/enrollments', { cache: 'no-store' });
+      if (res.ok) {
+        const data = (await res.json()) as { courseIds?: string[] };
+        enrolledIds = Array.from(new Set([...enrolledIds.map(String), ...(data.courseIds || []).map(String)]));
+        localStorage.setItem(`${LOCAL_ENROLLMENTS_KEY}_${userId}`, JSON.stringify(enrolledIds));
       }
     } catch {}
   }
@@ -424,19 +433,19 @@ export function getFallbackCourseData(courseId: string): CourseSchema | null {
         {
           id: 'les-0-0',
           title: '1. Introduction, Objectives & Study Blueprint',
-          videoUrl: 'https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/BigBuckBunny.mp4',
+          videoUrl: '',
           duration: '06:15',
         },
         {
           id: 'les-0-1',
           title: '2. Core Concepts & Practical Architecture',
-          videoUrl: 'https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ElephantsDream.mp4',
+          videoUrl: '',
           duration: '11:40',
         },
         {
           id: 'les-0-2',
           title: '3. Essential Drills & Live Walkthrough',
-          videoUrl: 'https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ForBiggerBlazes.mp4',
+          videoUrl: '',
           duration: '09:20',
         },
       ],
@@ -448,13 +457,13 @@ export function getFallbackCourseData(courseId: string): CourseSchema | null {
         {
           id: 'les-1-0',
           title: '4. Deep Dive: Professional Workflows & Best Practices',
-          videoUrl: 'https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ForBiggerEscapes.mp4',
+          videoUrl: '',
           duration: '14:10',
         },
         {
           id: 'les-1-1',
           title: '5. Problem Solving & Performance Optimization',
-          videoUrl: 'https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ForBiggerFun.mp4',
+          videoUrl: '',
           duration: '12:30',
         },
       ],
@@ -466,13 +475,13 @@ export function getFallbackCourseData(courseId: string): CourseSchema | null {
         {
           id: 'les-2-0',
           title: '6. Building the End-to-End Capstone Project',
-          videoUrl: 'https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ForBiggerJoyBlazes.mp4',
+          videoUrl: '',
           duration: '18:45',
         },
         {
           id: 'les-2-1',
           title: '7. Final Review, Deployment & Graduation Checklist',
-          videoUrl: 'https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ForBiggerMeltdowns.mp4',
+          videoUrl: '',
           duration: '08:15',
         },
       ],

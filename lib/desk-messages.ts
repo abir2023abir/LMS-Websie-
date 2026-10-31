@@ -1,8 +1,11 @@
 import fs from 'fs';
-import path from 'path';
 import { dataPath } from '@/lib/data-dir';
+import { kvGet, kvSet } from '@/lib/kv-store';
 
-const file = dataPath('desk-messages.json');
+// Course questions and consultation requests. Stored with kv-store so they survive
+// Vercel restarts; the old local desk-messages.json is read once as a fallback.
+const legacyFile = dataPath('desk-messages.json');
+const KEY = 'desk-messages';
 const CONSULTATION_TIMES = ['9:15 am', '9:30 am', '9:45 am', '10:00 am', '10:15 am', '10:30 am', '1:00 pm', '1:30 pm', '2:00 pm', '3:00 pm', '4:00 pm'];
 
 export type DeskKind = 'student' | 'service';
@@ -70,33 +73,46 @@ function asThread(item: Partial<DeskThread>): DeskThread {
   };
 }
 
-function read(): DeskThread[] {
+function readLegacy(): Partial<DeskThread>[] {
   try {
-    const parsed = JSON.parse(fs.readFileSync(file, 'utf8'));
-    return Array.isArray(parsed) ? parsed.map((item) => asThread(item)) : [];
+    const parsed = JSON.parse(fs.readFileSync(legacyFile, 'utf8'));
+    return Array.isArray(parsed) ? parsed : [];
   } catch {
     return [];
   }
 }
 
-function write(list: DeskThread[]) {
-  fs.mkdirSync(path.dirname(file), { recursive: true });
-  fs.writeFileSync(file, JSON.stringify(list, null, 2));
+async function read(): Promise<DeskThread[]> {
+  const saved = await kvGet<Partial<DeskThread>[] | null>(KEY, null);
+  return (Array.isArray(saved) ? saved : readLegacy()).map((item) => asThread(item));
 }
 
-export function listDeskThreads() {
-  return read().sort((a, b) => (a.createdAt < b.createdAt ? 1 : -1));
+async function write(list: DeskThread[]) {
+  await kvSet(KEY, list);
 }
 
-export function bookedTimesOn(date: string) {
-  return read().filter((item) => item.kind === 'service' && item.appointmentDate === date).map((item) => item.appointmentTime);
+export async function listDeskThreads() {
+  return (await read()).sort((a, b) => (a.createdAt < b.createdAt ? 1 : -1));
 }
 
-export function getDeskThread(id: string) {
-  return read().find((item) => item.id === id) || null;
+export async function bookedTimesOn(date: string) {
+  return (await read()).filter((item) => item.kind === 'service' && item.appointmentDate === date).map((item) => item.appointmentTime);
 }
 
-export function openDeskThread(input: {
+export async function getDeskThread(id: string) {
+  return (await read()).find((item) => item.id === id) || null;
+}
+
+/** A student's own questions, optionally for one lesson. */
+export async function studentThreads(email: string, courseId?: string, lessonId?: string) {
+  const owner = email.trim().toLowerCase();
+  return (await listDeskThreads()).filter((item) => item.kind === 'student'
+    && item.email.toLowerCase() === owner
+    && (!courseId || item.courseId === courseId)
+    && (!lessonId || item.lessonId === lessonId));
+}
+
+export async function openDeskThread(input: {
   kind: DeskKind;
   name: string;
   email: string;
@@ -146,7 +162,7 @@ export function openDeskThread(input: {
       }
     }
   }
-  if (input.kind === 'service' && bookedTimesOn(input.appointmentDate!).includes(input.appointmentTime!)) {
+  if (input.kind === 'service' && (await bookedTimesOn(input.appointmentDate!)).includes(input.appointmentTime!)) {
     throw new Error('That time was just requested. Please choose another available time.');
   }
   const now = new Date().toISOString();
@@ -176,14 +192,14 @@ export function openDeskThread(input: {
     company: String(input.company || '').trim(),
     monthlyRevenue: String(input.monthlyRevenue || '').trim(),
   };
-  write([thread, ...read()]);
+  await write([thread, ...(await read())]);
   return thread;
 }
 
-export function replyDeskThread(id: string, text: string, from: 'admin' | 'instructor' = 'admin') {
+export async function replyDeskThread(id: string, text: string, from: 'admin' | 'instructor' = 'admin') {
   const clean = text.trim();
   if (!clean) throw new Error('Write a reply first.');
-  const list = read();
+  const list = await read();
   const current = list.find((item) => item.id === id);
   if (!current) throw new Error('Message not found.');
   const next: DeskThread = {
@@ -191,14 +207,14 @@ export function replyDeskThread(id: string, text: string, from: 'admin' | 'instr
     status: 'replied',
     messages: [...current.messages, { id: `note-${Date.now().toString(36)}`, from, text: clean, at: new Date().toISOString() }],
   };
-  write(list.map((item) => (item.id === id ? next : item)));
+  await write(list.map((item) => (item.id === id ? next : item)));
   return next;
 }
 
-export function continueDeskThread(id: string, email: string, text: string) {
+export async function continueDeskThread(id: string, email: string, text: string) {
   const clean = text.trim();
   if (!clean) throw new Error('Write a message first.');
-  const list = read();
+  const list = await read();
   const current = list.find((item) => item.id === id);
   if (!current || current.email.toLowerCase() !== email.trim().toLowerCase()) throw new Error('Message not found.');
   const next: DeskThread = {
@@ -206,6 +222,6 @@ export function continueDeskThread(id: string, email: string, text: string) {
     status: 'open',
     messages: [...current.messages, { id: `note-${Date.now().toString(36)}`, from: 'sender', text: clean, at: new Date().toISOString() }],
   };
-  write(list.map((item) => (item.id === id ? next : item)));
+  await write(list.map((item) => (item.id === id ? next : item)));
   return next;
 }

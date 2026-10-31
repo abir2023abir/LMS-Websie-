@@ -3,7 +3,7 @@ import { cookies } from 'next/headers';
 import { verifyAdminSession } from '@/lib/auth-server';
 import { isFirebaseDemo } from '@/lib/utils';
 import { listProfiles } from '@/lib/accounts';
-import { listPayments } from '@/lib/admin-studio';
+import { listPayments } from '@/lib/payments';
 
 export async function GET() {
   const cookieStore = cookies();
@@ -42,7 +42,7 @@ export async function GET() {
       dataAvailable = false;
     }
 
-    const manualPayments = listPayments();
+    const manualPayments = await listPayments();
     const paidTransactions = [
       ...realTransactions.filter((txn) => ['paid', 'success', 'valid', 'completed'].includes(String(txn.status || '').toLowerCase())),
       ...manualPayments.filter((payment) => ['paid', 'approved'].includes(payment.status)).map((payment) => ({

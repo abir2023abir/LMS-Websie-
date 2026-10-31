@@ -13,8 +13,10 @@ type Payment = {
   courseTitle: string;
   amount: number;
   method: string;
-  status: 'pending' | 'approved' | 'rejected' | 'paid';
+  status: 'pending' | 'approved' | 'rejected' | 'paid' | 'failed';
   transactionId: string;
+  senderNumber?: string;
+  createdAt?: string;
   screenshot: string;
   source: 'sslcommerz' | 'manual';
 };
@@ -28,6 +30,14 @@ const empty = {
   status: 'pending' as const,
   transactionId: '',
   source: 'manual' as const,
+};
+
+const statusClass: Record<Payment['status'], string> = {
+  pending: 'bg-amber-50 text-amber-800',
+  approved: 'bg-emerald-50 text-emerald-700',
+  paid: 'bg-emerald-50 text-emerald-700',
+  rejected: 'bg-rose-50 text-rose-700',
+  failed: 'bg-slate-100 text-slate-600',
 };
 
 export default function AdminPaymentsBoard() {
@@ -80,7 +90,7 @@ export default function AdminPaymentsBoard() {
       <div className="flex items-center justify-between gap-3">
         <div>
           <h2 className="font-display font-extrabold text-xl">Payment records ({payments.length})</h2>
-          <p className="text-xs text-slate-500">SSLCommerz rows and manual bKash or Nagad rows. Open a row for the transaction ID and screenshot, then approve or reject a manual payment.</p>
+          <p className="text-xs text-slate-500">Online (SSLCommerz) payments are confirmed automatically. For bKash, Nagad or Rocket Send Money, check the Transaction ID in your account, then Approve — the course opens for the student straight away.</p>
         </div>
         <button type="button" onClick={() => { setDraft(empty); setFile(null); setNote(''); setOpen(true); }} className="bg-[#FACC15] text-[#111827] text-xs font-bold px-4 py-2 rounded-full">Add manual payment</button>
       </div>
@@ -99,7 +109,7 @@ export default function AdminPaymentsBoard() {
                 <td>{payment.courseTitle}</td>
                 <td>{taka(payment.amount)}</td>
                 <td>{payment.method}</td>
-                <td className="capitalize">{payment.status}</td>
+                <td><span className={`rounded-full px-2 py-0.5 text-[11px] font-bold capitalize ${statusClass[payment.status]}`}>{payment.status}</span></td>
                 <td className="text-right whitespace-nowrap">
                   <button type="button" className="text-xs font-bold underline mr-2" onClick={() => setViewing(payment)}>View</button>
                   <button type="button" title="Edit" onClick={() => { setDraft(payment); setFile(null); setOpen(true); }} className="p-1.5"><Pencil className="w-4 h-4 inline" /></button>
@@ -131,6 +141,7 @@ export default function AdminPaymentsBoard() {
             <select className={fieldClass} value={draft.method || 'Personal bKash'} onChange={(e) => setDraft({ ...draft, method: e.target.value })}>
               <option>Personal bKash</option>
               <option>Personal Nagad</option>
+              <option>Personal Rocket</option>
               <option>SSLCommerz (bKash)</option>
               <option>SSLCommerz (Nagad)</option>
               <option>SSLCommerz (Visa)</option>
@@ -153,13 +164,15 @@ export default function AdminPaymentsBoard() {
             <p><span className="font-bold">Amount:</span> {taka(viewing.amount)}</p>
             <p><span className="font-bold">Method:</span> {viewing.method}</p>
             <p><span className="font-bold">Status:</span> {viewing.status}</p>
-            <p><span className="font-bold">Transaction ID:</span> {viewing.transactionId || '—'}</p>
+            <p><span className="font-bold">Transaction ID:</span> <span className="font-mono">{viewing.transactionId || '—'}</span></p>
+            {viewing.senderNumber && <p><span className="font-bold">Sent from:</span> <span className="font-mono">{viewing.senderNumber}</span></p>}
+            {viewing.createdAt && <p><span className="font-bold">Submitted:</span> {new Date(viewing.createdAt).toLocaleString('en-BD')}</p>}
             {viewing.screenshot ? (
               <Image src={`/api/admin/payment-ledger?proof=${encodeURIComponent(viewing.screenshot)}`} alt="Payment screenshot" width={900} height={700} unoptimized className="h-auto w-full rounded-xl border" />
             ) : (
               <p className="text-slate-500">No screenshot attached.</p>
             )}
-            {viewing.source === 'manual' && (
+            {viewing.source === 'manual' && viewing.status === 'pending' && (
               <div className="flex gap-2 pt-2">
                 <button type="button" className="bg-green-700 text-white text-xs font-bold px-3 py-2 rounded-xl" onClick={() => setStatus(viewing.id, 'approved')}>Approve</button>
                 <button type="button" className="bg-rose-600 text-white text-xs font-bold px-3 py-2 rounded-xl" onClick={() => setStatus(viewing.id, 'rejected')}>Reject</button>

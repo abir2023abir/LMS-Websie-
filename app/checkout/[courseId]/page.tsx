@@ -9,9 +9,10 @@ interface PageProps {
   params: {
     courseId: string;
   };
+  searchParams?: { status?: string };
 }
 
-export default async function CheckoutPage({ params }: PageProps) {
+export default async function CheckoutPage({ params, searchParams }: PageProps) {
   const { courseId } = params;
 
   let course: CourseSchema | null = null;
@@ -31,5 +32,5 @@ export default async function CheckoutPage({ params }: PageProps) {
     notFound();
   }
 
-  return <CheckoutPageClient course={course} />;
+  return <CheckoutPageClient course={course} paymentStatus={searchParams?.status} />;
 }

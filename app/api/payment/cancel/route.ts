@@ -1,17 +1,6 @@
-import { NextResponse } from 'next/server';
+import { paymentReturn } from '@/lib/sslcommerz';
 
-export async function POST(request: Request) {
-  const url = new URL(request.url);
-  const courseId = url.searchParams.get('courseId') || '1';
-  const baseUrl = process.env.NEXT_PUBLIC_SITE_URL || 'http://localhost:3000';
+export const dynamic = 'force-dynamic';
 
-  return NextResponse.redirect(`${baseUrl}/checkout/${courseId}?status=cancelled`, 303);
-}
-
-export async function GET(request: Request) {
-  const url = new URL(request.url);
-  const courseId = url.searchParams.get('courseId') || '1';
-  const baseUrl = process.env.NEXT_PUBLIC_SITE_URL || 'http://localhost:3000';
-
-  return NextResponse.redirect(`${baseUrl}/checkout/${courseId}?status=cancelled`, 303);
-}
+export const POST = (request: Request) => paymentReturn(request, 'cancelled');
+export const GET = (request: Request) => paymentReturn(request, 'cancelled');

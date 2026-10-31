@@ -30,3 +30,11 @@ export function SslMark() {
     </span>
   );
 }
+
+export function RocketMark() {
+  return (
+    <span className="inline-flex items-center justify-center h-7 px-2 rounded-md bg-[#8C3494] text-white text-sm font-black tracking-tight">
+      Rocket
+    </span>
+  );
+}

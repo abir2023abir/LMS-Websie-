@@ -1,6 +1,35 @@
 import { isFirebaseDemo } from '@/lib/utils';
+import { kvGet, kvSet } from '@/lib/kv-store';
 
 const isDemoMode = isFirebaseDemo;
+
+// Without Firebase, CMS content is kept with kv-store (local file, or Supabase on Vercel)
+// so edits made in Admin → Landing Page CMS really save.
+const localId = (prefix: string) => `${prefix}-${Date.now().toString(36)}${Math.random().toString(36).slice(2, 6)}`;
+
+async function localList<T extends { id?: string }>(name: string, defaults: T[]): Promise<T[]> {
+  const saved = await kvGet<T[] | null>(`cms-${name}`, null);
+  return saved ?? defaults.map((item, index) => ({ ...item, id: item.id || `${name}-${index + 1}` }));
+}
+
+async function localCreate<T extends { id?: string }>(name: string, defaults: T[], data: T): Promise<string> {
+  const id = localId(name);
+  await kvSet(`cms-${name}`, [...(await localList(name, defaults)), { ...data, id, updatedAt: new Date().toISOString() }]);
+  return id;
+}
+
+async function localUpdate<T extends { id?: string }>(name: string, defaults: T[], id: string, data: Partial<T>): Promise<boolean> {
+  const list = await localList(name, defaults);
+  if (!list.some((item) => item.id === id)) return false;
+  await kvSet(`cms-${name}`, list.map((item) => (item.id === id ? { ...item, ...data, updatedAt: new Date().toISOString() } : item)));
+  return true;
+}
+
+async function localDelete<T extends { id?: string }>(name: string, defaults: T[], id: string): Promise<boolean> {
+  const list = await localList(name, defaults);
+  await kvSet(`cms-${name}`, list.filter((item) => item.id !== id));
+  return true;
+}
 
 async function firestore() {
   const [{ db }, fs] = await Promise.all([import('@/lib/firebase'), import('firebase/firestore')]);
@@ -25,6 +54,8 @@ export type HeroContent = {
 
 export async function getHeroContent(): Promise<HeroContent | null> {
   if (isDemoMode()) {
+    const saved = await kvGet<HeroContent | null>('cms-hero', null);
+    if (saved) return saved;
     return {
       headline: 'Build Your Skills. Bridge the Gap to Your Future.',
       description: 'Learn practical skills, follow structured lessons, and turn your knowledge into real-world progress. Career Bridge.Studio brings courses, assessments, and learning progress together in one place.',
@@ -56,7 +87,8 @@ export async function getHeroContent(): Promise<HeroContent | null> {
 
 export async function saveHeroContent(data: Omit<HeroContent, 'id' | 'updatedAt'>): Promise<string> {
   if (isDemoMode()) {
-    return 'demo-hero';
+    await kvSet('cms-hero', { ...data, updatedAt: new Date().toISOString() });
+    return 'local-hero';
   }
 
   try {
@@ -103,6 +135,8 @@ export type AboutContent = {
 
 export async function getAboutContent(): Promise<AboutContent | null> {
   if (isDemoMode()) {
+    const saved = await kvGet<AboutContent | null>('cms-about', null);
+    if (saved) return saved;
     return {
       title: 'A Better Learning Journey, Built Around Your Goals',
       description: 'Career Bridge.Studio helps learners develop knowledge, strengthen practical skills, and follow a structured path toward personal and professional growth. Learn through organised lessons, practise your skills, and track your progress as you move forward.',
@@ -134,7 +168,8 @@ export async function getAboutContent(): Promise<AboutContent | null> {
 
 export async function saveAboutContent(data: Omit<AboutContent, 'id' | 'updatedAt'>): Promise<string> {
   if (isDemoMode()) {
-    return 'demo-about';
+    await kvSet('cms-about', { ...data, updatedAt: new Date().toISOString() });
+    return 'local-about';
   }
 
   try {
@@ -176,8 +211,8 @@ export type SuccessStory = {
 
 export async function getSuccessStories(): Promise<SuccessStory[]> {
   if (isDemoMode()) {
-    // No real learner stories in demo mode; the home page hides the section when this is empty.
-    return [];  }
+    return (await localList<SuccessStory>('success-stories', [])).sort((a, b) => (a.order || 0) - (b.order || 0));
+  }
 
   try {
     const fb = await firestore();
@@ -198,7 +233,7 @@ export async function getSuccessStories(): Promise<SuccessStory[]> {
 
 export async function createSuccessStory(data: Omit<SuccessStory, 'id' | 'updatedAt'>): Promise<string> {
   if (isDemoMode()) {
-    return `demo-story-${Date.now()}`;
+    return localCreate<SuccessStory>('success-stories', [], data);
   }
 
   try {
@@ -216,7 +251,7 @@ export async function createSuccessStory(data: Omit<SuccessStory, 'id' | 'update
 
 export async function updateSuccessStory(id: string, data: Partial<Omit<SuccessStory, 'id' | 'updatedAt'>>): Promise<boolean> {
   if (isDemoMode()) {
-    return true;
+    return localUpdate<SuccessStory>('success-stories', [], id, data);
   }
 
   try {
@@ -234,7 +269,7 @@ export async function updateSuccessStory(id: string, data: Partial<Omit<SuccessS
 
 export async function deleteSuccessStory(id: string): Promise<boolean> {
   if (isDemoMode()) {
-    return true;
+    return localDelete<SuccessStory>('success-stories', [], id);
   }
 
   try {
@@ -259,16 +294,17 @@ export type Feature = {
   updatedAt?: any;
 };
 
+const DEFAULT_FEATURES: Feature[] = [
+  { title: 'Structured Learning Path', description: 'Know what to study next and follow the course structure.', icon: 'ShieldCheck', order: 1 },
+  { title: 'Measurable Progress', description: 'Review your learning activity and assessment performance.', icon: 'Award', order: 2 },
+  { title: 'Guided Support', description: 'Use available mentor, student, and programme support features.', icon: 'Banknote', order: 3 },
+  { title: 'Goal-Oriented Practice', description: 'Connect course activities with the skills you want to develop.', icon: 'Users', order: 4 },
+];
+
 export async function getFeatures(): Promise<Feature[]> {
   if (isDemoMode()) {
-    return [
-      { title: 'Structured Learning Path', description: 'Know what to study next and follow the course structure.', icon: 'ShieldCheck', order: 1 },
-      { title: 'Measurable Progress', description: 'Review your learning activity and assessment performance.', icon: 'Award', order: 2 },
-      { title: 'Guided Support', description: 'Use available mentor, student, and programme support features.', icon: 'Banknote', order: 3 },
-      { title: 'Goal-Oriented Practice', description: 'Connect course activities with the skills you want to develop.', icon: 'Users', order: 4 },
-    ];
+    return (await localList<Feature>('features', DEFAULT_FEATURES)).sort((a, b) => (a.order || 0) - (b.order || 0));
   }
-
   try {
     const fb = await firestore();
     const q = fb.query(fb.collection(fb.db, FEATURES_COLLECTION), fb.orderBy('order', 'asc'));
@@ -288,7 +324,7 @@ export async function getFeatures(): Promise<Feature[]> {
 
 export async function createFeature(data: Omit<Feature, 'id' | 'updatedAt'>): Promise<string> {
   if (isDemoMode()) {
-    return `demo-feature-${Date.now()}`;
+    return localCreate<Feature>('features', DEFAULT_FEATURES, data);
   }
 
   try {
@@ -306,7 +342,7 @@ export async function createFeature(data: Omit<Feature, 'id' | 'updatedAt'>): Pr
 
 export async function updateFeature(id: string, data: Partial<Omit<Feature, 'id' | 'updatedAt'>>): Promise<boolean> {
   if (isDemoMode()) {
-    return true;
+    return localUpdate<Feature>('features', DEFAULT_FEATURES, id, data);
   }
 
   try {
@@ -324,7 +360,7 @@ export async function updateFeature(id: string, data: Partial<Omit<Feature, 'id'
 
 export async function deleteFeature(id: string): Promise<boolean> {
   if (isDemoMode()) {
-    return true;
+    return localDelete<Feature>('features', DEFAULT_FEATURES, id);
   }
 
   try {
@@ -362,12 +398,7 @@ export type BlogArticle = {
 
 export async function getBlogArticles(): Promise<BlogArticle[]> {
   if (isDemoMode()) {
-    const { blogPosts } = await import('@/lib/blog-data');
-    return blogPosts.map((post) => ({
-      ...post,
-      content: JSON.stringify(post.content),
-      isFeatured: post.isFeatured ?? false,
-    }));
+    return localList<BlogArticle>('blog', []);
   }
 
   try {
@@ -389,10 +420,7 @@ export async function getBlogArticles(): Promise<BlogArticle[]> {
 
 export async function getBlogArticleBySlug(slug: string): Promise<BlogArticle | null> {
   if (isDemoMode()) {
-    const { blogPosts } = await import('@/lib/blog-data');
-    const post = blogPosts.find((p) => p.slug === slug);
-    if (!post) return null;
-    return { ...post, content: JSON.stringify(post.content), isFeatured: post.isFeatured ?? false };
+    return (await localList<BlogArticle>('blog', [])).find((post) => post.slug === slug) || null;
   }
 
   try {
@@ -414,7 +442,7 @@ export async function getBlogArticleBySlug(slug: string): Promise<BlogArticle | 
 
 export async function createBlogArticle(data: Omit<BlogArticle, 'id' | 'updatedAt'>): Promise<string> {
   if (isDemoMode()) {
-    return `demo-blog-${Date.now()}`;
+    return localCreate<BlogArticle>('blog', [], data);
   }
 
   try {
@@ -432,7 +460,7 @@ export async function createBlogArticle(data: Omit<BlogArticle, 'id' | 'updatedA
 
 export async function updateBlogArticle(id: string, data: Partial<Omit<BlogArticle, 'id' | 'updatedAt'>>): Promise<boolean> {
   if (isDemoMode()) {
-    return true;
+    return localUpdate<BlogArticle>('blog', [], id, data);
   }
 
   try {
@@ -450,7 +478,7 @@ export async function updateBlogArticle(id: string, data: Partial<Omit<BlogArtic
 
 export async function deleteBlogArticle(id: string): Promise<boolean> {
   if (isDemoMode()) {
-    return true;
+    return localDelete<BlogArticle>('blog', [], id);
   }
 
   try {
@@ -478,7 +506,7 @@ export type ContactEnquiry = {
 
 export async function getContactEnquiries(): Promise<ContactEnquiry[]> {
   if (isDemoMode()) {
-    return [];
+    return (await localList<ContactEnquiry>('enquiries', [])).sort((a, b) => String(b.createdAt || '').localeCompare(String(a.createdAt || '')));
   }
 
   try {
@@ -500,7 +528,7 @@ export async function getContactEnquiries(): Promise<ContactEnquiry[]> {
 
 export async function createContactEnquiry(data: Omit<ContactEnquiry, 'id' | 'createdAt' | 'updatedAt'>): Promise<string> {
   if (isDemoMode()) {
-    return `demo-enquiry-${Date.now()}`;
+    return localCreate<ContactEnquiry>('enquiries', [], { ...data, createdAt: new Date().toISOString() } as ContactEnquiry);
   }
 
   try {
@@ -519,7 +547,7 @@ export async function createContactEnquiry(data: Omit<ContactEnquiry, 'id' | 'cr
 
 export async function updateEnquiryStatus(id: string, status: ContactEnquiry['status']): Promise<boolean> {
   if (isDemoMode()) {
-    return true;
+    return localUpdate<ContactEnquiry>('enquiries', [], id, { status });
   }
 
   try {
@@ -537,7 +565,7 @@ export async function updateEnquiryStatus(id: string, status: ContactEnquiry['st
 
 export async function deleteEnquiry(id: string): Promise<boolean> {
   if (isDemoMode()) {
-    return true;
+    return localDelete<ContactEnquiry>('enquiries', [], id);
   }
 
   try {

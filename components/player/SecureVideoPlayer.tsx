@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useRef, useEffect, useCallback } from 'react';
-import YoutubeLesson, { youtubeId } from '@/components/player/YoutubeLesson';
+import YoutubeLesson, { directVideoSrc, youtubeId } from '@/components/player/YoutubeLesson';
 import {
   Play,
   Pause,
@@ -71,17 +71,7 @@ export default function SecureVideoPlayer({
   const [hoverSeekX, setHoverSeekX] = useState<number>(0);
   const [watermarkPos, setWatermarkPos] = useState({ top: '15%', left: '20%' });
 
-  // Safe fallback sample video stream
-  const sampleVideos = [
-    'https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/BigBuckBunny.mp4',
-    'https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ElephantsDream.mp4',
-    'https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ForBiggerBlazes.mp4',
-  ];
-
-  const src =
-    videoUrl && (videoUrl.startsWith('http') || videoUrl.startsWith('/'))
-      ? videoUrl
-      : sampleVideos[0];
+  const src = directVideoSrc(videoUrl);
 
   // Watermark drifting position timer to discourage screen recording
   useEffect(() => {
@@ -275,6 +265,21 @@ export default function SecureVideoPlayer({
             <ShieldCheck className="w-3 h-3 text-[#FACC15]" />
             <span>{studentName} • {studentEmail}</span>
           </div>
+        </div>
+      </div>
+    );
+  }
+
+  if (!src) {
+    return (
+      <div className="relative aspect-video w-full rounded-3xl overflow-hidden bg-[#111827] border border-white/10 shadow-2xl flex items-center justify-center">
+        {poster && <img src={poster} alt="" className="absolute inset-0 h-full w-full object-cover opacity-30" />}
+        <div className="relative z-10 px-6 text-center text-white">
+          <div className="mx-auto mb-3 flex h-12 w-12 items-center justify-center rounded-2xl bg-[#FACC15] text-[#111827]">
+            <Play className="h-5 w-5 fill-current" />
+          </div>
+          <p className="font-display text-base font-bold">This lesson’s video will be added soon</p>
+          <p className="mt-1 text-xs text-white/70">{title}</p>
         </div>
       </div>
     );

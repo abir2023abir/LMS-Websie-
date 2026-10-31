@@ -1,19 +1,40 @@
 import { NextResponse } from 'next/server';
-import { listQuizzes } from '@/lib/admin-studio';
+import { currentProfile, staffIdentity } from '@/lib/user-session';
+import { getEnrollments } from '@/lib/payments';
+import { listAttempts, quizzesForCourses, quizzesForLesson, studentView } from '@/lib/quizzes';
 
 export const dynamic = 'force-dynamic';
 
-export async function GET() {
+// Published quizzes (without answers) for one lesson, or — with no lesson — for all
+// of the signed-in student's enrolled courses. Includes the student's best score.
+export async function GET(request: Request) {
+  const url = new URL(request.url);
+  const courseId = url.searchParams.get('courseId') || '';
+  const lessonId = url.searchParams.get('lessonId') || '';
+  const staff = await staffIdentity();
+  const profile = staff ? null : await currentProfile();
+  if (!staff && !profile) return NextResponse.json({ success: false, message: 'Please sign in.' }, { status: 401 });
+
+  const enrolled = profile ? await getEnrollments(profile.id) : [];
+  if (courseId && profile && !enrolled.includes(courseId)) {
+    return NextResponse.json({ success: false, message: 'Enroll in this course to take its quizzes.' }, { status: 403 });
+  }
+  const quizzes = courseId && lessonId ? await quizzesForLesson(courseId, lessonId) : await quizzesForCourses(courseId ? [courseId] : enrolled);
+  const attempts = profile ? await listAttempts(profile.id) : [];
   return NextResponse.json({
     success: true,
-    quizzes: listQuizzes().map((quiz) => ({
-      id: quiz.id,
-      title: quiz.title,
-      questions: quiz.questions.map((question) => ({
-        id: question.id,
-        prompt: question.prompt,
-        choices: question.choices,
-      })),
-    })),
+    quizzes: quizzes.map((quiz) => {
+      const mine = attempts.filter((attempt) => attempt.quizId === quiz.id);
+      return {
+        ...studentView(quiz),
+        courseId: quiz.courseId,
+        courseTitle: quiz.courseTitle,
+        moduleTitle: quiz.moduleTitle,
+        lessonTitle: quiz.lessonTitle,
+        best: mine.length ? Math.max(...mine.map((attempt) => attempt.percent)) : null,
+        passed: mine.some((attempt) => attempt.passed),
+        attempts: mine.length,
+      };
+    }),
   });
 }

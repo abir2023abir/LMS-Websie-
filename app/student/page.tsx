@@ -40,6 +40,8 @@ export default function StudentDashboardPage() {
   const [loading, setLoading] = useState(true);
   const [activeTab, setActiveTab] = useState<'all' | 'in_progress' | 'completed' | 'certificates'>('all');
   const [searchQuery, setSearchQuery] = useState('');
+  const [pendingPayments, setPendingPayments] = useState<{ id: string; courseTitle: string; method: string }[]>([]);
+  const [justPaid, setJustPaid] = useState(false);
 
   // Selected Certificate Modal State
   const [selectedCertCourse, setSelectedCertCourse] = useState<EnrolledCourseWithProgress | null>(null);
@@ -52,7 +54,13 @@ export default function StudentDashboardPage() {
       const list = await getEnrolledCoursesWithProgress(userId);
       setEnrolledCourses(list);
       setLoading(false);
+      fetch('/api/student/enrollments', { cache: 'no-store' })
+        .then((res) => (res.ok ? res.json() : null))
+        .then((data) => setPendingPayments(data?.pending || []))
+        .catch(() => undefined);
     }
+
+    setJustPaid(new URLSearchParams(window.location.search).get('payment') === 'success');
 
     loadStudentData();
   }, [user]);
@@ -134,6 +142,18 @@ export default function StudentDashboardPage() {
 
         {/* ── MAIN DASHBOARD CONTENT ── */}
         <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10 w-full flex-1 space-y-10">
+          {justPaid && (
+            <div className="rounded-2xl border border-emerald-200 bg-emerald-50 p-4 text-sm font-semibold text-emerald-800">Payment received — your course is now open below.</div>
+          )}
+          {pendingPayments.length > 0 && (
+            <div className="rounded-2xl border border-amber-200 bg-amber-50 p-4 text-sm text-amber-900">
+              <p className="font-bold">Waiting for payment approval</p>
+              <ul className="mt-1 list-disc pl-5">
+                {pendingPayments.map((payment) => <li key={payment.id}>{payment.courseTitle} · {payment.method}</li>)}
+              </ul>
+              <p className="mt-1 text-xs">The course opens here as soon as we confirm your payment.</p>
+            </div>
+          )}
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
             <div className="bg-white rounded-3xl border border-slate-200/80 p-6 space-y-2 shadow-sm">
               <div className="flex items-center justify-between">

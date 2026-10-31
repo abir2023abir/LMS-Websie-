@@ -150,7 +150,7 @@ export default function BlogEditor() {
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between">
-        <h3 className="text-sm font-bold text-slate-900">Blog Articles ({articles.length})</h3>
+        <p className="text-sm text-slate-600">{articles.length ? `${articles.length} article${articles.length === 1 ? '' : 's'}.` : 'No articles yet.'} The blog page stays hidden on the site for now.</p>
         <button
           onClick={() => {
             setEditingArticle(null);
@@ -170,13 +170,16 @@ export default function BlogEditor() {
             });
             setIsModalOpen(true);
           }}
-          className="flex items-center gap-2 bg-[#FACC15] text-[#111827] px-3 py-1.5 rounded-lg text-xs font-medium hover:bg-[#eab308] transition-colors"
+          className="flex shrink-0 items-center gap-1.5 rounded-xl bg-[#111827] px-4 py-2 text-sm font-bold text-white hover:bg-slate-800"
         >
           <Plus className="w-4 h-4" />
           Add Article
         </button>
       </div>
 
+      {articles.length === 0 && (
+        <div className="rounded-2xl border border-dashed border-slate-200 py-12 text-center text-sm text-slate-500">Write your first article about bookkeeping, business finance or careers.</div>
+      )}
       <div className="space-y-3">
         {articles.map((article) => (
           <div key={article.id} className="bg-white border border-slate-200 rounded-lg p-4 space-y-3">

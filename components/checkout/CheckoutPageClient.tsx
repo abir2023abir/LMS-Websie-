@@ -10,7 +10,7 @@ import { useAuth } from '@/context/AuthContext';
 import { takaFromUsd } from '@/lib/utils';
 import type { CourseSchema } from '@/types/course';
 
-export default function CheckoutPageClient({ course }: { course: CourseSchema }) {
+export default function CheckoutPageClient({ course, paymentStatus }: { course: CourseSchema; paymentStatus?: string }) {
   const router = useRouter();
   const { user, role } = useAuth();
   const next = `/checkout/${encodeURIComponent(course.id || '')}`;
@@ -21,6 +21,11 @@ export default function CheckoutPageClient({ course }: { course: CourseSchema })
       <FloatingNavbar />
       <main className="mx-auto max-w-5xl px-4 pb-20 pt-32 sm:px-6">
         <Link href="/courses" className="text-sm font-semibold text-slate-600 underline underline-offset-4">Back to all courses</Link>
+        {(paymentStatus === 'failed' || paymentStatus === 'cancelled') && (
+          <div className="mt-4 rounded-2xl border border-rose-200 bg-rose-50 p-4 text-sm text-rose-800">
+            {paymentStatus === 'cancelled' ? 'The payment was cancelled.' : 'The payment could not be completed.'} You can try again below. If money was deducted, contact us with your transaction details.
+          </div>
+        )}
         <div className="mt-6 grid gap-6 rounded-3xl border border-slate-200 bg-white p-5 shadow-sm sm:grid-cols-[240px_1fr] sm:p-7">
           <div className="relative aspect-video overflow-hidden rounded-2xl bg-slate-100 sm:aspect-square">
             <Image src={course.thumbnail} alt={course.title} fill className="object-cover" />

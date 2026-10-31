@@ -6,6 +6,7 @@ import AuthGuard from '@/components/auth/AuthGuard';
 import { useAuth } from '@/context/AuthContext';
 import FloatingNavbar from '@/components/english/FloatingNavbar';
 import EnglishFooter from '@/components/english/EnglishFooter';
+import LessonVideoField from '@/components/admin/LessonVideoField';
 import DashboardCalendar from '@/components/dashboard/DashboardCalendar';
 import InboxButton from '@/components/inbox/InboxButton';
 import AdminMessages from '@/components/admin/AdminMessages';
@@ -49,12 +50,12 @@ export default function TeacherPanelPage() {
   const [modules, setModules] = useState<ModuleSchema[]>([
     {
       id: 'mod-1',
-      title: 'Module 1: Foundations of Spoken Fluency',
+      title: 'Module 1: Getting Started',
       lessons: [
         {
           id: 'les-1',
           title: 'Welcome to Career Bridge.Studio',
-          videoUrl: 'https://www.youtube.com/watch?v=dQw4w9WgXcQ',
+          videoUrl: '',
           duration: '05:30',
         },
       ],
@@ -66,6 +67,14 @@ export default function TeacherPanelPage() {
   const [formError, setFormError] = useState('');
   const [formSuccess, setFormSuccess] = useState('');
   const [adminStaff, setAdminStaff] = useState(false);
+  // Id for the course being built, so lesson videos can be uploaded before it is saved.
+  const newCourseId = () => `c${Date.now().toString(36)}${Math.random().toString(36).slice(2, 8)}`;
+  const [draftCourseId, setDraftCourseId] = useState(newCourseId);
+
+  const totalLearners = courses.reduce((sum, c) => sum + (c.studentCount || 0), 0);
+  const totalRevenue = courses.reduce((sum, c) => sum + (c.price || 0) * (c.studentCount || 0), 0);
+  const ratedCourses = courses.filter((c) => (c.rating || 0) > 0);
+  const averageRating = ratedCourses.length ? ratedCourses.reduce((sum, c) => sum + (c.rating || 0), 0) / ratedCourses.length : 0;
 
   useEffect(() => {
     fetch('/api/auth/staff', { cache: 'no-store' })
@@ -208,6 +217,7 @@ export default function TeacherPanelPage() {
     setSubmitting(true);
     try {
       const payload = {
+        id: draftCourseId,
         title,
         description,
         instructorId: user?.uid || (adminStaff ? 'admin' : 'instructor-demo'),
@@ -232,6 +242,7 @@ export default function TeacherPanelPage() {
       }
 
       setFormSuccess('Course uploaded successfully!');
+      setDraftCourseId(newCourseId());
       // Reset form
       setTitle('');
       setDescription('');
@@ -309,7 +320,7 @@ export default function TeacherPanelPage() {
             title="Course messages"
             intro="Questions for your courses show the module, lesson, student progress, and your instructor assignment. Admin sees the same thread."
           />
-          {/* ── QUICK METRICS ── */}
+          {/* ── QUICK METRICS (computed from the mentor's real course records) ── */}
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
             <div className="bg-white rounded-3xl border border-slate-200/80 p-6 space-y-2 shadow-sm">
               <div className="flex items-center justify-between">
@@ -318,7 +329,7 @@ export default function TeacherPanelPage() {
                 </div>
                 <span className="text-xs font-bold text-slate-500 uppercase">Students</span>
               </div>
-              <div className="font-display font-extrabold text-3xl text-[#111827]">1,420</div>
+              <div className="font-display font-extrabold text-3xl text-[#111827]">{totalLearners.toLocaleString()}</div>
               <div className="text-xs text-slate-500">Total Enrolled Learners</div>
             </div>
 
@@ -329,8 +340,8 @@ export default function TeacherPanelPage() {
                 </div>
                 <span className="text-xs font-bold text-slate-500 uppercase">Earnings</span>
               </div>
-              <div className="font-display font-extrabold text-3xl text-[#111827]">{takaFromUsd(4850)}</div>
-              <div className="text-xs text-slate-500">Total Revenue</div>
+              <div className="font-display font-extrabold text-3xl text-[#111827]">{totalRevenue ? takaFromUsd(totalRevenue) : '৳0'}</div>
+              <div className="text-xs text-slate-500">Course price × enrolled learners</div>
             </div>
 
             <div className="bg-white rounded-3xl border border-slate-200/80 p-6 space-y-2 shadow-sm">
@@ -353,8 +364,8 @@ export default function TeacherPanelPage() {
                 </div>
                 <span className="text-xs font-bold text-slate-500 uppercase">Rating</span>
               </div>
-              <div className="font-display font-extrabold text-3xl text-[#111827]">4.9 / 5</div>
-              <div className="text-xs text-slate-500">Average Course Rating</div>
+              <div className="font-display font-extrabold text-3xl text-[#111827]">{averageRating ? `${averageRating.toFixed(1)} / 5` : '—'}</div>
+              <div className="text-xs text-slate-500">{averageRating ? 'Average Course Rating' : 'No ratings yet'}</div>
             </div>
           </div>
 
@@ -514,7 +525,7 @@ export default function TeacherPanelPage() {
                       required
                       value={title}
                       onChange={(e) => setTitle(e.target.value)}
-                      placeholder="e.g. Spoken English & Accent Perfection Masterclass"
+                      placeholder="e.g. Foundations of Bookkeeping & Accounting"
                       className="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-3 text-sm text-[#111827] placeholder-slate-400 focus:outline-none focus:border-[#111827] transition-colors"
                     />
                   </div>
@@ -671,7 +682,7 @@ export default function TeacherPanelPage() {
                             {mod.lessons.map((les, lesIdx) => (
                               <div
                                 key={les.id}
-                                className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2 bg-white p-3 rounded-xl border border-slate-200 text-xs"
+                                className="flex flex-wrap items-center gap-2 bg-white p-3 rounded-xl border border-slate-200 text-xs"
                               >
                                 <Film className="w-4 h-4 text-slate-400 flex-shrink-0 hidden sm:block" />
                                 <input
@@ -683,15 +694,6 @@ export default function TeacherPanelPage() {
                                   placeholder={`Lesson ${lesIdx + 1} Title`}
                                   className="bg-slate-50 border border-slate-200 rounded-lg px-2.5 py-1.5 text-[#111827] flex-1 focus:outline-none focus:border-[#111827]"
                                 />
-                                <input
-                                  type="url"
-                                  value={les.videoUrl}
-                                  onChange={(e) =>
-                                    updateLesson(mod.id, les.id, 'videoUrl', e.target.value)
-                                  }
-                                  placeholder="Video URL (e.g. YouTube / Vimeo / MP4)"
-                                  className="bg-slate-50 border border-slate-200 rounded-lg px-2.5 py-1.5 text-[#111827] flex-1 focus:outline-none focus:border-[#111827]"
-                                />
                                 <button
                                   type="button"
                                   onClick={() => removeLesson(mod.id, les.id)}
@@ -699,6 +701,13 @@ export default function TeacherPanelPage() {
                                 >
                                   <X className="w-3.5 h-3.5" />
                                 </button>
+                                <LessonVideoField
+                                  className="basis-full"
+                                  courseId={draftCourseId}
+                                  lessonId={les.id}
+                                  value={les.videoUrl}
+                                  onChange={(value) => updateLesson(mod.id, les.id, 'videoUrl', value)}
+                                />
                               </div>
                             ))}
 

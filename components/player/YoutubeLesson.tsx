@@ -2,6 +2,15 @@
 
 import { useEffect, useRef } from 'react';
 
+// Returns a playable direct video URL, or '' when none has been uploaded yet.
+// Uploaded lesson videos ("r2:<key>") play through the access-checked /api/videos/play route.
+// Google's public sample clips (old demo data) count as "none".
+export function directVideoSrc(url?: string) {
+  if (!url || url.includes('gtv-videos-bucket')) return '';
+  if (url.startsWith('r2:')) return `/api/videos/play?key=${encodeURIComponent(url.slice(3))}`;
+  return url.startsWith('http') || url.startsWith('/') ? url : '';
+}
+
 export function youtubeId(url?: string) {
   if (!url) return '';
   const match = url.match(/(?:youtu\.be\/|youtube\.com\/(?:watch\?v=|embed\/|shorts\/|live\/))([A-Za-z0-9_-]{6,})/);

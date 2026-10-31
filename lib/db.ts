@@ -38,23 +38,29 @@ const fallbackCourses = (): CourseSchema[] => featuredCourses.map(mapFallbackCou
 /**
  * Creates a new course. Stored in memory in demo mode, in Firestore otherwise.
  */
-export async function createCourse(courseData: Omit<CourseSchema, 'id' | 'createdAt' | 'updatedAt'>): Promise<string> {
+// `id` lets the course builder upload lesson videos before the course is saved.
+export async function createCourse(courseData: Omit<CourseSchema, 'id' | 'createdAt' | 'updatedAt'>, id?: string): Promise<string> {
   if (isDemoMode()) {
-    const demoId = `demo-${Date.now()}`;
+    const demoId = id || `demo-${Date.now()}`;
     demoCourses.unshift({ ...courseData, id: demoId } as CourseSchema);
     return demoId;
   }
 
   try {
     const fb = await firestore();
-    const docRef = await fb.addDoc(fb.collection(fb.db, COURSES_COLLECTION), {
+    const fields = {
       ...courseData,
-      rating: courseData.rating ?? 5.0,
+      rating: courseData.rating ?? 0,
       reviewCount: courseData.reviewCount ?? 0,
       studentCount: courseData.studentCount ?? 0,
       createdAt: fb.serverTimestamp(),
       updatedAt: fb.serverTimestamp(),
-    });
+    };
+    if (id) {
+      await fb.setDoc(fb.doc(fb.db, COURSES_COLLECTION, id), fields);
+      return id;
+    }
+    const docRef = await fb.addDoc(fb.collection(fb.db, COURSES_COLLECTION), fields);
     return docRef.id;
   } catch (error) {
     console.error('Error creating course in Firestore:', error);
