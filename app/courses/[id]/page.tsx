@@ -8,7 +8,7 @@ import FloatingNavbar from '@/components/english/FloatingNavbar';
 import EnglishFooter from '@/components/english/EnglishFooter';
 import VideoPlayer from '@/components/player/VideoPlayer';
 import CheckoutModal from '@/components/checkout/CheckoutModal';
-import { getCourseById } from '@/lib/db';
+import { getCourseById } from '@/lib/course-client';
 import { getFallbackCourseData } from '@/lib/progress';
 import { applyCourseEdit, loadCourseEdits } from '@/lib/course-edits-client';
 import { takaFromUsd } from '@/lib/utils';

@@ -9,7 +9,7 @@ import useSWR from 'swr';
 import {
   Plus, LogOut, Shield, LayoutDashboard, BookOpen, Award, HelpCircle,
   Banknote, Users, FileText, Search, Trash2, RefreshCw, Eye,
-  Sparkles, Inbox, MessageSquare, Pencil, Globe, Menu, X, GraduationCap, Video, TrendingUp
+  Sparkles, Inbox, MessageSquare, Pencil, Globe, Menu, X, GraduationCap, Video, TrendingUp, AlertTriangle
 } from 'lucide-react';
 import { applyCourseEdit, useCourseEdits } from '@/lib/course-edits-client';
 import TopCoursesList from './TopCoursesList';
@@ -70,6 +70,8 @@ export default function AdminDashboard() {
     revalidateOnFocus: true,
     dedupingInterval: 10000,
   });
+  // Warns when Supabase is not set up, so nobody thinks unsaved data was kept.
+  const { data: storage } = useSWR('/api/admin/storage-status', fetcher, { revalidateOnFocus: false });
   const { data: requestData } = useSWR('/api/admin/service-requests', fetcher, {
     // Only the request-count badge needs this; no need to hit the server every few seconds.
     refreshInterval: 30000,
@@ -94,8 +96,7 @@ export default function AdminDashboard() {
   const handleDeleteCourse = async (courseId: string) => {
     if (!confirm('Are you sure you want to delete this course?')) return;
     try {
-      const { deleteCourse } = await import('@/lib/db');
-      await deleteCourse(courseId);
+      await fetch(`/api/courses/${encodeURIComponent(courseId)}`, { method: 'DELETE' });
       mutate();
     } catch {
       mutate();
@@ -167,7 +168,16 @@ export default function AdminDashboard() {
 
       <main className="mx-auto max-w-[1400px] px-3 py-5 sm:px-5 lg:px-8 lg:py-8">
         <section className="min-w-0 space-y-8">
-        
+        {storage && storage.ok === false && (
+          <div className="flex items-start gap-3 rounded-2xl border border-red-200 bg-red-50 p-4 text-sm text-red-800">
+            <AlertTriangle className="mt-0.5 h-5 w-5 shrink-0" />
+            <div>
+              <p className="font-bold">Database is not set up — new data is not being saved.</p>
+              <p className="mt-1">{storage.message} Open Supabase → SQL Editor, paste the contents of <code className="rounded bg-red-100 px-1">supabase/app_kv.sql</code> and press Run. This warning disappears once it works.</p>
+            </div>
+          </div>
+        )}
+
         {/* ── TAB 1: OVERVIEW (REAL DATABASE METRICS) ── */}
         {activeTab === 'Overview' && (
           <div className="space-y-8">

@@ -1,10 +1,11 @@
 import { NextResponse } from 'next/server';
 import { getAllCourses, createCourse } from '@/lib/db';
+import { staffDenied, staffIdentity } from '@/lib/user-session';
 import type { CourseSchema, ModuleSchema } from '@/types/course';
 
 /**
  * GET /api/courses
- * Fetches all available courses from Firestore.
+ * Fetches all available courses.
  */
 export async function GET() {
   try {
@@ -28,16 +29,18 @@ export async function GET() {
 
 /**
  * POST /api/courses
- * Creates a new course document in Firestore.
+ * Creates a new course.
  * Body requirements: title, description, instructorId, price, thumbnail, modules
  */
 export async function POST(request: Request) {
+  // Only admins and instructors may add courses; an instructor always adds under their own account.
+  const staff = await staffIdentity();
+  if (!staff) return staffDenied();
   try {
     const body = await request.json();
     const {
       title,
       description,
-      instructorId,
       instructorName,
       price,
       originalPrice,
@@ -47,6 +50,7 @@ export async function POST(request: Request) {
       duration,
       modules,
     } = body;
+    const instructorId = staff.admin ? body.instructorId : staff.profile?.id;
 
     // Strict payload validation
     if (!title || typeof title !== 'string' || title.trim().length < 3 || title.trim().length > 200) {

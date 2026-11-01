@@ -1,9 +1,7 @@
 import fs from 'fs';
 import path from 'path';
-import { doc, getDoc, setDoc, serverTimestamp } from 'firebase/firestore';
-import { db } from '@/lib/firebase';
 import { dataPath } from '@/lib/data-dir';
-import { isFirebaseDemo } from '@/lib/utils';
+import { kvGet, kvSet } from '@/lib/kv-store';
 
 export interface CertificateRecord {
   certificateId: string;
@@ -27,12 +25,14 @@ const SERVER_CERTS_FILE = path.join(SERVER_DATA_DIR, 'certificates.json');
 // No built-in demo certificates: only certificates actually issued can be verified.
 const seedCertificates: Record<string, CertificateRecord> = {};
 
-// Helper to load file store
-function loadFileCertStore(): Record<string, CertificateRecord> {
+// Issued certificates live in kv-store (Supabase app_kv on Vercel, a local file in development).
+// Older local installs kept them in data/certificates.json; that file is read once as a starting point.
+const CERTS_KEY = 'certificates';
+
+function loadLegacyCertFile(): Record<string, CertificateRecord> {
   try {
     if (fs.existsSync(SERVER_CERTS_FILE)) {
-      const raw = fs.readFileSync(SERVER_CERTS_FILE, 'utf-8');
-      return JSON.parse(raw);
+      return JSON.parse(fs.readFileSync(SERVER_CERTS_FILE, 'utf-8'));
     }
   } catch (err) {
     console.warn('Could not read certificates.json', err);
@@ -40,16 +40,8 @@ function loadFileCertStore(): Record<string, CertificateRecord> {
   return { ...seedCertificates };
 }
 
-// Helper to save file store
-function saveFileCertStore(store: Record<string, CertificateRecord>) {
-  try {
-    if (!fs.existsSync(SERVER_DATA_DIR)) {
-      fs.mkdirSync(SERVER_DATA_DIR, { recursive: true });
-    }
-    fs.writeFileSync(SERVER_CERTS_FILE, JSON.stringify(store, null, 2), 'utf-8');
-  } catch (err) {
-    console.warn('Could not write certificates.json', err);
-  }
+async function loadCertStore(): Promise<Record<string, CertificateRecord>> {
+  return (await kvGet<Record<string, CertificateRecord> | null>(CERTS_KEY, null)) ?? loadLegacyCertFile();
 }
 
 /**
@@ -77,10 +69,10 @@ export async function saveCertificateRecord(record: CertificateRecord): Promise<
     createdAt: record.createdAt || new Date().toISOString(),
   };
 
-  // 1. Save to server persistent filesystem
-  const fileStore = loadFileCertStore();
-  fileStore[normalizedId] = certToSave;
-  saveFileCertStore(fileStore);
+  // 1. Save to the shared store
+  const store = await loadCertStore();
+  store[normalizedId] = certToSave;
+  await kvSet(CERTS_KEY, store);
 
   // 2. Save to localStorage if in browser
   if (typeof window !== 'undefined') {
@@ -92,18 +84,6 @@ export async function saveCertificateRecord(record: CertificateRecord): Promise<
     } catch {}
   }
 
-  // 3. Persist to Firestore if real keys configured
-  try {
-    if (!isFirebaseDemo()) {
-      const docRef = doc(db, 'certificates', normalizedId);
-      await setDoc(docRef, {
-        ...certToSave,
-        updatedAt: serverTimestamp(),
-      });
-    }
-  } catch (error) {
-    console.warn('[Certificate DB] Firestore sync skipped in sandbox/offline mode:', error);
-  }
 
   return certToSave;
 }
@@ -115,10 +95,10 @@ export async function getCertificateById(certificateId: string): Promise<Certifi
   if (!certificateId) return null;
   const normalizedId = certificateId.trim().toUpperCase();
 
-  // 1. Check persistent server file store
-  const fileStore = loadFileCertStore();
-  if (fileStore[normalizedId]) {
-    return fileStore[normalizedId];
+  // 1. Check the shared store
+  const store = await loadCertStore();
+  if (store[normalizedId]) {
+    return store[normalizedId];
   }
 
   // 2. Check localStorage in browser
@@ -134,21 +114,8 @@ export async function getCertificateById(certificateId: string): Promise<Certifi
     } catch {}
   }
 
-  // 3. Query Firestore certificates collection
-  try {
-    if (!isFirebaseDemo()) {
-      const docRef = doc(db, 'certificates', normalizedId);
-      const docSnap = await getDoc(docRef);
-      if (docSnap.exists()) {
-        const data = docSnap.data() as CertificateRecord;
-        return data;
-      }
-    }
-  } catch (error) {
-    console.warn('[Certificate DB] Error querying Firestore:', error);
-  }
 
-  // 4. Check seed certificates
+  // 3. Check seed certificates
   if (seedCertificates[normalizedId]) {
     return seedCertificates[normalizedId];
   }

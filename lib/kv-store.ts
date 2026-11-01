@@ -83,3 +83,19 @@ export async function kvSet<T>(key: string, value: T): Promise<void> {
   }
   cache.set(key, { at: Date.now(), value: copy(value) });
 }
+
+/** Whether the store can be used: false on Vercel until supabase/app_kv.sql has been run. */
+export async function kvHealth(): Promise<{ ok: boolean; mode: 'supabase' | 'file'; message?: string }> {
+  if (!useSupabase) return { ok: true, mode: 'file' };
+  try {
+    const res = await fetch(`${supabaseUrl}/rest/v1/app_kv?select=key&limit=1`, { headers: headers(), cache: 'no-store' });
+    if (res.ok) return { ok: true, mode: 'supabase' };
+    return {
+      ok: false,
+      mode: 'supabase',
+      message: res.status === 404 ? 'The app_kv table does not exist yet.' : `Supabase answered with status ${res.status}.`,
+    };
+  } catch {
+    return { ok: false, mode: 'supabase', message: 'Supabase could not be reached.' };
+  }
+}

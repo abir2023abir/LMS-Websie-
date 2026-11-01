@@ -1,6 +1,6 @@
 # English Capsules LMS Platform
 
-A modern, high-performance Learning Management System (LMS) built with Next.js 14 (App Router), TypeScript, Tailwind CSS, Firebase Firestore/Auth, and SSLCommerz Payment Gateway.
+A modern, high-performance Learning Management System (LMS) built with Next.js 14 (App Router), TypeScript, Tailwind CSS, Supabase (database), Cloudflare R2 (video) and SSLCommerz Payment Gateway.
 
 ---
 
@@ -34,14 +34,6 @@ cp .env.local.example .env.local
 ```
 Fill in your configuration variables in `.env.local`:
 ```env
-# Firebase Configuration
-NEXT_PUBLIC_FIREBASE_API_KEY=your-api-key
-NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN=your-project-id.firebaseapp.com
-NEXT_PUBLIC_FIREBASE_PROJECT_ID=your-project-id
-NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET=your-project-id.appspot.com
-NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID=your-sender-id
-NEXT_PUBLIC_FIREBASE_APP_ID=your-app-id
-
 # Site URL
 NEXT_PUBLIC_SITE_URL=http://localhost:3000
 
@@ -56,7 +48,7 @@ SSLCOMMERZ_STORE_PASSWORD=your_store_password
 SSLCOMMERZ_IS_LIVE=false
 ```
 
-> **Note**: The application is equipped with an offline demo mode. If Firebase keys are not provided, it seamlessly runs with local mock data for testing.
+> **Note**: Without Supabase keys the app keeps its data in local JSON files under `data/`, which is fine for development. On Vercel, set the Supabase keys and run `supabase/app_kv.sql` once.
 
 ### 4. Run the Development Server
 ```bash

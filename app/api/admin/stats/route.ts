@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server';
 import { cookies } from 'next/headers';
 import { verifyAdminSession } from '@/lib/auth-server';
-import { isFirebaseDemo } from '@/lib/utils';
+import { getAllCourses } from '@/lib/db';
 import { listProfiles } from '@/lib/accounts';
 import { listPayments } from '@/lib/payments';
 
@@ -17,7 +17,6 @@ export async function GET() {
 
   try {
     let courses: any[] = [];
-    let realTransactions: any[] = [];
     let realStudents: any[] = [];
     let dataAvailable = false;
     try {
@@ -26,25 +25,14 @@ export async function GET() {
     } catch {
       // Keep unavailable analytics empty instead of inventing counts.
     }
-    if (!isFirebaseDemo()) try {
-      const { collection, getDocs, query, orderBy, limit } = await import('firebase/firestore');
-      const { db } = await import('@/lib/firebase');
-      const [courseSnap, txnSnap] = await Promise.all([
-        getDocs(collection(db, 'courses')),
-        getDocs(query(collection(db, 'transactions'), orderBy('createdAt', 'desc'), limit(200))),
-      ]);
-      courses = courseSnap.docs.map((doc) => ({ id: doc.id, ...doc.data() }));
-      dataAvailable = true;
-      txnSnap.forEach((doc) => {
-        realTransactions.push({ id: doc.id, ...doc.data() });
-      });
+    try {
+      courses = await getAllCourses();
     } catch {
       dataAvailable = false;
     }
 
     const manualPayments = await listPayments();
     const paidTransactions = [
-      ...realTransactions.filter((txn) => ['paid', 'success', 'valid', 'completed'].includes(String(txn.status || '').toLowerCase())),
       ...manualPayments.filter((payment) => ['paid', 'approved'].includes(payment.status)).map((payment) => ({
         ...payment, studentId: payment.studentEmail || payment.studentName,
         createdAt: payment.createdAt, courseTitle: payment.courseTitle,
@@ -65,7 +53,7 @@ export async function GET() {
     }
     const monthlyMap = new Map<string, { month: string; revenue: number; sales: number; signups: number }>();
     for (const txn of paidTransactions) {
-      const date = txn.createdAt?.toDate ? txn.createdAt.toDate() : new Date(txn.createdAt || txn.date || '');
+      const date = new Date(txn.createdAt || '');
       if (Number.isNaN(date.getTime())) continue;
       const key = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}`;
       const entry = monthlyMap.get(key) || { month: date.toLocaleDateString('en-US', { month: 'short', year: '2-digit' }), revenue: 0, sales: 0, signups: 0 };
@@ -120,7 +108,6 @@ export async function GET() {
         })),
         topCourses: [],
         categoryDistribution,
-        transactions: realTransactions,
         studentsList: realStudents.map((student) => ({ id: student.id, name: student.name, email: student.email, created_at: student.created_at })),
         monthlyRevenue: [...monthlyMap.entries()].sort(([a], [b]) => a.localeCompare(b)).slice(-6).map(([, value]) => value),
       },

@@ -15,7 +15,7 @@ import {
   rankInCourse,
   type CourseProgressRecord,
 } from '@/lib/progress';
-import { getCourseById } from '@/lib/db';
+import { getCourseById } from '@/lib/course-client';
 import { useCourseEdits } from '@/lib/course-edits-client';
 import LessonQuestions from '@/components/student/LessonQuestions';
 import LessonQuiz from '@/components/student/LessonQuiz';

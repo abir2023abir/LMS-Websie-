@@ -1,13 +1,6 @@
 import type { CourseSchema, ModuleSchema } from '@/types/course';
 import { featuredCourses } from '@/lib/data';
-import { isFirebaseDemo } from '@/lib/utils';
 import { sendRecord } from '@/lib/server-sync';
-
-async function firestore() {
-  if (isFirebaseDemo()) return null;
-  const [{ db }, fs] = await Promise.all([import('@/lib/firebase'), import('firebase/firestore')]);
-  return { db, ...fs };
-}
 
 export interface CourseProgressRecord {
   courseId: string;
@@ -92,30 +85,8 @@ export async function getUserCourseProgress(
 ): Promise<CourseProgressRecord | null> {
   const storeKey = `${userId}_${courseId}`;
 
-  // 1. Try local cache first for instant UI response
-  const localStore = getLocalProgressStore();
-  const localRecord = localStore[storeKey];
-
-  // 2. Query Firestore if available. A dead demo project must not keep the classroom on the loading screen.
-  try {
-    const fb = await firestore();
-    if (!fb) return localRecord || null;
-    const docSnap = await Promise.race([
-      fb.getDoc(fb.doc(fb.db, 'user_progress', storeKey)),
-      new Promise<never>((_, reject) => setTimeout(() => reject(new Error('progress timeout')), 2500)),
-    ]);
-    if (docSnap.exists()) {
-      const data = docSnap.data() as CourseProgressRecord;
-      // Sync local cache with Firestore data
-      localStore[storeKey] = data;
-      saveLocalProgressStore(localStore);
-      return data;
-    }
-  } catch (error) {
-    // Silent fallback to local cache
-  }
-
-  return localRecord || null;
+  // Browser copy; the server-side lesson path (lib/progression) is the source of truth.
+  return getLocalProgressStore()[storeKey] || null;
 }
 
 export const getCourseProgress = getUserCourseProgress;
@@ -220,12 +191,6 @@ export async function saveLessonCompletion(
     totalLessons: totalCourseLessons,
   });
 
-  // 2. Sync to Firestore in the background; the lesson UI must not wait on the network.
-  firestore()
-    .then((fb) =>
-      fb?.setDoc(fb.doc(fb.db, 'user_progress', storeKey), { ...updatedRecord, updatedAt: fb.serverTimestamp() }, { merge: true }),
-    )
-    .catch((err) => console.warn('Firestore progress sync failed, saved locally:', err));
 
   return updatedRecord;
 }
