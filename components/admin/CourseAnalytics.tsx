@@ -1,0 +1,214 @@
+'use client';
+
+import { useEffect, useMemo, useState } from 'react';
+import { Bar, BarChart, CartesianGrid, Cell, ResponsiveContainer, Tooltip, XAxis, YAxis } from 'recharts';
+import {
+  Activity, AlertTriangle, ArrowDownUp, CheckCircle2, ClipboardCheck, GraduationCap, HelpCircle, Medal, Search, TrendingUp, Trophy, UserCheck, Users, Video,
+} from 'lucide-react';
+import { useCourseOutline } from './CoursePlacePicker';
+
+type Row = {
+  studentId: string; name: string; email: string; percent: number; lessonsDone: number; lessonsTotal: number;
+  currentLesson: string; currentStep: string; quizAverage: number | null; examAverage: number | null;
+  assignmentsSubmitted: number; lastActive: string; atRisk: boolean;
+};
+type Data = {
+  summary: {
+    students: number; averageProgress: number; finished: number; activeThisWeek: number; atRisk: number;
+    quizPassRate: number | null; examPassRate: number | null; toReview: number; pendingRequests: number; attendanceRate: number | null;
+  };
+  funnel: { lesson: string; module: string; completed: number; current: number }[];
+  buckets: { range: string; students: number }[];
+  rows: Row[];
+};
+type SortKey = 'rank' | 'progress' | 'quiz' | 'exam' | 'active';
+
+const medal = ['text-[#EAB308]', 'text-slate-400', 'text-amber-700'];
+const pct = (value: number | null) => (value === null ? '—' : `${value}%`);
+const ago = (iso: string) => {
+  if (!iso) return '—';
+  const days = Math.floor((Date.now() - new Date(iso).getTime()) / 86400000);
+  return days <= 0 ? 'Today' : days === 1 ? 'Yesterday' : `${days} days ago`;
+};
+
+/**
+ * Course analytics for admins and instructors: headline numbers, where students drop off,
+ * how progress is spread, and a sortable ranking with at-risk flags.
+ */
+export default function CourseAnalytics() {
+  const outline = useCourseOutline();
+  const [courseId, setCourseId] = useState('');
+  const [data, setData] = useState<Data | null>(null);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState('');
+  const [query, setQuery] = useState('');
+  const [onlyAtRisk, setOnlyAtRisk] = useState(false);
+  const [sort, setSort] = useState<SortKey>('rank');
+
+  useEffect(() => { if (!courseId && outline[0]) setCourseId(outline[0].id); }, [outline, courseId]);
+  useEffect(() => {
+    if (!courseId) return;
+    let alive = true;
+    setLoading(true);
+    setError('');
+    fetch(`/api/admin/progress?courseId=${encodeURIComponent(courseId)}`, { cache: 'no-store' })
+      .then(async (res) => { const body = await res.json(); if (!res.ok) throw new Error(body.message || 'Could not load analytics.'); return body; })
+      .then((body) => { if (alive) setData(body); })
+      .catch((err) => { if (alive) setError(err instanceof Error ? err.message : 'Could not load analytics.'); })
+      .finally(() => { if (alive) setLoading(false); });
+    return () => { alive = false; };
+  }, [courseId]);
+
+  const rows = useMemo(() => {
+    if (!data) return [];
+    const ranked = data.rows.map((row, index) => ({ ...row, rank: index + 1 }));
+    const q = query.trim().toLowerCase();
+    const filtered = ranked.filter((row) => (!onlyAtRisk || row.atRisk) && (!q || row.name.toLowerCase().includes(q) || row.email.toLowerCase().includes(q)));
+    const by: Record<SortKey, (a: typeof ranked[number], b: typeof ranked[number]) => number> = {
+      rank: (a, b) => a.rank - b.rank,
+      progress: (a, b) => b.percent - a.percent,
+      quiz: (a, b) => (b.quizAverage ?? -1) - (a.quizAverage ?? -1),
+      exam: (a, b) => (b.examAverage ?? -1) - (a.examAverage ?? -1),
+      active: (a, b) => String(b.lastActive).localeCompare(String(a.lastActive)),
+    };
+    return [...filtered].sort(by[sort]);
+  }, [data, query, onlyAtRisk, sort]);
+
+  const s = data?.summary;
+  const kpis = s ? [
+    { label: 'Students', value: s.students, icon: Users, tone: 'bg-slate-900 text-white' },
+    { label: 'Average progress', value: `${s.averageProgress}%`, icon: TrendingUp, tone: 'bg-[#FEF9C3] text-[#A16207]' },
+    { label: 'Finished course', value: s.finished, icon: Trophy, tone: 'bg-emerald-50 text-emerald-700' },
+    { label: 'Active this week', value: s.activeThisWeek, icon: Activity, tone: 'bg-sky-50 text-sky-700' },
+    { label: 'At risk (7+ days idle)', value: s.atRisk, icon: AlertTriangle, tone: s.atRisk ? 'bg-rose-50 text-rose-700' : 'bg-slate-50 text-slate-500' },
+    { label: 'Quiz pass rate', value: pct(s.quizPassRate), icon: HelpCircle, tone: 'bg-violet-50 text-violet-700' },
+    { label: 'Exam pass rate', value: pct(s.examPassRate), icon: GraduationCap, tone: 'bg-indigo-50 text-indigo-700' },
+    { label: 'Live attendance', value: pct(s.attendanceRate), icon: Video, tone: 'bg-teal-50 text-teal-700' },
+    { label: 'Assignments to review', value: s.toReview, icon: ClipboardCheck, tone: s.toReview ? 'bg-amber-50 text-amber-800' : 'bg-slate-50 text-slate-500' },
+    { label: 'Waiting for approval', value: s.pendingRequests, icon: UserCheck, tone: s.pendingRequests ? 'bg-amber-50 text-amber-800' : 'bg-slate-50 text-slate-500' },
+  ] : [];
+
+  return (
+    <section className="space-y-5 rounded-3xl border border-slate-200 bg-white p-5 shadow-sm sm:p-6">
+      <div className="flex flex-wrap items-start justify-between gap-3">
+        <div>
+          <h2 className="font-display text-xl font-extrabold">Course analytics</h2>
+          <p className="text-sm text-slate-500">How students are moving through the course, where they get stuck, and who needs a nudge.</p>
+        </div>
+        <select aria-label="Course" value={courseId} onChange={(e) => setCourseId(e.target.value)} className="rounded-xl border border-slate-200 px-3 py-2 text-sm font-semibold">
+          {outline.length === 0 && <option value="">No courses</option>}
+          {outline.map((course) => <option key={course.id} value={course.id}>{course.title}</option>)}
+        </select>
+      </div>
+
+      {error && <p className="rounded-2xl bg-rose-50 p-4 text-sm font-semibold text-rose-700">{error}</p>}
+
+      {loading && !data ? (
+        <div className="grid grid-cols-2 gap-3 md:grid-cols-5">{Array.from({ length: 10 }).map((_, i) => <div key={i} className="h-20 animate-pulse rounded-2xl bg-slate-100" />)}</div>
+      ) : data && (
+        <div className={`space-y-5 transition-opacity ${loading ? 'opacity-60' : ''}`}>
+          {/* KPI grid */}
+          <div className="grid grid-cols-2 gap-3 md:grid-cols-3 xl:grid-cols-5">
+            {kpis.map(({ label, value, icon: Icon, tone }) => (
+              <div key={label} className="flex items-center gap-3 rounded-2xl border border-slate-100 p-3">
+                <span className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-xl ${tone}`}><Icon className="h-5 w-5" /></span>
+                <div className="min-w-0"><p className="font-display text-xl font-extrabold leading-tight">{value}</p><p className="truncate text-[11px] font-semibold text-slate-500">{label}</p></div>
+              </div>
+            ))}
+          </div>
+
+          {/* Charts */}
+          <div className="grid gap-4 lg:grid-cols-5">
+            <div className="rounded-2xl border border-slate-100 p-4 lg:col-span-3">
+              <p className="font-bold">Lesson funnel</p>
+              <p className="mb-3 text-xs text-slate-500">Finished each lesson (green) and working on it now (yellow). A big drop shows a lesson that holds students back.</p>
+              {data.funnel.length === 0 ? <p className="py-10 text-center text-sm text-slate-400">No lessons yet.</p> : (
+                <div style={{ height: Math.max(220, data.funnel.length * 34) }}>
+                  <ResponsiveContainer width="100%" height="100%">
+                    <BarChart data={data.funnel} layout="vertical" margin={{ left: 8, right: 16 }}>
+                      <CartesianGrid strokeDasharray="3 3" horizontal={false} stroke="#f1f5f9" />
+                      <XAxis type="number" allowDecimals={false} tick={{ fontSize: 11 }} />
+                      <YAxis type="category" dataKey="lesson" width={170} tick={{ fontSize: 11 }} />
+                      <Tooltip cursor={{ fill: '#f8fafc' }} />
+                      <Bar dataKey="completed" name="Finished" stackId="a" fill="#10b981" radius={[0, 0, 0, 0]} />
+                      <Bar dataKey="current" name="On it now" stackId="a" fill="#FACC15" radius={[0, 6, 6, 0]} />
+                    </BarChart>
+                  </ResponsiveContainer>
+                </div>
+              )}
+            </div>
+            <div className="rounded-2xl border border-slate-100 p-4 lg:col-span-2">
+              <p className="font-bold">Progress spread</p>
+              <p className="mb-3 text-xs text-slate-500">How many students are at each stage of the course.</p>
+              <div className="h-[220px]">
+                <ResponsiveContainer width="100%" height="100%">
+                  <BarChart data={data.buckets} margin={{ left: -16, right: 8 }}>
+                    <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f1f5f9" />
+                    <XAxis dataKey="range" tick={{ fontSize: 11 }} />
+                    <YAxis allowDecimals={false} tick={{ fontSize: 11 }} />
+                    <Tooltip cursor={{ fill: '#f8fafc' }} />
+                    <Bar dataKey="students" name="Students" radius={[6, 6, 0, 0]}>
+                      {data.buckets.map((bucket, index) => <Cell key={bucket.range} fill={index === data.buckets.length - 1 ? '#10b981' : '#111827'} />)}
+                    </Bar>
+                  </BarChart>
+                </ResponsiveContainer>
+              </div>
+            </div>
+          </div>
+
+          {/* Ranking table */}
+          <div className="space-y-3">
+            <div className="flex flex-wrap items-center gap-2">
+              <p className="mr-auto font-bold">Student ranking</p>
+              <label className="flex min-w-[200px] items-center gap-2 rounded-full bg-slate-100 px-3 py-2">
+                <Search className="h-4 w-4 text-slate-400" />
+                <input value={query} onChange={(e) => setQuery(e.target.value)} placeholder="Search student…" className="w-full bg-transparent text-sm focus:outline-none" />
+              </label>
+              <label className="flex items-center gap-1.5 rounded-full border border-slate-200 px-3 py-2 text-xs font-bold"><input type="checkbox" checked={onlyAtRisk} onChange={(e) => setOnlyAtRisk(e.target.checked)} />At risk only</label>
+              <label className="flex items-center gap-1.5 rounded-full border border-slate-200 px-3 py-2 text-xs font-bold">
+                <ArrowDownUp className="h-3.5 w-3.5" />
+                <select value={sort} onChange={(e) => setSort(e.target.value as SortKey)} className="bg-transparent focus:outline-none">
+                  <option value="rank">Rank</option><option value="progress">Progress</option><option value="quiz">Quiz average</option><option value="exam">Exam average</option><option value="active">Last active</option>
+                </select>
+              </label>
+            </div>
+            {rows.length === 0 ? (
+              <p className="rounded-2xl border border-dashed border-slate-200 py-8 text-center text-sm text-slate-500">{data.rows.length ? 'No students match.' : 'No students are enrolled in this course yet.'}</p>
+            ) : (
+              <div className="overflow-x-auto">
+                <table className="w-full min-w-[860px] text-left text-sm">
+                  <thead><tr className="border-b border-slate-100 text-xs uppercase tracking-wide text-slate-400"><th className="w-14 py-2">Rank</th><th>Student</th><th className="w-56">Progress</th><th>Now on</th><th>Quiz</th><th>Exam</th><th>Last active</th></tr></thead>
+                  <tbody>
+                    {rows.map((row) => (
+                      <tr key={row.studentId} className="border-b border-slate-50">
+                        <td className="py-3 font-display font-extrabold">{row.rank <= 3 ? <Medal className={`h-5 w-5 ${medal[row.rank - 1]}`} /> : `#${row.rank}`}</td>
+                        <td>
+                          <p className="flex items-center gap-1.5 font-semibold">{row.name}{row.atRisk && <span className="rounded-full bg-rose-50 px-1.5 py-0.5 text-[10px] font-bold text-rose-700">At risk</span>}</p>
+                          <p className="text-xs text-slate-500">{row.email}</p>
+                        </td>
+                        <td>
+                          <div className="flex items-center gap-2">
+                            <div className="h-2 flex-1 overflow-hidden rounded-full bg-slate-100"><div className={`h-full rounded-full ${row.percent === 100 ? 'bg-emerald-500' : 'bg-[#FACC15]'}`} style={{ width: `${row.percent}%` }} /></div>
+                            <span className="w-20 text-right text-xs font-semibold text-slate-600">{row.lessonsDone}/{row.lessonsTotal} · {row.percent}%</span>
+                          </div>
+                        </td>
+                        <td className="max-w-[220px]">
+                          {row.percent === 100 ? <span className="flex items-center gap-1 text-xs font-bold text-emerald-700"><CheckCircle2 className="h-3.5 w-3.5" />Finished</span> : (
+                            <><p className="truncate text-xs font-semibold text-slate-700">{row.currentLesson}</p><p className="truncate text-[11px] text-slate-500">{row.currentStep}</p></>
+                          )}
+                        </td>
+                        <td className="text-sm">{pct(row.quizAverage)}</td>
+                        <td className="text-sm">{pct(row.examAverage)}</td>
+                        <td className={`text-xs ${row.atRisk ? 'font-semibold text-rose-700' : 'text-slate-500'}`}>{ago(row.lastActive)}</td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            )}
+          </div>
+        </div>
+      )}
+    </section>
+  );
+}

@@ -31,8 +31,20 @@ const VIDEO_KEY = 'lesson-video-done';
 const APPROVALS_KEY = 'lesson-approvals';
 const REQUESTS_KEY = 'progress-requests';
 
-/* ── course structure ── */
-export async function courseLessons(courseId: string) {
+/* ── course structure (cached for 30 s: it changes rarely and every progress check needs it) ── */
+type CourseShape = { title: string; lessons: { lessonId: string; lessonTitle: string; moduleId: string; moduleTitle: string }[] };
+const shapeCache = new Map<string, { at: number; value: Promise<CourseShape> }>();
+
+export function courseLessons(courseId: string): Promise<CourseShape> {
+  const hit = shapeCache.get(courseId);
+  if (hit && Date.now() - hit.at < 30000) return hit.value;
+  const value = loadCourseLessons(courseId);
+  shapeCache.set(courseId, { at: Date.now(), value });
+  value.catch(() => shapeCache.delete(courseId));
+  return value;
+}
+
+async function loadCourseLessons(courseId: string): Promise<CourseShape> {
   let course = await getCourseById(courseId).catch(() => null);
   if (!course?.modules?.length && featuredCourses.some((c) => c.id === courseId)) course = getFallbackCourseData(courseId);
   const modules = course?.modules?.length ? course.modules : getFallbackCourseData(courseId)?.modules || [];

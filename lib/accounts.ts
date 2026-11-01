@@ -156,7 +156,21 @@ function matches(row: object, filter: Filter) {
   return Object.entries(filter).every(([key, value]) => (row as Record<string, unknown>)[key] === value);
 }
 
+// Reads are cached for a few seconds (every request checks the signed-in profile); writes clear the table.
+const selectCache = new Map<string, { at: number; rows: Promise<unknown[]> }>();
+const clearTable = (table: string) => { for (const key of selectCache.keys()) if (key.startsWith(`${table}?`)) selectCache.delete(key); };
+
 async function select<T extends Table>(table: T, filter: Filter = {}): Promise<Tables[T][]> {
+  const cacheKey = `${table}?${JSON.stringify(filter)}`;
+  const hit = selectCache.get(cacheKey);
+  if (hit && Date.now() - hit.at < 5000) return (await hit.rows) as Tables[T][];
+  const rows = selectFresh(table, filter);
+  selectCache.set(cacheKey, { at: Date.now(), rows });
+  rows.catch(() => selectCache.delete(cacheKey));
+  return rows;
+}
+
+async function selectFresh<T extends Table>(table: T, filter: Filter): Promise<Tables[T][]> {
   if (useSupabase) {
     try {
       return await rest(`${supabaseUrl}/rest/v1/${table}?select=*&${query(filter)}`, { headers: headers() });
@@ -175,6 +189,7 @@ async function select<T extends Table>(table: T, filter: Filter = {}): Promise<T
 type OnClash = 'error' | 'ignore' | 'merge';
 
 async function insert<T extends Table>(table: T, row: Tables[T], onClash: OnClash = 'error'): Promise<void> {
+  clearTable(table);
   const key = KEYS[table];
   if (useSupabase) {
     const prefer = onClash === 'ignore' ? 'resolution=ignore-duplicates' : onClash === 'merge' ? 'resolution=merge-duplicates' : 'return=minimal';
@@ -201,6 +216,7 @@ async function insert<T extends Table>(table: T, row: Tables[T], onClash: OnClas
 }
 
 async function update<T extends Table>(table: T, filter: Filter, patch: Partial<Tables[T]>): Promise<void> {
+  clearTable(table);
   if (useSupabase) {
     await rest(`${supabaseUrl}/rest/v1/${table}?${query(filter)}`, {
       method: 'PATCH',

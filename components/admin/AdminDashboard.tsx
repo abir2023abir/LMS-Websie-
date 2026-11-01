@@ -4,6 +4,7 @@ import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import Image from 'next/image';
+import dynamic from 'next/dynamic';
 import useSWR from 'swr';
 import {
   Plus, LogOut, Shield, LayoutDashboard, BookOpen, Award, HelpCircle,
@@ -11,26 +12,29 @@ import {
   Sparkles, Inbox, MessageSquare, Pencil, Globe, Menu, X, GraduationCap, Video, TrendingUp
 } from 'lucide-react';
 import { applyCourseEdit, useCourseEdits } from '@/lib/course-edits-client';
-import StatsCards from './StatsCards';
-import RevenueAreaChart from './RevenueAreaChart';
 import TopCoursesList from './TopCoursesList';
 import InboxButton from '@/components/inbox/InboxButton';
-import AdminCourseEditor from './AdminCourseEditor';
-import AdminPaymentSetup from './AdminPaymentSetup';
-import AdminQuizzes from './AdminQuizzes';
-import AdminExams from './AdminExams';
-import AdminLiveClasses from './AdminLiveClasses';
-import AdminProgress from './AdminProgress';
-import AdminStudents from './AdminStudents';
-import AdminRequests from './AdminRequests';
-import AdminAssignments from './AdminAssignments';
-import AdminCertificates from './AdminCertificates';
-import AdminEarnings from './AdminEarnings';
-import AdminPaymentsBoard from './AdminPaymentsBoard';
-import AdminMessages from './AdminMessages';
-import AdminAccounts from './AdminAccounts';
-import LandingPageCMS from './LandingPageCMS';
 import { takaFromUsd } from '@/lib/utils';
+
+// Each tab loads its code only when opened, so the admin panel starts fast.
+const TabLoading = () => <div className="h-64 animate-pulse rounded-3xl bg-white" />;
+const StatsCards = dynamic(() => import('./StatsCards'), { ssr: false, loading: () => <div className="h-32 animate-pulse rounded-3xl bg-white" /> });
+const RevenueAreaChart = dynamic(() => import('./RevenueAreaChart'), { ssr: false, loading: () => <div className="h-[360px] animate-pulse rounded-3xl bg-white" /> });
+const AdminCourseEditor = dynamic(() => import('./AdminCourseEditor'), { loading: TabLoading });
+const AdminPaymentSetup = dynamic(() => import('./AdminPaymentSetup'), { loading: TabLoading });
+const AdminQuizzes = dynamic(() => import('./AdminQuizzes'), { loading: TabLoading });
+const AdminExams = dynamic(() => import('./AdminExams'), { loading: TabLoading });
+const AdminLiveClasses = dynamic(() => import('./AdminLiveClasses'), { loading: TabLoading });
+const AdminProgress = dynamic(() => import('./AdminProgress'), { loading: TabLoading });
+const AdminStudents = dynamic(() => import('./AdminStudents'), { loading: TabLoading });
+const AdminRequests = dynamic(() => import('./AdminRequests'), { loading: TabLoading });
+const AdminAssignments = dynamic(() => import('./AdminAssignments'), { loading: TabLoading });
+const AdminCertificates = dynamic(() => import('./AdminCertificates'), { loading: TabLoading });
+const AdminEarnings = dynamic(() => import('./AdminEarnings'), { loading: TabLoading });
+const AdminPaymentsBoard = dynamic(() => import('./AdminPaymentsBoard'), { loading: TabLoading });
+const AdminMessages = dynamic(() => import('./AdminMessages'), { loading: TabLoading });
+const AdminAccounts = dynamic(() => import('./AdminAccounts'), { loading: TabLoading });
+const LandingPageCMS = dynamic(() => import('./LandingPageCMS'), { loading: TabLoading });
 
 const navTabs = [
   { name: 'Overview', icon: LayoutDashboard },
@@ -62,12 +66,15 @@ export default function AdminDashboard() {
   const courseEdits = useCourseEdits(editsVersion);
 
   const { data, mutate, isLoading } = useSWR('/api/admin/stats', fetcher, {
-    refreshInterval: 15000,
+    refreshInterval: 60000,
     revalidateOnFocus: true,
+    dedupingInterval: 10000,
   });
   const { data: requestData } = useSWR('/api/admin/service-requests', fetcher, {
-    refreshInterval: 4000,
+    // Only the request-count badge needs this; no need to hit the server every few seconds.
+    refreshInterval: 30000,
     revalidateOnFocus: true,
+    dedupingInterval: 10000,
   });
   const serviceRequests = requestData?.requests || [];
 

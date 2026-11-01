@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
+import MyProgressPanel from '@/components/student/MyProgressPanel';
 import AuthGuard from '@/components/auth/AuthGuard';
 import { useAuth } from '@/context/AuthContext';
 import FloatingNavbar from '@/components/english/FloatingNavbar';
@@ -145,6 +146,7 @@ export default function StudentDashboardPage() {
           {justPaid && (
             <div className="rounded-2xl border border-emerald-200 bg-emerald-50 p-4 text-sm font-semibold text-emerald-800">Payment received — your course is now open below.</div>
           )}
+          <MyProgressPanel />
           {pendingPayments.length > 0 && (
             <div className="rounded-2xl border border-amber-200 bg-amber-50 p-4 text-sm text-amber-900">
               <p className="font-bold">Waiting for payment approval</p>
