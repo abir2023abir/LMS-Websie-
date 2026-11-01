@@ -1,156 +1,228 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
+import Link from 'next/link';
+import { AlertTriangle, Award, CalendarClock, Check, Clock, GraduationCap, X } from 'lucide-react';
+import AuthGuard from '@/components/auth/AuthGuard';
 import FloatingNavbar from '@/components/english/FloatingNavbar';
 import EnglishFooter from '@/components/english/EnglishFooter';
-import WorkspaceLinks from '@/components/workspace/WorkspaceLinks';
-import { useAuth } from '@/context/AuthContext';
-import { addQuestion, allAssignments, appealAttempt, paper, progressRankings, questions, rankings, reviewAssignment, reviewAttempt, submitExam } from '@/lib/workspace';
-import type { ExamQuestion } from '@/lib/workspace';
+
+type ExamSummary = {
+  id: string; title: string; description: string; courseTitle: string; moduleTitle: string; lessonTitle: string;
+  durationMinutes: number; opensAt: string; closesAt: string; passMark: number; maxAttempts: number; questionCount: number;
+  window: 'open' | 'upcoming' | 'closed'; attemptsUsed: number; inProgress: boolean;
+  best: { score: number; total: number; percent: number; passed: boolean } | null;
+};
+type Question = { id: string; prompt: string; choices: string[]; points: number };
+type Running = { examId: string; title: string; attemptId: string; deadline: string; questions: Question[] };
+type Review = { id: string; prompt: string; choices: string[]; correctIndex: number; chosen: number; explanation: string };
+type Outcome = { score: number; total: number; percent: number; passed: boolean; passMark: number; review: Review[] | null };
+
+const when = (iso: string) => (iso ? new Date(iso).toLocaleString('en-BD', { day: 'numeric', month: 'short', hour: 'numeric', minute: '2-digit' }) : '');
+const clock = (ms: number) => {
+  const total = Math.max(0, Math.floor(ms / 1000));
+  const h = Math.floor(total / 3600);
+  const m = Math.floor((total % 3600) / 60);
+  const s = total % 60;
+  return `${h ? `${h}:` : ''}${String(m).padStart(h ? 2 : 1, '0')}:${String(s).padStart(2, '0')}`;
+};
 
 export default function ExamsPage() {
-  const { user, role } = useAuth();
-  const [bank, setBank] = useState<ExamQuestion[]>(paper(2));
-  const [board, setBoard] = useState(rankings());
-  const [ladder, setLadder] = useState(progressRankings());
-  const [work, setWork] = useState(allAssignments());
-  const [picks, setPicks] = useState<number[]>([]);
-  const [written, setWritten] = useState('');
-  const [appeal, setAppeal] = useState('');
-  const [result, setResult] = useState<string>('');
-  const [prompt, setPrompt] = useState('');
-  const [choices, setChoices] = useState('Yes, No');
-  const [answer, setAnswer] = useState(0);
-  const [count, setCount] = useState(2);
-  const [review, setReview] = useState('');
+  const [exams, setExams] = useState<ExamSummary[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [running, setRunning] = useState<Running | null>(null);
+  const [answers, setAnswers] = useState<Record<string, number>>({});
+  const [now, setNow] = useState(Date.now());
+  const [outcome, setOutcome] = useState<Outcome | null>(null);
+  const [error, setError] = useState('');
+  const [busy, setBusy] = useState(false);
+  const submitted = useRef(false);
 
-  const refresh = () => {
-    setBoard(rankings());
-    setLadder(progressRankings());
-    setWork(allAssignments());
+  const load = () => fetch('/api/exams', { cache: 'no-store' }).then((res) => res.json()).then((data) => setExams(data.exams || [])).finally(() => setLoading(false));
+  useEffect(() => { void load(); }, []);
+
+  const call = async (body: Record<string, unknown>) => {
+    const res = await fetch('/api/exams', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) });
+    const data = await res.json();
+    if (!res.ok || !data.success) throw new Error(data.message || 'Something went wrong.');
+    return data;
   };
+
+  const start = async (exam: ExamSummary) => {
+    if (!exam.inProgress && !confirm(`Start "${exam.title}"? The ${exam.durationMinutes}-minute timer starts now and keeps running even if you leave the page.`)) return;
+    setBusy(true);
+    setError('');
+    try {
+      const data = await call({ action: 'start', examId: exam.id });
+      submitted.current = false;
+      setOutcome(null);
+      setAnswers(data.answers || {});
+      setRunning({ examId: exam.id, title: data.title, attemptId: data.attemptId, deadline: data.deadline, questions: data.questions });
+      window.scrollTo({ top: 0 });
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Could not start the exam.');
+    } finally {
+      setBusy(false);
+    }
+  };
+
+  const submit = useCallback(async (auto = false) => {
+    if (!running || submitted.current) return;
+    if (!auto) {
+      const unanswered = running.questions.filter((question) => !Number.isInteger(answers[question.id])).length;
+      if (!confirm(unanswered ? `You have ${unanswered} unanswered question(s). Submit anyway?` : 'Submit your exam now?')) return;
+    }
+    submitted.current = true;
+    setBusy(true);
+    try {
+      const data = await call({ action: 'submit', examId: running.examId, attemptId: running.attemptId, answers });
+      setOutcome(data);
+      setRunning(null);
+      void load();
+    } catch (err) {
+      submitted.current = false;
+      setError(err instanceof Error ? err.message : 'Could not submit. Check your connection and try again.');
+    } finally {
+      setBusy(false);
+    }
+  }, [running, answers]); // eslint-disable-line react-hooks/exhaustive-deps
+
+  // Countdown; submits automatically when time is up.
   useEffect(() => {
-    setBank(questions());
-    refresh();
-  }, []);
+    if (!running) return;
+    const timer = setInterval(() => setNow(Date.now()), 1000);
+    return () => clearInterval(timer);
+  }, [running]);
+  const remaining = running ? new Date(running.deadline).getTime() - now : 0;
+  useEffect(() => { if (running && remaining <= 0) void submit(true); }, [running, remaining, submit]);
+
+  // Save answers on the server as the student goes, so a refresh loses nothing.
+  useEffect(() => {
+    if (!running) return;
+    const timer = setTimeout(() => { call({ action: 'save', examId: running.examId, attemptId: running.attemptId, answers }).catch(() => undefined); }, 800);
+    return () => clearTimeout(timer);
+  }, [answers, running]); // eslint-disable-line react-hooks/exhaustive-deps
+
+  // Warn before leaving mid-exam.
+  useEffect(() => {
+    if (!running) return;
+    const warn = (event: BeforeUnloadEvent) => { event.preventDefault(); };
+    window.addEventListener('beforeunload', warn);
+    return () => window.removeEventListener('beforeunload', warn);
+  }, [running]);
+
+  const answered = running ? running.questions.filter((question) => Number.isInteger(answers[question.id])).length : 0;
 
   return (
-    <div className="min-h-screen bg-slate-50 text-[#111827] flex flex-col">
-      <FloatingNavbar />
-      <main className="max-w-5xl mx-auto px-4 pt-32 pb-16 w-full space-y-6">
-        <h1 className="font-display font-extrabold text-3xl">Exams and ranking</h1>
-        <WorkspaceLinks />
+    <AuthGuard>
+      <div className="flex min-h-screen flex-col bg-slate-50 text-[#111827]">
+        <FloatingNavbar />
+        <main className="mx-auto w-full max-w-3xl flex-1 space-y-6 px-4 pb-16 pt-28">
+          {error && <p className="flex items-center gap-2 rounded-2xl border border-rose-200 bg-rose-50 p-4 text-sm font-semibold text-rose-700"><AlertTriangle className="h-4 w-4" />{error}</p>}
 
-        <section className="bg-white rounded-3xl border border-slate-200 p-6 space-y-4 shadow-sm">
-          <div className="flex flex-wrap items-center gap-2">
-            <h2 className="font-bold">Question bank</h2>
-            <input type="number" min={1} value={count} onChange={(e) => setCount(Number(e.target.value))} className="w-16 border border-slate-200 rounded-xl px-2 py-1 text-sm" />
-            <button type="button" className="text-xs font-bold px-3 py-2 rounded-full bg-slate-100" onClick={() => { setBank(paper(count)); setPicks([]); }}>Build paper</button>
-          </div>
-          {bank.map((question, index) => (
-            <fieldset key={question.id} className="space-y-2">
-              <legend className="font-semibold text-sm">{index + 1}. {question.prompt}</legend>
-              {question.choices.map((choice, choiceIndex) => (
-                <label key={choice} className="flex items-center gap-2 text-sm">
-                  <input
-                    type="radio"
-                    name={question.id}
-                    checked={picks[index] === choiceIndex}
-                    onChange={() => {
-                      const next = [...picks];
-                      next[index] = choiceIndex;
-                      setPicks(next);
-                    }}
-                  />
-                  {choice}
-                </label>
+          {running ? (
+            <>
+              {/* Sticky exam bar */}
+              <div className="sticky top-20 z-20 flex flex-wrap items-center justify-between gap-3 rounded-2xl bg-[#111827] p-4 text-white shadow-lg">
+                <div className="min-w-0">
+                  <p className="truncate font-display font-bold">{running.title}</p>
+                  <p className="text-xs text-slate-300">{answered} of {running.questions.length} answered · saved automatically</p>
+                </div>
+                <span className={`flex items-center gap-1.5 rounded-xl px-3 py-1.5 font-mono text-lg font-bold ${remaining < 60000 ? 'bg-rose-500' : remaining < 300000 ? 'bg-amber-500 text-[#111827]' : 'bg-white/10'}`}>
+                  <Clock className="h-4 w-4" />{clock(remaining)}
+                </span>
+              </div>
+
+              {running.questions.map((question, index) => (
+                <div key={question.id} className="space-y-3 rounded-2xl border border-slate-200 bg-white p-5">
+                  <div className="flex items-start justify-between gap-3">
+                    <p className="font-semibold">{index + 1}. {question.prompt}</p>
+                    <span className="shrink-0 rounded-full bg-slate-100 px-2 py-0.5 text-[11px] font-bold text-slate-600">{question.points} mark{question.points > 1 ? 's' : ''}</span>
+                  </div>
+                  <div className="grid gap-2">
+                    {question.choices.map((choice, cIndex) => (
+                      <button key={cIndex} type="button" onClick={() => setAnswers((prev) => ({ ...prev, [question.id]: cIndex }))} className={`rounded-xl border px-4 py-3 text-left text-sm transition-colors ${answers[question.id] === cIndex ? 'border-[#FACC15] bg-[#FEF9C3] font-semibold' : 'border-slate-200 hover:border-slate-300'}`}>
+                        <span className="mr-2 font-bold text-slate-400">{String.fromCharCode(65 + cIndex)}.</span>{choice}
+                      </button>
+                    ))}
+                  </div>
+                </div>
               ))}
-            </fieldset>
-          ))}
-          <label className="block text-xs font-bold text-slate-500">Written answer</label>
-          <textarea value={written} onChange={(e) => setWritten(e.target.value)} className="w-full border border-slate-200 rounded-xl px-3 py-2 text-sm min-h-16" placeholder="Short written answer for the mentor" />
-          <button
-            type="button"
-            className="bg-[#111827] text-white font-bold text-sm px-4 py-2 rounded-xl"
-            onClick={() => {
-              const scored = submitExam(user?.email || 'student@local', picks, bank, written);
-              setResult(`${scored.score} / ${scored.total} · ${scored.passed ? 'pass' : 'fail'}`);
-              setWritten('');
-              refresh();
-            }}
-          >
-            Submit and mark
-          </button>
-          {result && <p className="font-bold">Score: {result}</p>}
-        </section>
 
-        <section className="bg-white rounded-3xl border border-slate-200 p-6 space-y-3 shadow-sm">
-          <h2 className="font-bold">Add a question</h2>
-          <input value={prompt} onChange={(e) => setPrompt(e.target.value)} placeholder="Question" className="w-full border border-slate-200 rounded-xl px-3 py-2 text-sm" />
-          <input value={choices} onChange={(e) => setChoices(e.target.value)} placeholder="Choices, separated by commas" className="w-full border border-slate-200 rounded-xl px-3 py-2 text-sm" />
-          <input type="number" value={answer} onChange={(e) => setAnswer(Number(e.target.value))} className="w-24 border border-slate-200 rounded-xl px-3 py-2 text-sm" />
-          <button
-            type="button"
-            className="bg-[#FACC15] font-bold text-sm px-4 py-2 rounded-xl"
-            onClick={() => {
-              if (!prompt.trim()) return;
-              addQuestion(prompt, choices.split(',').map((item) => item.trim()).filter(Boolean), answer);
-              setPrompt('');
-              refresh();
-            }}
-          >
-            Save to bank
-          </button>
-        </section>
-
-        <section className="bg-white rounded-3xl border border-slate-200 p-6 shadow-sm">
-          <h2 className="font-bold mb-3">Rank by course progress</h2>
-          <ol className="space-y-2 text-sm">
-            {ladder.map((row, index) => (
-              <li key={row.email}>{index + 1}. {row.name} — {row.progress}%</li>
-            ))}
-            {ladder.length === 0 && <li>No student progress yet.</li>}
-          </ol>
-        </section>
-        <section className="bg-white rounded-3xl border border-slate-200 p-6 shadow-sm">
-          <h2 className="font-bold mb-3">Exam results</h2>
-          <ol className="space-y-2 text-sm">
-            {board.map((row, index) => (
-              <li key={row.id} className="space-y-1">
-                <p>{index + 1}. {row.email} — {row.score}/{row.total} · {row.passed ? 'pass' : 'fail'}</p>
-                {row.written && <p className="text-slate-600">Written: {row.written}</p>}
-                {row.review && <p className="text-slate-600">Mentor: {row.review}</p>}
-                {row.appeal && <p className="text-slate-600">Appeal: {row.appeal}</p>}
-                {row.email === (user?.email || '') && (
-                  <form className="flex gap-2" onSubmit={(e) => { e.preventDefault(); if (!appeal.trim()) return; appealAttempt(row.id, appeal); setAppeal(''); refresh(); }}>
-                    <input value={appeal} onChange={(e) => setAppeal(e.target.value)} placeholder="Appeal this result" className="border border-slate-200 rounded-xl px-3 py-1 text-xs" />
-                    <button className="text-xs font-bold underline">Send appeal</button>
-                  </form>
-                )}
-                {role === 'Instructor' && (
-                  <form className="flex gap-2" onSubmit={(e) => { e.preventDefault(); reviewAttempt(row.id, review || 'Reviewed', true); setReview(''); refresh(); }}>
-                    <input value={review} onChange={(e) => setReview(e.target.value)} placeholder="Mentor review" className="border border-slate-200 rounded-xl px-3 py-1 text-xs" />
-                    <button className="text-xs font-bold underline">Mark pass</button>
-                    <button type="button" className="text-xs font-bold underline" onClick={() => { reviewAttempt(row.id, review || 'Needs another attempt', false); setReview(''); refresh(); }}>Mark fail</button>
-                  </form>
-                )}
-              </li>
-            ))}
-            {board.length === 0 && <li>No exam has been submitted yet.</li>}
-          </ol>
-        </section>
-        <section className="bg-white rounded-3xl border border-slate-200 p-6 shadow-sm space-y-2">
-          <h2 className="font-bold">Assignments waiting for a mentor</h2>
-          {work.map((item) => (
-            <form key={`${item.lessonId}-${item.email}-${item.text}`} className="text-sm flex flex-wrap gap-2 items-center" onSubmit={(e) => { e.preventDefault(); reviewAssignment(item.lessonId, item.email, review || 'Checked'); setReview(''); refresh(); }}>
-              <span>{item.email} · {item.status} · {item.text}</span>
-              {role === 'Instructor' && <button className="text-xs font-bold underline">Mark reviewed</button>}
-            </form>
-          ))}
-          {work.length === 0 && <p className="text-sm text-slate-600">No assignments yet.</p>}
-        </section>
-      </main>
-      <EnglishFooter />
-    </div>
+              <button type="button" onClick={() => submit(false)} disabled={busy} className="w-full rounded-2xl bg-[#FACC15] py-4 text-base font-extrabold text-[#111827] hover:bg-[#EAB308] disabled:opacity-50">
+                {busy ? 'Submitting…' : 'Submit exam'}
+              </button>
+            </>
+          ) : outcome ? (
+            <div className="space-y-5">
+              <div className={`rounded-3xl p-8 text-center ${outcome.passed ? 'bg-emerald-50' : 'bg-amber-50'}`}>
+                <Award className={`mx-auto h-12 w-12 ${outcome.passed ? 'text-emerald-600' : 'text-amber-600'}`} />
+                <p className="mt-3 font-display text-4xl font-extrabold">{outcome.percent}%</p>
+                <p className="text-sm font-semibold text-slate-600">{outcome.score} of {outcome.total} marks · pass mark {outcome.passMark}%</p>
+                <p className={`mt-2 text-lg font-bold ${outcome.passed ? 'text-emerald-700' : 'text-amber-800'}`}>{outcome.passed ? 'Congratulations — you passed!' : 'Not passed this time.'}</p>
+              </div>
+              {outcome.review && outcome.review.map((item, index) => (
+                <div key={item.id} className="space-y-2 rounded-2xl border border-slate-200 bg-white p-4">
+                  <p className="text-sm font-semibold">{index + 1}. {item.prompt}</p>
+                  {item.choices.map((choice, cIndex) => (
+                    <div key={cIndex} className={`flex items-center justify-between rounded-xl border px-3 py-2 text-sm ${cIndex === item.correctIndex ? 'border-emerald-300 bg-emerald-50' : cIndex === item.chosen ? 'border-rose-300 bg-rose-50' : 'border-slate-100'}`}>
+                      <span>{choice}</span>
+                      {cIndex === item.correctIndex ? <Check className="h-4 w-4 text-emerald-600" /> : cIndex === item.chosen ? <X className="h-4 w-4 text-rose-600" /> : null}
+                    </div>
+                  ))}
+                  {item.explanation && <p className="text-xs text-slate-600"><strong>Why:</strong> {item.explanation}</p>}
+                </div>
+              ))}
+              <button type="button" onClick={() => setOutcome(null)} className="rounded-xl border border-slate-200 bg-white px-5 py-2.5 text-sm font-bold hover:bg-slate-50">Back to my exams</button>
+            </div>
+          ) : (
+            <>
+              <div>
+                <Link href="/student" className="text-xs font-bold text-slate-500 hover:text-slate-900">← Back to dashboard</Link>
+                <h1 className="mt-2 font-display text-3xl font-extrabold">My exams</h1>
+                <p className="text-sm text-slate-500">Exams from your courses. Each exam is timed — make sure you have a steady connection before you start.</p>
+              </div>
+              {loading ? (
+                <p className="py-10 text-center text-sm text-slate-500">Loading exams…</p>
+              ) : exams.length === 0 ? (
+                <div className="rounded-3xl border border-dashed border-slate-200 bg-white py-12 text-center">
+                  <GraduationCap className="mx-auto h-8 w-8 text-slate-300" />
+                  <p className="mt-2 font-semibold text-slate-700">No exams yet</p>
+                  <p className="text-sm text-slate-500">Exams appear here when your courses schedule them.</p>
+                </div>
+              ) : exams.map((exam) => {
+                const attemptsLeft = exam.maxAttempts ? exam.maxAttempts - exam.attemptsUsed : Infinity;
+                const canStart = exam.window === 'open' && (exam.inProgress || attemptsLeft > 0);
+                return (
+                  <article key={exam.id} className="space-y-3 rounded-3xl border border-slate-200 bg-white p-5">
+                    <div className="flex flex-wrap items-start justify-between gap-2">
+                      <div className="min-w-0">
+                        <p className="text-[11px] font-semibold text-slate-500">{exam.courseTitle}{exam.moduleTitle ? ` · ${exam.moduleTitle}` : ''}{exam.lessonTitle ? ` · ${exam.lessonTitle}` : ''}</p>
+                        <p className="font-display text-lg font-bold">{exam.title}</p>
+                      </div>
+                      {exam.best && <span className={`rounded-full px-3 py-1 text-xs font-bold ${exam.best.passed ? 'bg-emerald-50 text-emerald-700' : 'bg-amber-50 text-amber-800'}`}>Best {exam.best.percent}%{exam.best.passed ? ' · Passed' : ''}</span>}
+                    </div>
+                    {exam.description && <p className="whitespace-pre-wrap text-sm text-slate-600">{exam.description}</p>}
+                    <div className="flex flex-wrap gap-x-4 gap-y-1 text-xs text-slate-600">
+                      <span className="flex items-center gap-1"><Clock className="h-3.5 w-3.5" />{exam.durationMinutes} minutes</span>
+                      <span>{exam.questionCount} questions</span>
+                      <span>Pass mark {exam.passMark}%</span>
+                      <span>{exam.maxAttempts ? `${Math.max(0, attemptsLeft)} of ${exam.maxAttempts} attempts left` : 'Unlimited attempts'}</span>
+                      {exam.window === 'upcoming' && <span className="flex items-center gap-1 font-semibold text-sky-700"><CalendarClock className="h-3.5 w-3.5" />Opens {when(exam.opensAt)}</span>}
+                      {exam.window === 'open' && exam.closesAt && <span className="flex items-center gap-1"><CalendarClock className="h-3.5 w-3.5" />Closes {when(exam.closesAt)}</span>}
+                      {exam.window === 'closed' && <span className="font-semibold text-slate-500">Closed</span>}
+                    </div>
+                    <button type="button" disabled={!canStart || busy} onClick={() => start(exam)} className="rounded-xl bg-[#111827] px-5 py-2.5 text-sm font-bold text-white hover:bg-slate-800 disabled:bg-slate-200 disabled:text-slate-500">
+                      {exam.inProgress ? 'Resume exam' : exam.window === 'upcoming' ? 'Not open yet' : exam.window === 'closed' ? 'Exam closed' : attemptsLeft <= 0 ? 'No attempts left' : exam.attemptsUsed ? 'Try again' : 'Start exam'}
+                    </button>
+                  </article>
+                );
+              })}
+            </>
+          )}
+        </main>
+        <EnglishFooter />
+      </div>
+    </AuthGuard>
   );
 }

@@ -265,7 +265,7 @@ export async function createProfile(input: { email: string; name: string; passwo
   return profile;
 }
 
-export async function updateProfile(id: string, patch: Partial<Pick<Profile, 'roles' | 'active_role' | 'disabled' | 'name' | 'mentor_level'>>) {
+export async function updateProfile(id: string, patch: Partial<Pick<Profile, 'roles' | 'active_role' | 'disabled' | 'name' | 'mentor_level' | 'phone' | 'password_hash'>>) {
   await update('profiles', { id }, patch);
 }
 
@@ -353,6 +353,14 @@ export async function assignCourseMentor(courseId: string, mentorEmail: string, 
   const email = normalizeEmail(mentorEmail);
   const history = [{ email, at: new Date().toISOString() }, ...current.mentor_history];
   await saveCourseSettings({ ...current, mentor_email: email, mentor_history: history, updated_by: by });
+}
+
+// Leaves the course without a mentor; the history records when it happened (email "").
+export async function unassignCourseMentor(courseId: string, by: string) {
+  const current = await courseSettings(courseId);
+  if (!current.mentor_email) return;
+  const history = [{ email: '', at: new Date().toISOString() }, ...current.mentor_history];
+  await saveCourseSettings({ ...current, mentor_email: '', mentor_history: history, updated_by: by });
 }
 
 export async function saveProgress(row: Omit<StudentProgress, 'updated_at'>) {

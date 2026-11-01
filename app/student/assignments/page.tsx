@@ -1,76 +1,85 @@
 'use client';
 
-import { useEffect, useState, type FormEvent } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import Link from 'next/link';
+import { CalendarDays, ChevronRight, ClipboardList } from 'lucide-react';
 import AuthGuard from '@/components/auth/AuthGuard';
-import { useAuth } from '@/context/AuthContext';
+import FloatingNavbar from '@/components/english/FloatingNavbar';
 
-type Task = { id: string; title: string; course: string; instructions: string; dueDate: string };
-type Submission = { id: string; assignmentId: string; text: string; status: string; grade: string; review: string; fileName: string };
+type Assignment = {
+  id: string; title: string; courseId: string; courseTitle: string; moduleTitle: string; lessonTitle: string; dueDate: string; maxScore: number;
+  submission: { status: 'submitted' | 'needs-changes' | 'graded'; score: number | null } | null;
+};
 
+const day = (value: string) => (value ? new Date(`${value}T12:00:00`).toLocaleDateString('en-BD', { day: 'numeric', month: 'short' }) : '');
+
+// All assignments from the student's courses. They are submitted inside each lesson.
 export default function StudentAssignmentsPage() {
-  const { user, userProfile } = useAuth();
-  const [tasks, setTasks] = useState<Task[]>([]);
-  const [submissions, setSubmissions] = useState<Submission[]>([]);
-  const [text, setText] = useState<Record<string, string>>({});
-  const [note, setNote] = useState('');
+  const [assignments, setAssignments] = useState<Assignment[]>([]);
+  const [loading, setLoading] = useState(true);
 
-  const email = user?.email || '';
-
-  const load = () => {
-    if (!email) return;
-    fetch(`/api/assignments?email=${encodeURIComponent(email)}`)
+  useEffect(() => {
+    fetch('/api/assignments', { cache: 'no-store' })
       .then((res) => res.json())
-      .then((data) => {
-        setTasks(data.assignments || []);
-        setSubmissions(data.submissions || []);
-      });
-  };
+      .then((data) => setAssignments(data.assignments || []))
+      .finally(() => setLoading(false));
+  }, []);
 
-  useEffect(() => { load(); }, [email]);
+  const byCourse = useMemo(() => {
+    const map = new Map<string, Assignment[]>();
+    assignments.forEach((item) => map.set(item.courseId, [...(map.get(item.courseId) || []), item]));
+    return [...map.values()];
+  }, [assignments]);
+  const todo = assignments.filter((item) => !item.submission || item.submission.status === 'needs-changes').length;
 
-  const submit = async (event: FormEvent<HTMLFormElement>, assignmentId: string) => {
-    event.preventDefault();
-    const form = new FormData(event.currentTarget);
-    form.set('assignmentId', assignmentId);
-    form.set('studentName', userProfile?.name || user?.displayName || 'Student');
-    form.set('email', email);
-    form.set('text', text[assignmentId] || '');
-    const res = await fetch('/api/assignments', { method: 'POST', body: form });
-    const data = await res.json();
-    setNote(res.ok ? 'Submitted. The admin can review it.' : data.message || 'Could not submit.');
-    if (res.ok) load();
+  const badge = (item: Assignment) => {
+    if (!item.submission) return <span className="rounded-full bg-slate-100 px-3 py-1 text-xs font-bold text-slate-600">To do</span>;
+    if (item.submission.status === 'graded') return <span className="rounded-full bg-emerald-50 px-3 py-1 text-xs font-bold text-emerald-700">{item.submission.score}/{item.maxScore}</span>;
+    if (item.submission.status === 'needs-changes') return <span className="rounded-full bg-sky-50 px-3 py-1 text-xs font-bold text-sky-800">Changes requested</span>;
+    return <span className="rounded-full bg-amber-50 px-3 py-1 text-xs font-bold text-amber-800">Submitted</span>;
   };
 
   return (
     <AuthGuard>
-      <main className="max-w-3xl mx-auto px-4 py-16 space-y-6">
-        <Link href="/student" className="text-xs font-bold text-slate-500">Back to dashboard</Link>
-        <h1 className="font-display font-extrabold text-3xl">Assignments</h1>
-        {tasks.length === 0 ? <p className="text-sm text-slate-500">No assignments have been posted yet.</p> : tasks.map((task) => {
-          const mine = submissions.filter((item) => item.assignmentId === task.id);
-          return (
-            <section key={task.id} className="bg-white border border-slate-200 rounded-3xl p-5 space-y-3">
-              <h2 className="font-bold text-lg">{task.title}</h2>
-              <p className="text-xs text-slate-500">{task.course}{task.dueDate ? ` · due ${task.dueDate}` : ''}</p>
-              <p className="text-sm">{task.instructions}</p>
-              {mine.map((item) => (
-                <div key={item.id} className="text-xs bg-slate-50 rounded-xl p-3">
-                  <div className="font-bold capitalize">{item.status}{item.grade ? ` · ${item.grade}` : ''}</div>
-                  {item.text && <p className="mt-1">{item.text}</p>}
-                  {item.review && <p className="mt-1 text-slate-600">Review: {item.review}</p>}
-                </div>
-              ))}
-              <form className="space-y-2" onSubmit={(event) => submit(event, task.id)}>
-                <textarea className="w-full border border-slate-200 rounded-xl px-3 py-2 text-sm" rows={3} placeholder="Write your answer" value={text[task.id] || ''} onChange={(e) => setText({ ...text, [task.id]: e.target.value })} />
-                <input name="file" type="file" className="text-xs" />
-                <button className="bg-[#111827] text-white text-xs font-bold px-4 py-2 rounded-full">Submit</button>
-              </form>
+      <div className="min-h-screen bg-slate-50">
+        <FloatingNavbar />
+        <main className="mx-auto max-w-3xl space-y-6 px-4 pb-16 pt-28">
+          <Link href="/student" className="text-xs font-bold text-slate-500 hover:text-slate-900">← Back to dashboard</Link>
+          <div className="flex flex-wrap items-end justify-between gap-3">
+            <div>
+              <h1 className="font-display text-3xl font-extrabold">My assignments</h1>
+              <p className="text-sm text-slate-500">Open a lesson to read the task and submit your work.</p>
+            </div>
+            {assignments.length > 0 && <span className="rounded-full bg-amber-50 px-3 py-1 text-xs font-bold text-amber-800">{todo} to do</span>}
+          </div>
+
+          {loading ? (
+            <p className="py-10 text-center text-sm text-slate-500">Loading assignments…</p>
+          ) : assignments.length === 0 ? (
+            <div className="rounded-3xl border border-dashed border-slate-200 bg-white py-12 text-center">
+              <ClipboardList className="mx-auto h-8 w-8 text-slate-300" />
+              <p className="mt-2 font-semibold text-slate-700">No assignments yet</p>
+              <p className="text-sm text-slate-500">Assignments appear here once your courses have them.</p>
+            </div>
+          ) : byCourse.map((items) => (
+            <section key={items[0].courseId} className="space-y-2">
+              <h2 className="font-bold text-slate-800">{items[0].courseTitle}</h2>
+              <div className="divide-y divide-slate-100 rounded-3xl border border-slate-200 bg-white">
+                {items.map((item) => (
+                  <Link key={item.id} href={`/student/learn/${encodeURIComponent(item.courseId)}`} className="flex items-center gap-3 p-4 hover:bg-slate-50">
+                    <div className="min-w-0 flex-1">
+                      <p className="flex items-center gap-1 truncate text-[11px] font-semibold text-slate-500">{item.moduleTitle}<ChevronRight className="h-3 w-3 shrink-0" />{item.lessonTitle}</p>
+                      <p className="truncate font-bold text-[#111827]">{item.title}</p>
+                      {item.dueDate && <p className="flex items-center gap-1 text-xs text-slate-500"><CalendarDays className="h-3 w-3" />Due {day(item.dueDate)}</p>}
+                    </div>
+                    {badge(item)}
+                  </Link>
+                ))}
+              </div>
             </section>
-          );
-        })}
-        {note && <p className="text-sm font-semibold">{note}</p>}
-      </main>
+          ))}
+        </main>
+      </div>
     </AuthGuard>
   );
 }

@@ -19,7 +19,8 @@ import { getCourseById } from '@/lib/db';
 import { useCourseEdits } from '@/lib/course-edits-client';
 import LessonQuestions from '@/components/student/LessonQuestions';
 import LessonQuiz from '@/components/student/LessonQuiz';
-import { addQuestion, lessonNote, lessonVideo, recordWatch, saveLessonNote, submitAssignment, watchPercent } from '@/lib/workspace';
+import LessonAssignment from '@/components/student/LessonAssignment';
+import { lessonNote, lessonVideo, recordWatch, saveLessonNote, watchPercent } from '@/lib/workspace';
 import type { CourseSchema, ModuleSchema, LessonSchema } from '@/types/course';
 import {
   BookOpen,
@@ -43,6 +44,7 @@ import {
   Volume2,
   FileCheck,
   Lock,
+  ClipboardList,
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 
@@ -59,8 +61,6 @@ export default function StudentLearnPage() {
   const [activeModuleIndex, setActiveModuleIndex] = useState(0);
   const [activeLessonIndex, setActiveLessonIndex] = useState(0);
   const [noteText, setNoteText] = useState('');
-  const [assignmentText, setAssignmentText] = useState('');
-  const [shortText, setShortText] = useState('');
   const courseEdits = useCourseEdits();
   const [watchTick, setWatchTick] = useState(0);
   const [expandedModules, setExpandedModules] = useState<Record<string, boolean>>({
@@ -69,7 +69,7 @@ export default function StudentLearnPage() {
   });
 
   // Active tab beneath the video player
-  const [activeTab, setActiveTab] = useState<'overview' | 'quiz' | 'discussion' | 'resources'>('overview');
+  const [activeTab, setActiveTab] = useState<'overview' | 'quiz' | 'assignment' | 'discussion' | 'resources'>('overview');
 
   // Certificate Modal state
   const [isCertModalOpen, setIsCertModalOpen] = useState(false);
@@ -371,37 +371,6 @@ export default function StudentLearnPage() {
                 >
                   Save notes
                 </button>
-                <label className="block text-xs font-bold text-slate-500">Assignment</label>
-                <textarea
-                  value={assignmentText}
-                  onChange={(e) => setAssignmentText(e.target.value)}
-                  className="w-full border border-slate-200 rounded-xl px-3 py-2 text-sm min-h-16"
-                  placeholder="Write the assignment answer"
-                />
-                <button
-                  type="button"
-                  className="text-xs font-bold px-3 py-2 rounded-full bg-[#111827] text-white"
-                  onClick={() => {
-                    if (!assignmentText.trim()) return;
-                    submitAssignment(currentLesson.id, user?.email || 'student@local', assignmentText);
-                    setAssignmentText('');
-                  }}
-                >
-                  Submit assignment
-                </button>
-                <label className="block text-xs font-bold text-slate-500">Short question</label>
-                <input value={shortText} onChange={(e) => setShortText(e.target.value)} className="w-full border border-slate-200 rounded-xl px-3 py-2 text-sm" placeholder="Add a short question for this lesson" />
-                <button
-                  type="button"
-                  className="text-xs font-bold px-3 py-2 rounded-full bg-slate-100"
-                  onClick={() => {
-                    if (!shortText.trim()) return;
-                    addQuestion(shortText, ['Noted'], 0, 'short', currentLesson.id);
-                    setShortText('');
-                  }}
-                >
-                  Save short question
-                </button>
               </div>
             )}
 
@@ -457,9 +426,10 @@ export default function StudentLearnPage() {
               <div className="flex items-center gap-2 border-b border-slate-100 pb-4 overflow-x-auto scrollbar-none">
                 {[
                   { key: 'overview', label: 'Overview & Study Notes', icon: FileText },
-                  { key: 'quiz', label: 'Knowledge Drill Quiz', icon: HelpCircle },
+                  { key: 'quiz', label: 'Quiz', icon: HelpCircle },
+                  { key: 'assignment', label: 'Assignment', icon: ClipboardList },
                   { key: 'discussion', label: 'Ask Instructor', icon: MessageSquare },
-                  { key: 'resources', label: 'Downloadable Resources', icon: Download },
+                  { key: 'resources', label: 'Resources', icon: Download },
                 ].map(({ key, label, icon: Icon }) => (
                   <button
                     key={key}
@@ -505,6 +475,10 @@ export default function StudentLearnPage() {
               {/* TAB 2: KNOWLEDGE QUIZ */}
               {activeTab === 'quiz' && currentLesson && (
                 <LessonQuiz courseId={courseId} lessonId={currentLesson.id} />
+              )}
+
+              {activeTab === 'assignment' && currentLesson && (
+                <LessonAssignment courseId={courseId} lessonId={currentLesson.id} />
               )}
 
               {/* TAB 3: DISCUSSION COMMUNITY */}

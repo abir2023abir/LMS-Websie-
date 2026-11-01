@@ -182,3 +182,12 @@ export async function grantEnrollment(studentId: string, courseId: string) {
   if (current.includes(courseId)) return;
   await kvSet(ENROLLMENTS_KEY, { ...all, [studentId]: [...current, courseId] });
 }
+
+export async function revokeEnrollment(studentId: string, courseId: string) {
+  const all = await kvGet<Record<string, string[]>>(ENROLLMENTS_KEY, {});
+  await kvSet(ENROLLMENTS_KEY, { ...all, [studentId]: (all[studentId] || []).filter((id) => id !== courseId) });
+}
+
+export async function allEnrollments(): Promise<Record<string, string[]>> {
+  return kvGet<Record<string, string[]>>(ENROLLMENTS_KEY, {});
+}

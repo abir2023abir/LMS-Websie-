@@ -1,58 +1,47 @@
 import { NextResponse } from 'next/server';
-import fs from 'fs';
-import { requireAdmin } from '@/lib/admin-guard';
-import {
-  assignmentFilePath,
-  deleteAssignment,
-  listAssignments,
-  listSubmissions,
-  reviewSubmission,
-  saveAssignment,
-  type SubmissionStatus,
-} from '@/lib/admin-studio';
+import { staffDenied, staffIdentity } from '@/lib/user-session';
+import { deleteAssignment, listAssignments, listSubmissions, readSubmissionFile, reviewSubmission, saveAssignment, type SubmissionStatus } from '@/lib/assignments';
 
+export const dynamic = 'force-dynamic';
+
+const STATUSES = new Set<SubmissionStatus>(['submitted', 'needs-changes', 'graded']);
+
+async function payload() {
+  const [assignments, submissions] = await Promise.all([listAssignments(), listSubmissions()]);
+  return { success: true, assignments, submissions };
+}
+
+// Admins and mentors manage lesson assignments and review submissions.
 export async function GET(request: Request) {
-  const denied = requireAdmin();
-  if (denied) return denied;
-  const file = new URL(request.url).searchParams.get('file') || '';
-  if (file) {
-    const target = assignmentFilePath(file);
-    if (!fs.existsSync(target)) return NextResponse.json({ success: false }, { status: 404 });
-    const bytes = fs.readFileSync(target);
-    return new NextResponse(new Uint8Array(bytes), {
-      headers: { 'Content-Type': 'application/octet-stream', 'Content-Disposition': `inline; filename="${file}"` },
+  if (!(await staffIdentity())) return staffDenied();
+  const fileId = new URL(request.url).searchParams.get('file') || '';
+  if (fileId) {
+    const file = await readSubmissionFile(fileId);
+    if (!file) return NextResponse.json({ success: false, message: 'File not found.' }, { status: 404 });
+    return new NextResponse(new Uint8Array(file.bytes), {
+      headers: { 'Content-Type': file.type, 'Content-Disposition': `attachment; filename="${encodeURIComponent(file.name)}"` },
     });
   }
-  return NextResponse.json({ success: true, assignments: listAssignments(), submissions: listSubmissions() });
+  return NextResponse.json(await payload());
 }
 
 export async function POST(request: Request) {
-  const denied = requireAdmin();
-  if (denied) return denied;
+  if (!(await staffIdentity())) return staffDenied();
   try {
     const body = await request.json();
     if (body.action === 'delete') {
-      deleteAssignment(String(body.id || ''));
-      return NextResponse.json({ success: true, assignments: listAssignments(), submissions: listSubmissions() });
+      await deleteAssignment(String(body.id || ''));
+    } else if (body.action === 'review') {
+      const submission = (await listSubmissions()).find((item) => item.id === body.id);
+      const assignment = (await listAssignments()).find((item) => item.id === submission?.assignmentId);
+      const status = STATUSES.has(body.status) ? (body.status as SubmissionStatus) : 'graded';
+      await reviewSubmission(String(body.id || ''), { status, score: body.score === '' || body.score === null || body.score === undefined ? null : Number(body.score), feedback: String(body.feedback || '') }, assignment?.maxScore || 100);
+    } else {
+      await saveAssignment(body);
     }
-    if (body.action === 'review') {
-      reviewSubmission(String(body.id || ''), {
-        status: String(body.status || 'reviewed') as SubmissionStatus,
-        grade: String(body.grade || ''),
-        review: String(body.review || ''),
-      });
-      return NextResponse.json({ success: true, assignments: listAssignments(), submissions: listSubmissions() });
-    }
-    saveAssignment({
-      id: body.id ? String(body.id) : undefined,
-      title: String(body.title || ''),
-      course: String(body.course || ''),
-      instructions: String(body.instructions || ''),
-      dueDate: String(body.dueDate || ''),
-    });
-    return NextResponse.json({ success: true, assignments: listAssignments(), submissions: listSubmissions() });
+    return NextResponse.json(await payload());
   } catch (error) {
-    const message = error instanceof Error ? error.message : 'Could not save the assignment.';
+    const message = error instanceof Error ? error.message : 'Could not save.';
     return NextResponse.json({ success: false, message }, { status: 400 });
   }
 }

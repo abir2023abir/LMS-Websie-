@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server';
 import { requireAdmin } from '@/lib/admin-guard';
 import {
-  assignCourseMentor,
+  assignCourseMentor, unassignCourseMentor,
   decideLink,
   linkById,
   listCourseSettings,
@@ -44,6 +44,10 @@ export async function PATCH(request: Request) {
         return NextResponse.json({ success: false, message: 'Link not found.' }, { status: 404 });
       }
       await decideLink(String(body.linkId), body.status, 'admin');
+      return NextResponse.json({ success: true });
+    }
+    if (body.courseId && body.action === 'unassign') {
+      await unassignCourseMentor(String(body.courseId), 'admin');
       return NextResponse.json({ success: true });
     }
     if (body.courseId) {
