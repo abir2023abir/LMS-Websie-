@@ -27,7 +27,7 @@ export default function AdminLoginForm() {
       const data = await res.json();
 
       if (!res.ok || !data.success) {
-        setError('Invalid username or password. Access denied.');
+        setError(data?.message || 'Invalid username or password. Access denied.');
         setIsLoading(false);
         return;
       }

@@ -55,8 +55,8 @@ function LoginPageContent() {
       await loginWithEmail(email, password);
     } catch (err: any) {
       console.error('Login error:', err);
-      if (err.code === 'auth/invalid-credential') {
-        setError('Invalid email or password. Please check your credentials.');
+      if (err.code === 'auth/invalid-credential' || err.code === 'auth/too-many-requests') {
+        setError(err.message || 'Invalid email or password. Please check your credentials.');
       } else {
         setError(err.message || 'Login failed. Please try again.');
       }

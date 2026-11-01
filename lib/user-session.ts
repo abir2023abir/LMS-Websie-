@@ -4,11 +4,14 @@ import { NextResponse } from 'next/server';
 import { profileById, type MentorLevel, type Profile, type Role } from '@/lib/accounts';
 import { verifyAdminSession } from '@/lib/auth-server';
 
-const SECRET = `${process.env.ADMIN_JWT_SECRET || 'lms_secure_admin_jwt_secret_dev_fallback_2026'}:user`;
+// No fallback secret: without ADMIN_JWT_SECRET user sessions are neither issued nor accepted.
+const BASE_SECRET = process.env.ADMIN_JWT_SECRET || '';
+const SECRET = `${BASE_SECRET}:user`;
 export const USER_COOKIE = 'user_session';
 const MAX_AGE = 7 * 24 * 60 * 60;
 
 export function setUserSession(response: NextResponse, profileId: string) {
+  if (!BASE_SECRET) throw new Error('ADMIN_JWT_SECRET is not set');
   const token = jwt.sign({ uid: profileId }, SECRET, { expiresIn: MAX_AGE });
   response.cookies.set(USER_COOKIE, token, {
     httpOnly: true,
@@ -25,9 +28,9 @@ export function clearUserSession(response: NextResponse) {
 
 export async function currentProfile(): Promise<Profile | null> {
   const token = cookies().get(USER_COOKIE)?.value;
-  if (!token) return null;
+  if (!token || !BASE_SECRET) return null;
   try {
-    const { uid } = jwt.verify(token, SECRET) as { uid: string };
+    const { uid } = jwt.verify(token, SECRET, { algorithms: ['HS256'] }) as { uid: string };
     const profile = await profileById(uid);
     return profile && !profile.disabled ? profile : null;
   } catch {

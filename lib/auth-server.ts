@@ -1,6 +1,11 @@
 import jwt from 'jsonwebtoken';
 
-const JWT_SECRET = process.env.ADMIN_JWT_SECRET || 'lms_secure_admin_jwt_secret_dev_fallback_2026';
+// No fallback: without ADMIN_JWT_SECRET no admin session can be signed or accepted.
+const JWT_SECRET = process.env.ADMIN_JWT_SECRET || '';
+
+export const ADMIN_COOKIE = 'admin_session';
+/** Admin sessions end after 12 hours; the admin signs in again after that. */
+export const ADMIN_SESSION_SECONDS = 12 * 60 * 60;
 
 export interface AdminTokenPayload {
   username: string;
@@ -14,12 +19,12 @@ export interface AdminTokenPayload {
  * Returns the decoded payload if valid, or null if invalid/expired.
  */
 export function verifyAdminSession(token?: string): AdminTokenPayload | null {
-  if (!token || typeof token !== 'string') {
+  if (!JWT_SECRET || !token || typeof token !== 'string') {
     return null;
   }
 
   try {
-    const decoded = jwt.verify(token, JWT_SECRET) as AdminTokenPayload;
+    const decoded = jwt.verify(token, JWT_SECRET, { algorithms: ['HS256'] }) as AdminTokenPayload;
     if (decoded && decoded.role === 'admin') {
       return decoded;
     }
@@ -33,12 +38,24 @@ export function verifyAdminSession(token?: string): AdminTokenPayload | null {
  * Signs a new admin JWT token.
  */
 export function signAdminSession(username: string): string {
+  if (!JWT_SECRET) throw new Error('ADMIN_JWT_SECRET is not set');
   return jwt.sign(
     {
       username,
       role: 'admin',
     },
     JWT_SECRET,
-    { expiresIn: '7d' }
+    { algorithm: 'HS256', expiresIn: ADMIN_SESSION_SECONDS }
   );
+}
+
+/** Cookie options shared by sign-in and sign-out so the browser replaces the same cookie. */
+export function adminCookieOptions(maxAge: number) {
+  return {
+    httpOnly: true,
+    secure: process.env.NODE_ENV === 'production',
+    sameSite: 'lax' as const,
+    maxAge,
+    path: '/',
+  };
 }

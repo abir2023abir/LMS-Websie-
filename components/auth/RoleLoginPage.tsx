@@ -70,8 +70,8 @@ function RoleLoginContent({ config }: { config: RoleLoginConfig }) {
       }
       router.replace(panel);
     } catch (err: any) {
-      if (err.code === 'auth/invalid-credential') {
-        setError('Invalid email or password. Please check your credentials.');
+      if (err.code === 'auth/invalid-credential' || err.code === 'auth/too-many-requests') {
+        setError(err.message || 'Invalid email or password. Please check your credentials.');
       } else {
         setError(err.message || 'Login failed. Please try again.');
       }

@@ -84,10 +84,10 @@ export default function AdminDashboard() {
 
   const handleLogout = async () => {
     try {
-      await fetch('/api/admin/logout', { method: 'POST' });
-      router.refresh();
-    } catch {
-      router.refresh();
+      await fetch('/api/admin/logout', { method: 'POST', cache: 'no-store' });
+    } finally {
+      // Full reload so no cached admin data stays on screen after sign-out
+      window.location.replace('/admin');
     }
   };
 

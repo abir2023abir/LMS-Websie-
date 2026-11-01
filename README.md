@@ -46,7 +46,7 @@ NEXT_PUBLIC_FIREBASE_APP_ID=your-app-id
 NEXT_PUBLIC_SITE_URL=http://localhost:3000
 
 # Admin Authentication
-ADMIN_USERNAME=abir
+ADMIN_USERNAME=your_admin_username
 ADMIN_PASSWORD=your_secure_password
 ADMIN_JWT_SECRET=your_secure_random_jwt_secret
 
