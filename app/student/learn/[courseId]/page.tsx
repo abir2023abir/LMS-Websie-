@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, useMemo } from 'react';
+import { useState, useEffect, useMemo, useCallback } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import Link from 'next/link';
 import Image from 'next/image';
@@ -20,6 +20,7 @@ import { useCourseEdits } from '@/lib/course-edits-client';
 import LessonQuestions from '@/components/student/LessonQuestions';
 import LessonQuiz from '@/components/student/LessonQuiz';
 import LessonAssignment from '@/components/student/LessonAssignment';
+import LessonSteps, { type LessonProgress, type LiveSession } from '@/components/student/LessonSteps';
 import { lessonNote, lessonVideo, recordWatch, saveLessonNote, watchPercent } from '@/lib/workspace';
 import type { CourseSchema, ModuleSchema, LessonSchema } from '@/types/course';
 import {
@@ -70,6 +71,10 @@ export default function StudentLearnPage() {
 
   // Active tab beneath the video player
   const [activeTab, setActiveTab] = useState<'overview' | 'quiz' | 'assignment' | 'discussion' | 'resources'>('overview');
+
+  // Strict lesson path from the server (video → quiz → assignment → exam → live/approval)
+  const [path, setPath] = useState<{ lessons: LessonProgress[]; lives: LiveSession[]; rank: number | null; rankTotal: number } | null>(null);
+  const [videoReported, setVideoReported] = useState<Record<string, boolean>>({});
 
   // Certificate Modal state
   const [isCertModalOpen, setIsCertModalOpen] = useState(false);
@@ -143,18 +148,44 @@ export default function StudentLearnPage() {
   const lessonIsOpen = (mIdx: number, lIdx: number) => {
     void watchTick;
     const idx = flattenedLessons.findIndex((item) => item.moduleIndex === mIdx && item.lessonIndex === lIdx);
+    if (path) {
+      const entry = path.lessons.find((item) => item.lessonId === flattenedLessons[idx]?.lesson.id);
+      return entry ? entry.state !== 'locked' : idx <= 0;
+    }
     if (idx <= 0) return true;
     const prev = flattenedLessons[idx - 1];
     if (progress?.completedLessons[prev.lesson.id]) return true;
     return watchPercent(prev.lesson.id) >= 80;
   };
 
+  const loadPath = useCallback(async (lessonId?: string) => {
+    try {
+      const res = await fetch(`/api/progress?courseId=${encodeURIComponent(courseId)}${lessonId ? `&lessonId=${encodeURIComponent(lessonId)}` : ''}`, { cache: 'no-store' });
+      if (res.ok) setPath(await res.json());
+    } catch { /* keep the local fallback */ }
+  }, [courseId]);
+
+  useEffect(() => {
+    if (currentLesson?.id) void loadPath(currentLesson.id);
+  }, [currentLesson?.id, loadPath]);
+
+  // Tell the server once a lesson's video reaches 80%, then refresh the path.
+  const reportWatch = (lessonId: string, percent: number) => {
+    if (percent < 80 || videoReported[lessonId]) return;
+    setVideoReported((prev) => ({ ...prev, [lessonId]: true }));
+    fetch('/api/progress', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ action: 'video', courseId, lessonId, percent }) })
+      .then(() => loadPath(lessonId)).catch(() => undefined);
+  };
+
+  const currentPath = path?.lessons.find((item) => item.lessonId === currentLesson?.id);
+
   const currentFlatIndex = flattenedLessons.findIndex(
     (item) => item.moduleIndex === activeModuleIndex && item.lessonIndex === activeLessonIndex
   );
 
   const hasPrevLesson = currentFlatIndex > 0;
-  const hasNextLesson = currentFlatIndex < flattenedLessons.length - 1;
+  const hasNextLesson = currentFlatIndex < flattenedLessons.length - 1
+    && (!path || path.lessons.find((item) => item.lessonId === flattenedLessons[currentFlatIndex + 1]?.lesson.id)?.state !== 'locked');
 
   // Handle Mark Lesson Complete
   const handleToggleLessonComplete = async (lessonId?: string, modId?: string) => {
@@ -346,6 +377,7 @@ export default function StudentLearnPage() {
                 onProgress={(percent) => {
                   if (!currentLesson) return;
                   recordWatch(currentLesson.id, percent);
+                  reportWatch(currentLesson.id, percent);
                   setWatchTick(percent);
                 }}
                 onNextLesson={hasNextLesson ? handleNextLesson : undefined}
@@ -356,7 +388,7 @@ export default function StudentLearnPage() {
             {currentLesson && (
               <div className="bg-white rounded-3xl border border-slate-200 p-5 shadow-sm space-y-3">
                 <p className="text-xs font-bold uppercase text-slate-500">
-                  Watched {watchPercent(currentLesson.id)}%. The next lesson opens at 80%.
+                  Watched {watchPercent(currentLesson.id)}%. Watch 80% to finish this step.
                 </p>
                 <label className="block text-xs font-bold text-slate-500">Lesson notes</label>
                 <textarea
@@ -372,6 +404,18 @@ export default function StudentLearnPage() {
                   Save notes
                 </button>
               </div>
+            )}
+
+            {currentPath && path && (
+              <LessonSteps
+                courseId={courseId}
+                lesson={currentPath}
+                lives={path.lives}
+                rank={path.rank}
+                rankTotal={path.rankTotal}
+                onOpenTab={(tab) => setActiveTab(tab)}
+                onChanged={() => loadPath(currentLesson?.id)}
+              />
             )}
 
             {/* ── LESSON ACTION & CONTROLS BAR ── */}

@@ -21,7 +21,7 @@ export default function LessonAssignment({ courseId, lessonId }: { courseId: str
   const load = () => fetch(`/api/assignments?courseId=${encodeURIComponent(courseId)}&lessonId=${encodeURIComponent(lessonId)}`, { cache: 'no-store' })
     .then(async (res) => {
       const data = await res.json();
-      if (!res.ok) { setMessage(data.message || 'Could not load assignments.'); setAssignments([]); return; }
+      if (!res.ok || data.locked) { setMessage(data.message || 'Could not load assignments.'); setAssignments([]); return; }
       setMessage('');
       setAssignments(data.assignments || []);
     })

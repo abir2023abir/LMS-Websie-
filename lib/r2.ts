@@ -55,6 +55,12 @@ export function lessonVideoKey(courseId: string, lessonId: string, fileName: str
   return `courses/${safe(courseId)}/${safe(lessonId)}/${Date.now()}-${safe(fileName)}`;
 }
 
+/** The lesson a stored key belongs to, or ''. */
+export function lessonIdFromKey(key: string) {
+  const match = key.match(/^courses\/[^/]+\/([^/]+)\/[^/]+$/);
+  return match ? match[1] : '';
+}
+
 /** The course a stored key belongs to, or '' if the key is not a lesson video. */
 export function courseIdFromKey(key: string) {
   const match = key.match(/^courses\/([^/]+)\/[^/]+\/[^/]+$/);

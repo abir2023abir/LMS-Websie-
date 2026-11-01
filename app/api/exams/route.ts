@@ -1,7 +1,21 @@
 import { NextResponse } from 'next/server';
 import { requireRole } from '@/lib/user-session';
 import { getEnrollments } from '@/lib/payments';
-import { attemptsFor, examWindow, listExams, saveProgress, startAttempt, submitAttempt } from '@/lib/exams';
+import { attemptsFor, examWindow, listExams, saveProgress, startAttempt, submitAttempt, type Exam } from '@/lib/exams';
+import { courseLessons, stepOpen } from '@/lib/progression';
+
+// The lesson whose path an exam belongs to: its own lesson, or a module's last lesson. Course-wide exams are not gated.
+async function gateLesson(exam: Exam) {
+  if (exam.lessonId) return exam.lessonId;
+  if (!exam.moduleId) return '';
+  const { lessons } = await courseLessons(exam.courseId);
+  return lessons.filter((lesson) => lesson.moduleId === exam.moduleId).pop()?.lessonId || '';
+}
+
+async function examLocked(studentId: string, exam: Exam) {
+  const lessonId = await gateLesson(exam);
+  return lessonId ? !(await stepOpen(studentId, exam.courseId, lessonId, 'exam')) : false;
+}
 
 export const dynamic = 'force-dynamic';
 
@@ -10,9 +24,11 @@ export async function GET() {
   const { profile, denied } = await requireRole('Student');
   if (denied) return denied;
   const [exams, enrolled, mine] = await Promise.all([listExams(), getEnrollments(profile.id), attemptsFor(profile.id)]);
+  const visible = exams.filter((exam) => exam.published && enrolled.includes(exam.courseId));
+  const locks = await Promise.all(visible.map((exam) => examLocked(profile.id, exam)));
   return NextResponse.json({
     success: true,
-    exams: exams.filter((exam) => exam.published && enrolled.includes(exam.courseId)).map((exam) => {
+    exams: visible.map((exam, index) => {
       const attempts = mine.filter((attempt) => attempt.examId === exam.id);
       const done = attempts.filter((attempt) => attempt.status === 'submitted');
       const best = done.length ? done.reduce((top, attempt) => (attempt.percent > top.percent ? attempt : top)) : null;
@@ -22,6 +38,7 @@ export async function GET() {
         durationMinutes: exam.durationMinutes, opensAt: exam.opensAt, closesAt: exam.closesAt, passMark: exam.passMark,
         maxAttempts: exam.maxAttempts, questionCount: exam.questions.length,
         window: examWindow(exam),
+        locked: locks[index],
         attemptsUsed: attempts.length,
         inProgress: attempts.some((attempt) => attempt.status === 'in-progress'),
         best: best ? { score: best.score, total: best.total, percent: best.percent, passed: best.passed } : null,
@@ -43,6 +60,7 @@ export async function POST(request: Request) {
     }
     const answers = (body.answers && typeof body.answers === 'object' ? body.answers : {}) as Record<string, number>;
     if (body.action === 'start') {
+      if (await examLocked(profile.id, exam)) throw new Error('Finish the lesson, quiz and assignment before this exam.');
       const started = await startAttempt(exam, { id: profile.id, name: profile.name || profile.email, email: profile.email });
       return NextResponse.json({ success: true, title: exam.title, durationMinutes: exam.durationMinutes, ...started });
     }

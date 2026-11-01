@@ -7,6 +7,7 @@ import { useAuth } from '@/context/AuthContext';
 import FloatingNavbar from '@/components/english/FloatingNavbar';
 import EnglishFooter from '@/components/english/EnglishFooter';
 import LessonVideoField from '@/components/admin/LessonVideoField';
+import ProgressRequests from '@/components/admin/ProgressRequests';
 import DashboardCalendar from '@/components/dashboard/DashboardCalendar';
 import InboxButton from '@/components/inbox/InboxButton';
 import AdminMessages from '@/components/admin/AdminMessages';
@@ -320,6 +321,7 @@ export default function TeacherPanelPage() {
             title="Course messages"
             intro="Questions for your courses show the module, lesson, student progress, and your instructor assignment. Admin sees the same thread."
           />
+          <ProgressRequests />
           {/* ── QUICK METRICS (computed from the mentor's real course records) ── */}
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
             <div className="bg-white rounded-3xl border border-slate-200/80 p-6 space-y-2 shadow-sm">

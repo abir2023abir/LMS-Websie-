@@ -21,7 +21,7 @@ export default function LessonQuiz({ courseId, lessonId }: { courseId: string; l
     fetch(`/api/quizzes?courseId=${encodeURIComponent(courseId)}&lessonId=${encodeURIComponent(lessonId)}`, { cache: 'no-store' })
       .then(async (res) => {
         const data = await res.json();
-        if (!res.ok) { setMessage(data.message || 'Could not load quizzes.'); setQuizzes([]); return; }
+        if (!res.ok || data.locked) { setMessage(data.message || 'Could not load quizzes.'); setQuizzes([]); return; }
         setMessage('');
         setQuizzes(data.quizzes || []);
       })

@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server';
 import { requireRole } from '@/lib/user-session';
 import { getEnrollments } from '@/lib/payments';
 import { gradeQuiz, listQuizzes } from '@/lib/quizzes';
+import { stepOpen } from '@/lib/progression';
 
 export const dynamic = 'force-dynamic';
 
@@ -14,6 +15,9 @@ export async function POST(request: Request) {
   if (!quiz) return NextResponse.json({ success: false, message: 'Quiz not found.' }, { status: 404 });
   if (!(await getEnrollments(profile.id)).includes(quiz.courseId)) {
     return NextResponse.json({ success: false, message: 'Enroll in this course to take its quizzes.' }, { status: 403 });
+  }
+  if (!(await stepOpen(profile.id, quiz.courseId, quiz.lessonId, 'quiz'))) {
+    return NextResponse.json({ success: false, message: 'Finish the earlier steps of this lesson first.' }, { status: 403 });
   }
   const answers = (body.answers && typeof body.answers === 'object' ? body.answers : {}) as Record<string, number>;
   const { attempt, results } = await gradeQuiz(quiz, profile.id, answers);

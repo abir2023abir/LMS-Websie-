@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server';
 import { currentProfile, staffIdentity } from '@/lib/user-session';
 import { getEnrollments } from '@/lib/payments';
 import { listAttempts, quizzesForCourses, quizzesForLesson, studentView } from '@/lib/quizzes';
+import { stepOpen } from '@/lib/progression';
 
 export const dynamic = 'force-dynamic';
 
@@ -18,6 +19,9 @@ export async function GET(request: Request) {
   const enrolled = profile ? await getEnrollments(profile.id) : [];
   if (courseId && profile && !enrolled.includes(courseId)) {
     return NextResponse.json({ success: false, message: 'Enroll in this course to take its quizzes.' }, { status: 403 });
+  }
+  if (profile && courseId && lessonId && !(await stepOpen(profile.id, courseId, lessonId, 'quiz'))) {
+    return NextResponse.json({ success: true, locked: true, message: 'Watch the lesson video first — the quiz opens after that.', quizzes: [] });
   }
   const quizzes = courseId && lessonId ? await quizzesForLesson(courseId, lessonId) : await quizzesForCourses(courseId ? [courseId] : enrolled);
   const attempts = profile ? await listAttempts(profile.id) : [];

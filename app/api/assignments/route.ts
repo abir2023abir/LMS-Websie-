@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server';
 import { requireRole } from '@/lib/user-session';
 import { getEnrollments } from '@/lib/payments';
 import { listAssignments, listSubmissions, saveSubmissionFile, submitAssignment } from '@/lib/assignments';
+import { stepOpen } from '@/lib/progression';
 
 export const dynamic = 'force-dynamic';
 
@@ -16,6 +17,9 @@ export async function GET(request: Request) {
   const enrolled = await getEnrollments(profile.id);
   if (courseId && !enrolled.includes(courseId)) {
     return NextResponse.json({ success: false, message: 'Enroll in this course to see its assignments.' }, { status: 403 });
+  }
+  if (courseId && lessonId && !(await stepOpen(profile.id, courseId, lessonId, 'assignment'))) {
+    return NextResponse.json({ success: true, locked: true, message: 'Pass this lesson’s quiz first — the assignment opens after that.', assignments: [] });
   }
   const [assignments, submissions] = await Promise.all([listAssignments(), listSubmissions()]);
   const visible = assignments.filter((item) => item.published
@@ -42,6 +46,9 @@ export async function POST(request: Request) {
     if (!assignment) return NextResponse.json({ success: false, message: 'Assignment not found.' }, { status: 404 });
     if (!(await getEnrollments(profile.id)).includes(assignment.courseId)) {
       return NextResponse.json({ success: false, message: 'Enroll in this course to submit.' }, { status: 403 });
+    }
+    if (!(await stepOpen(profile.id, assignment.courseId, assignment.lessonId, 'assignment'))) {
+      return NextResponse.json({ success: false, message: 'Finish the earlier steps of this lesson first.' }, { status: 403 });
     }
     const file = form.get('file');
     let fileId = '';

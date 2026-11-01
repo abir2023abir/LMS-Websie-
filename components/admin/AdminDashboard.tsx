@@ -8,7 +8,7 @@ import useSWR from 'swr';
 import {
   Plus, LogOut, Shield, LayoutDashboard, BookOpen, Award, HelpCircle,
   Banknote, Users, FileText, Search, Trash2, RefreshCw, Eye,
-  Sparkles, Inbox, MessageSquare, Pencil, Globe, Menu, X, GraduationCap
+  Sparkles, Inbox, MessageSquare, Pencil, Globe, Menu, X, GraduationCap, Video, TrendingUp
 } from 'lucide-react';
 import { applyCourseEdit, useCourseEdits } from '@/lib/course-edits-client';
 import StatsCards from './StatsCards';
@@ -19,6 +19,8 @@ import AdminCourseEditor from './AdminCourseEditor';
 import AdminPaymentSetup from './AdminPaymentSetup';
 import AdminQuizzes from './AdminQuizzes';
 import AdminExams from './AdminExams';
+import AdminLiveClasses from './AdminLiveClasses';
+import AdminProgress from './AdminProgress';
 import AdminStudents from './AdminStudents';
 import AdminRequests from './AdminRequests';
 import AdminAssignments from './AdminAssignments';
@@ -36,6 +38,8 @@ const navTabs = [
   { name: 'Certificate', icon: Award },
   { name: 'Quizzes', icon: HelpCircle },
   { name: 'Exams', icon: GraduationCap },
+  { name: 'Live Classes', icon: Video },
+  { name: 'Progress', icon: TrendingUp },
   { name: 'Earnings', icon: Banknote },
   { name: 'Students', icon: Users },
   { name: 'Accounts', icon: Shield },
@@ -318,6 +322,8 @@ export default function AdminDashboard() {
 
         {activeTab === 'Quizzes' && <AdminQuizzes />}
         {activeTab === 'Exams' && <AdminExams />}
+        {activeTab === 'Live Classes' && <AdminLiveClasses />}
+        {activeTab === 'Progress' && <AdminProgress />}
         {activeTab === 'Certificate' && <AdminCertificates />}
         {activeTab === 'Assignments' && <AdminAssignments />}
         {activeTab === 'Landing Page CMS' && <LandingPageCMS />}

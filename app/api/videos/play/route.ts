@@ -1,7 +1,8 @@
 import { NextResponse } from 'next/server';
 import { currentProfile, staffIdentity } from '@/lib/user-session';
 import { getEnrollments } from '@/lib/payments';
-import { courseIdFromKey, presignPlayback } from '@/lib/r2';
+import { courseIdFromKey, lessonIdFromKey, presignPlayback } from '@/lib/r2';
+import { lessonOpen } from '@/lib/progression';
 
 export const dynamic = 'force-dynamic';
 
@@ -18,6 +19,9 @@ export async function GET(request: Request) {
     if (!profile) return NextResponse.json({ success: false, message: 'Sign in to watch this lesson.' }, { status: 401 });
     if (!(await getEnrollments(profile.id)).includes(courseId)) {
       return NextResponse.json({ success: false, message: 'Enroll in this course to watch its lessons.' }, { status: 403 });
+    }
+    if (!(await lessonOpen(profile.id, courseId, lessonIdFromKey(key)))) {
+      return NextResponse.json({ success: false, message: 'Finish the previous lesson first.' }, { status: 403 });
     }
   }
 

@@ -10,7 +10,7 @@ import EnglishFooter from '@/components/english/EnglishFooter';
 type ExamSummary = {
   id: string; title: string; description: string; courseTitle: string; moduleTitle: string; lessonTitle: string;
   durationMinutes: number; opensAt: string; closesAt: string; passMark: number; maxAttempts: number; questionCount: number;
-  window: 'open' | 'upcoming' | 'closed'; attemptsUsed: number; inProgress: boolean;
+  window: 'open' | 'upcoming' | 'closed'; locked: boolean; attemptsUsed: number; inProgress: boolean;
   best: { score: number; total: number; percent: number; passed: boolean } | null;
 };
 type Question = { id: string; prompt: string; choices: string[]; points: number };
@@ -192,7 +192,7 @@ export default function ExamsPage() {
                 </div>
               ) : exams.map((exam) => {
                 const attemptsLeft = exam.maxAttempts ? exam.maxAttempts - exam.attemptsUsed : Infinity;
-                const canStart = exam.window === 'open' && (exam.inProgress || attemptsLeft > 0);
+                const canStart = !exam.locked && exam.window === 'open' && (exam.inProgress || attemptsLeft > 0);
                 return (
                   <article key={exam.id} className="space-y-3 rounded-3xl border border-slate-200 bg-white p-5">
                     <div className="flex flex-wrap items-start justify-between gap-2">
@@ -213,7 +213,7 @@ export default function ExamsPage() {
                       {exam.window === 'closed' && <span className="font-semibold text-slate-500">Closed</span>}
                     </div>
                     <button type="button" disabled={!canStart || busy} onClick={() => start(exam)} className="rounded-xl bg-[#111827] px-5 py-2.5 text-sm font-bold text-white hover:bg-slate-800 disabled:bg-slate-200 disabled:text-slate-500">
-                      {exam.inProgress ? 'Resume exam' : exam.window === 'upcoming' ? 'Not open yet' : exam.window === 'closed' ? 'Exam closed' : attemptsLeft <= 0 ? 'No attempts left' : exam.attemptsUsed ? 'Try again' : 'Start exam'}
+                      {exam.locked ? 'Finish the lesson, quiz and assignment first' : exam.inProgress ? 'Resume exam' : exam.window === 'upcoming' ? 'Not open yet' : exam.window === 'closed' ? 'Exam closed' : attemptsLeft <= 0 ? 'No attempts left' : exam.attemptsUsed ? 'Try again' : 'Start exam'}
                     </button>
                   </article>
                 );
