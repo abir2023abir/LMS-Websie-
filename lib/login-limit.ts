@@ -5,14 +5,41 @@ const MAX_FAILS = 5;
 const WINDOW_MS = 15 * 60 * 1000;
 type Attempts = Record<string, { fails: number; first: number }>;
 
+// Counts are kept in memory and also saved to the kv store so they survive cold
+// starts. If saving fails (e.g. app_kv not set up yet) the in-memory count still
+// applies and sign-in keeps working.
+const memory = new Map<string, Attempts>();
+
 export function clientIp(request: Request) {
   return request.headers.get('x-forwarded-for')?.split(',')[0].trim() || request.headers.get('x-real-ip') || 'unknown';
 }
 
-async function liveAttempts(key: string): Promise<Attempts> {
-  const all = await kvGet<Attempts>(key, {});
+function fresh(all: Attempts): Attempts {
   const now = Date.now();
   return Object.fromEntries(Object.entries(all).filter(([, entry]) => now - entry.first < WINDOW_MS));
+}
+
+async function liveAttempts(key: string): Promise<Attempts> {
+  let stored: Attempts = {};
+  try {
+    stored = await kvGet<Attempts>(key, {});
+  } catch {
+    // fall back to memory only
+  }
+  const merged = { ...stored };
+  for (const [ip, entry] of Object.entries(memory.get(key) || {})) {
+    if (!merged[ip] || entry.fails > merged[ip].fails) merged[ip] = entry;
+  }
+  return fresh(merged);
+}
+
+async function save(key: string, attempts: Attempts) {
+  memory.set(key, attempts);
+  try {
+    await kvSet(key, attempts);
+  } catch (error) {
+    console.error(`[login-limit] could not save "${key}", keeping count in memory:`, error);
+  }
 }
 
 function minutesLeft(first: number) {
@@ -31,7 +58,7 @@ export async function loginFailed(key: string, ip: string): Promise<number> {
   const attempts = await liveAttempts(key);
   const entry = attempts[ip];
   attempts[ip] = { fails: (entry?.fails || 0) + 1, first: entry?.first || Date.now() };
-  await kvSet(key, attempts);
+  await save(key, attempts);
   return Math.max(0, MAX_FAILS - attempts[ip].fails);
 }
 
@@ -40,7 +67,7 @@ export async function loginSucceeded(key: string, ip: string) {
   const attempts = await liveAttempts(key);
   if (!attempts[ip]) return;
   delete attempts[ip];
-  await kvSet(key, attempts);
+  await save(key, attempts);
 }
 
 export function attemptsLeftMessage(left: number, base: string) {
