@@ -7,6 +7,8 @@ import LessonVideoField from './LessonVideoField';
 import { getFallbackCourseData } from '@/lib/progress';
 import { loadCourseEdits, shrinkImage } from '@/lib/course-edits-client';
 import { usdToBdt, USD_TO_BDT } from '@/lib/utils';
+import { lessonWindowLabel } from '@/lib/lesson-schedule';
+import type { ModuleSchema } from '@/types/course';
 
 export default function AdminCourseEditor({
   courseId,
@@ -31,6 +33,12 @@ export default function AdminCourseEditor({
   const [videos, setVideos] = useState<Record<string, string>>(
     Object.fromEntries(lessons.map((lesson) => [lesson.id, lesson.videoUrl || ''])),
   );
+  const [modules, setModules] = useState<ModuleSchema[]>(
+    (course?.modules || []).map((mod) => ({
+      ...mod,
+      lessons: (mod.lessons || []).map((lesson) => ({ ...lesson, days: lesson.days || 2 })),
+    })),
+  );
   const [busy, setBusy] = useState(false);
 
   useEffect(() => {
@@ -47,6 +55,12 @@ export default function AdminCourseEditor({
         thumbnail: edit.thumbnail || prev.thumbnail,
       }));
       setVideos((prev) => ({ ...prev, ...edit.videos }));
+      if (Array.isArray(edit.modules) && edit.modules.length) {
+        setModules(edit.modules.map((mod) => ({
+          ...mod,
+          lessons: (mod.lessons || []).map((lesson) => ({ ...lesson, days: lesson.days || 2 })),
+        })));
+      }
     });
   }, [courseId]);
 
@@ -77,6 +91,10 @@ export default function AdminCourseEditor({
         price: toUsd(form.price),
         originalPrice: toUsd(form.originalPrice),
         videos,
+        modules: modules.map((mod) => ({
+          ...mod,
+          lessons: mod.lessons.map((lesson) => ({ ...lesson, videoUrl: videos[lesson.id] ?? lesson.videoUrl, days: lesson.days || 2 })),
+        })),
       }),
     });
     const data = await res.json().catch(() => ({}));
@@ -130,19 +148,66 @@ export default function AdminCourseEditor({
           <textarea value={form.description} onChange={set('description')} rows={4} className={fieldClass} />
         </label>
 
-        <div className="space-y-2">
-          <p className="text-xs font-bold text-slate-500">Lesson videos — upload the recorded class or paste a YouTube link</p>
-          {lessons.map((lesson) => (
-            <div key={lesson.id} className="space-y-1 text-[11px] font-semibold text-slate-600">
-              <span>{lesson.title}</span>
-              <LessonVideoField
-                courseId={courseId}
-                lessonId={lesson.id}
-                value={videos[lesson.id] || ''}
-                onChange={(value) => setVideos((prev) => ({ ...prev, [lesson.id]: value }))}
-              />
+        <div className="space-y-3">
+          <div className="flex items-center justify-between gap-3">
+            <p className="text-xs font-bold text-slate-500">Modules and lessons</p>
+            <button
+              type="button"
+              onClick={() => setModules((prev) => [...prev, { id: `mod-${Date.now()}`, title: `Module ${prev.length + 1}`, lessons: [] }])}
+              className="rounded-full bg-slate-100 px-3 py-1.5 text-[11px] font-bold"
+            >
+              Add module
+            </button>
+          </div>
+          {modules.map((mod, modIndex) => (
+            <div key={mod.id} className="space-y-2 rounded-2xl border border-slate-200 bg-slate-50 p-3">
+              <div className="flex gap-2">
+                <input
+                  value={mod.title}
+                  onChange={(e) => setModules((prev) => prev.map((item) => item.id === mod.id ? { ...item, title: e.target.value } : item))}
+                  className={fieldClass}
+                />
+                <button type="button" onClick={() => setModules((prev) => prev.filter((item) => item.id !== mod.id))} className="text-xs font-bold text-rose-600">Remove</button>
+              </div>
+              {mod.lessons.map((lesson, lessonIndex) => (
+                <div key={lesson.id} className="space-y-1 rounded-xl bg-white p-3">
+                  <div className="flex flex-wrap items-center gap-2">
+                    <input
+                      value={lesson.title}
+                      onChange={(e) => setModules((prev) => prev.map((item) => item.id === mod.id ? { ...item, lessons: item.lessons.map((row) => row.id === lesson.id ? { ...row, title: e.target.value } : row) } : item))}
+                      className={`${fieldClass} min-w-0 flex-1`}
+                    />
+                    <label className="flex items-center gap-1 text-[11px] font-bold text-slate-500">
+                      Days
+                      <input
+                        type="number"
+                        min="1"
+                        value={lesson.days || 2}
+                        onChange={(e) => setModules((prev) => prev.map((item) => item.id === mod.id ? { ...item, lessons: item.lessons.map((row) => row.id === lesson.id ? { ...row, days: Math.max(1, Number(e.target.value) || 1) } : row) } : item))}
+                        className="w-16 rounded-lg border border-slate-200 px-2 py-1.5"
+                      />
+                    </label>
+                    <button type="button" onClick={() => setModules((prev) => prev.map((item) => item.id === mod.id ? { ...item, lessons: item.lessons.filter((row) => row.id !== lesson.id) } : item))} className="text-[11px] font-bold text-rose-600">Remove</button>
+                  </div>
+                  <p className="text-[11px] font-semibold text-amber-700">{lessonWindowLabel(mod.lessons, lessonIndex) || 'Set days for this lesson'}</p>
+                  <LessonVideoField
+                    courseId={courseId}
+                    lessonId={lesson.id}
+                    value={videos[lesson.id] || lesson.videoUrl || ''}
+                    onChange={(value) => setVideos((prev) => ({ ...prev, [lesson.id]: value }))}
+                  />
+                </div>
+              ))}
+              <button
+                type="button"
+                onClick={() => setModules((prev) => prev.map((item) => item.id === mod.id ? { ...item, lessons: [...item.lessons, { id: `les-${Date.now()}`, title: `Lesson ${item.lessons.length + 1}`, videoUrl: '', days: 2 }] } : item))}
+                className="text-[11px] font-bold text-amber-700"
+              >
+                Add lesson to module {modIndex + 1}
+              </button>
             </div>
           ))}
+          <p className="text-[11px] text-slate-500">Three lessons at 2 days each must be finished by day 2, day 4, and day 6.</p>
         </div>
 
         <div className="flex items-center gap-3 pt-2">

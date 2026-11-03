@@ -15,7 +15,7 @@ export async function GET() {
 }
 
 export async function PUT(request: Request) {
-  const denied = requireAdmin();
+  const denied = await requireAdmin('Courses');
   if (denied) return denied;
   try {
     const body = await request.json();
@@ -49,6 +49,21 @@ export async function PUT(request: Request) {
       patch.videos = Object.fromEntries(
         Object.entries(body.videos as Record<string, unknown>).map(([id, url]) => [id, String(url || '').trim()]),
       );
+    }
+    if (Array.isArray(body.modules)) {
+      patch.modules = body.modules.map((mod: any, modIndex: number) => ({
+        id: String(mod?.id || `mod-${modIndex + 1}`),
+        title: String(mod?.title || `Module ${modIndex + 1}`).slice(0, 160),
+        lessons: Array.isArray(mod?.lessons)
+          ? mod.lessons.map((lesson: any, lessonIndex: number) => ({
+              id: String(lesson?.id || `les-${modIndex + 1}-${lessonIndex + 1}`),
+              title: String(lesson?.title || `Lesson ${lessonIndex + 1}`).slice(0, 160),
+              videoUrl: String(lesson?.videoUrl || '').trim(),
+              duration: lesson?.duration ? String(lesson.duration).slice(0, 20) : undefined,
+              days: Math.max(1, Math.min(365, Math.round(Number(lesson?.days) || 2))),
+            }))
+          : [],
+      }));
     }
 
     return NextResponse.json({ success: true, edit: await saveCourseEdit(courseId, patch) });

@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server';
-import { staffDenied, staffIdentity } from '@/lib/user-session';
+import { requireAdmin } from '@/lib/admin-guard';
 import { listProfiles } from '@/lib/accounts';
 import { allEnrollments } from '@/lib/payments';
 import { deleteLiveClass, listLiveClasses, saveLiveClass, setAttendance } from '@/lib/live-classes';
@@ -23,12 +23,14 @@ async function payload() {
 
 // Admins and mentors schedule live classes and mark attendance.
 export async function GET() {
-  if (!(await staffIdentity())) return staffDenied();
+  const denied = await requireAdmin('Live Classes');
+  if (denied) return denied;
   return NextResponse.json(await payload());
 }
 
 export async function POST(request: Request) {
-  if (!(await staffIdentity())) return staffDenied();
+  const denied = await requireAdmin('Live Classes');
+  if (denied) return denied;
   try {
     const body = await request.json();
     if (body.action === 'delete') await deleteLiveClass(String(body.id || ''));

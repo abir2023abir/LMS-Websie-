@@ -13,7 +13,7 @@ export async function GET(_request: Request, { params }: { params: { id: string 
 
 // Admin only: remove a course.
 export async function DELETE(_request: Request, { params }: { params: { id: string } }) {
-  const denied = requireAdmin();
+  const denied = await requireAdmin('Courses');
   if (denied) return denied;
   await deleteCourse(params.id);
   return NextResponse.json({ success: true });

@@ -20,7 +20,7 @@ async function allProgrammes() {
 }
 
 export async function GET() {
-  const denied = requireAdmin();
+  const denied = await requireAdmin('Landing Page CMS');
   if (denied) return denied;
   if (process.env.VERCEL && !hasCmsDatabase()) {
     return NextResponse.json({ success: false, message: 'Configure Supabase to manage published programmes.' }, { status: 503 });
@@ -29,7 +29,7 @@ export async function GET() {
 }
 
 export async function POST(request: Request) {
-  const denied = requireAdmin();
+  const denied = await requireAdmin('Landing Page CMS');
   if (denied) return denied;
   if (process.env.VERCEL && !hasCmsDatabase()) {
     return NextResponse.json({ success: false, message: 'Configure Supabase to manage published programmes.' }, { status: 503 });

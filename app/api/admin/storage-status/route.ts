@@ -6,7 +6,7 @@ export const dynamic = 'force-dynamic';
 
 // Tells the admin panel whether data can be saved (Supabase app_kv table present).
 export async function GET() {
-  const denied = requireAdmin();
+  const denied = await requireAdmin('Overview');
   if (denied) return denied;
   return NextResponse.json({ success: true, ...(await kvHealth()) });
 }

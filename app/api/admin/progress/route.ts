@@ -1,4 +1,5 @@
 import { NextResponse } from 'next/server';
+import { requireAdmin } from '@/lib/admin-guard';
 import { staffDenied, staffIdentity } from '@/lib/user-session';
 import { courseAnalytics, staffCourses } from '@/lib/analytics';
 
@@ -6,6 +7,8 @@ export const dynamic = 'force-dynamic';
 
 // Progress analytics for one course (admins: any course; mentors: their own courses).
 export async function GET(request: Request) {
+  const denied = await requireAdmin('Progress');
+  if (denied) return denied;
   const staff = await staffIdentity();
   if (!staff) return staffDenied();
   const courseId = new URL(request.url).searchParams.get('courseId') || '';

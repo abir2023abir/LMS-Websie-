@@ -8,7 +8,7 @@ const STATUSES = new Set<PaymentStatus>(['pending', 'approved', 'rejected', 'pai
 const asStatus = (value: unknown) => (STATUSES.has(value as PaymentStatus) ? (value as PaymentStatus) : undefined);
 
 export async function GET(request: Request) {
-  const denied = requireAdmin();
+  const denied = await requireAdmin('Payments');
   if (denied) return denied;
   const proof = new URL(request.url).searchParams.get('proof') || '';
   if (proof) {
@@ -20,7 +20,7 @@ export async function GET(request: Request) {
 }
 
 export async function POST(request: Request) {
-  const denied = requireAdmin();
+  const denied = await requireAdmin('Payments');
   if (denied) return denied;
   try {
     const type = request.headers.get('content-type') || '';

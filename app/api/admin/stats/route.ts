@@ -1,19 +1,12 @@
 import { NextResponse } from 'next/server';
-import { cookies } from 'next/headers';
-import { verifyAdminSession } from '@/lib/auth-server';
+import { requireAdmin } from '@/lib/admin-guard';
 import { getAllCourses } from '@/lib/db';
 import { listProfiles } from '@/lib/accounts';
 import { listPayments } from '@/lib/payments';
 
 export async function GET() {
-  const cookieStore = cookies();
-  const adminSession = cookieStore.get('admin_session');
-
-  // Cryptographically validate admin authentication cookie token
-  const session = verifyAdminSession(adminSession?.value);
-  if (!session) {
-    return NextResponse.json({ success: false, message: 'Unauthorized' }, { status: 401 });
-  }
+  const denied = await requireAdmin('Overview');
+  if (denied) return denied;
 
   try {
     let courses: any[] = [];

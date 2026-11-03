@@ -16,7 +16,8 @@ import {
   type CourseProgressRecord,
 } from '@/lib/progress';
 import { getCourseById } from '@/lib/course-client';
-import { useCourseEdits } from '@/lib/course-edits-client';
+import { applyCourseEdit, loadCourseEdits, useCourseEdits } from '@/lib/course-edits-client';
+import { lessonWindowLabel } from '@/lib/lesson-schedule';
 import LessonQuestions from '@/components/student/LessonQuestions';
 import LessonQuiz from '@/components/student/LessonQuiz';
 import LessonAssignment from '@/components/student/LessonAssignment';
@@ -91,6 +92,8 @@ export default function StudentLearnPage() {
       if (!fetchedCourse || !fetchedCourse.modules || fetchedCourse.modules.length === 0) {
         fetchedCourse = getFallbackCourseData(courseId);
       }
+      const edits = await loadCourseEdits();
+      if (fetchedCourse) fetchedCourse = applyCourseEdit(fetchedCourse, edits[String(courseId)]);
 
       setCourse(fetchedCourse);
 
@@ -427,6 +430,9 @@ export default function StudentLearnPage() {
                 <h2 className="font-display font-bold text-base sm:text-lg text-[#111827]">
                   {currentLesson?.title}
                 </h2>
+                {currentModule && currentLesson && lessonWindowLabel(currentModule.lessons || [], activeLessonIndex) && (
+                  <p className="text-xs font-semibold text-slate-500">{lessonWindowLabel(currentModule.lessons || [], activeLessonIndex)}</p>
+                )}
               </div>
 
               <div className="flex items-center gap-2.5 w-full sm:w-auto">
@@ -644,7 +650,12 @@ export default function StudentLearnPage() {
                                 ) : (
                                   <div className="w-4 h-4 rounded-full border border-slate-300 flex-shrink-0" />
                                 )}
-                                <span className="truncate">{les.title}</span>
+                                <span className="min-w-0">
+                                  <span className="block truncate">{les.title}</span>
+                                  {lessonWindowLabel(mod.lessons || [], lIdx) && (
+                                    <span className="block text-[10px] font-semibold text-amber-700">{lessonWindowLabel(mod.lessons || [], lIdx)}</span>
+                                  )}
+                                </span>
                               </div>
 
                               <span className="text-[10px] text-slate-400 font-mono flex-shrink-0">

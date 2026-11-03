@@ -8,7 +8,7 @@ const MANUAL_IDS: ManualMethodId[] = ['bkash', 'nagad', 'rocket'];
 const ACCOUNT_TYPES = new Set(['Personal', 'Agent', 'Merchant']);
 
 export async function GET() {
-  const denied = requireAdmin();
+  const denied = await requireAdmin('Payments');
   if (denied) return denied;
   const settings = await getPaymentSettings();
   // Never send the SSLCommerz password back to the browser.
@@ -20,7 +20,7 @@ export async function GET() {
 }
 
 export async function POST(request: Request) {
-  const denied = requireAdmin();
+  const denied = await requireAdmin('Payments');
   if (denied) return denied;
   try {
     const body = (await request.json()) as Partial<PaymentSettings>;

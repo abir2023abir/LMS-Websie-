@@ -45,6 +45,7 @@ export function applyCourseEdit<T extends { title?: string; price?: number; thum
     ...(edit.level ? { level: edit.level } : {}),
     ...(edit.description ? { description: edit.description } : {}),
     thumbnail: edit.thumbnail || course.thumbnail,
+    ...(Array.isArray(edit.modules) ? { modules: edit.modules } : {}),
   };
 }
 

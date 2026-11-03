@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server';
-import { staffDenied, staffIdentity } from '@/lib/user-session';
+import { requireAdmin } from '@/lib/admin-guard';
 import { attemptsFor, deleteExam, listExams, saveExam } from '@/lib/exams';
 
 export const dynamic = 'force-dynamic';
@@ -11,12 +11,14 @@ async function payload() {
 
 // Admins and mentors create exams and see every student's result.
 export async function GET() {
-  if (!(await staffIdentity())) return staffDenied();
+  const denied = await requireAdmin('Exams');
+  if (denied) return denied;
   return NextResponse.json(await payload());
 }
 
 export async function POST(request: Request) {
-  if (!(await staffIdentity())) return staffDenied();
+  const denied = await requireAdmin('Exams');
+  if (denied) return denied;
   try {
     const body = await request.json();
     if (body.action === 'delete') await deleteExam(String(body.id || ''));

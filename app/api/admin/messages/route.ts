@@ -3,13 +3,13 @@ import { requireAdmin } from '@/lib/admin-guard';
 import { listDeskThreads, replyDeskThread } from '@/lib/desk-messages';
 
 export async function GET() {
-  const denied = requireAdmin();
+  const denied = await requireAdmin('Messages');
   if (denied) return denied;
   return NextResponse.json({ success: true, threads: await listDeskThreads() });
 }
 
 export async function POST(request: Request) {
-  const denied = requireAdmin();
+  const denied = await requireAdmin('Messages');
   if (denied) return denied;
   try {
     const body = await request.json();

@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server';
-import { staffDenied, staffIdentity } from '@/lib/user-session';
+import { requireAdmin } from '@/lib/admin-guard';
 import { deleteAssignment, listAssignments, listSubmissions, readSubmissionFile, reviewSubmission, saveAssignment, type SubmissionStatus } from '@/lib/assignments';
 
 export const dynamic = 'force-dynamic';
@@ -13,7 +13,8 @@ async function payload() {
 
 // Admins and mentors manage lesson assignments and review submissions.
 export async function GET(request: Request) {
-  if (!(await staffIdentity())) return staffDenied();
+  const denied = await requireAdmin('Assignments');
+  if (denied) return denied;
   const fileId = new URL(request.url).searchParams.get('file') || '';
   if (fileId) {
     const file = await readSubmissionFile(fileId);
@@ -26,7 +27,8 @@ export async function GET(request: Request) {
 }
 
 export async function POST(request: Request) {
-  if (!(await staffIdentity())) return staffDenied();
+  const denied = await requireAdmin('Assignments');
+  if (denied) return denied;
   try {
     const body = await request.json();
     if (body.action === 'delete') {

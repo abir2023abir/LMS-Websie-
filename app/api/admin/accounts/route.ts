@@ -16,7 +16,7 @@ import {
 export const dynamic = 'force-dynamic';
 
 export async function GET() {
-  const denied = requireAdmin();
+  const denied = await requireAdmin('Accounts');
   if (denied) return denied;
   try {
     const [profiles, links, courses] = await Promise.all([listProfiles(), listLinks(), listCourseSettings()]);
@@ -32,7 +32,7 @@ export async function GET() {
 }
 
 export async function PATCH(request: Request) {
-  const denied = requireAdmin();
+  const denied = await requireAdmin('Accounts');
   if (denied) return denied;
   try {
     const body = await request.json();

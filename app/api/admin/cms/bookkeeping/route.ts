@@ -1,21 +1,20 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { cookies } from 'next/headers';
-import { verifyAdminSession } from '@/lib/auth-server';
+import { requireAdmin } from '@/lib/admin-guard';
 import { getBookkeepingPageContent, saveBookkeepingPageContent } from '@/lib/bookkeeping-content';
 
 export const dynamic = 'force-dynamic';
 
-function isAdmin() {
-  return verifyAdminSession(cookies().get('admin_session')?.value);
+async function isAdmin() {
+  return (await requireAdmin('Landing Page CMS')) === null;
 }
 
 export async function GET() {
-  if (!isAdmin()) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+  if (!(await isAdmin())) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
   return NextResponse.json({ content: getBookkeepingPageContent() });
 }
 
 export async function POST(request: NextRequest) {
-  if (!isAdmin()) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+  if (!(await isAdmin())) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
   try {
     const content = saveBookkeepingPageContent(await request.json());
     return NextResponse.json({ success: true, content });

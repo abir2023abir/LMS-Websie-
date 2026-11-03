@@ -3,6 +3,8 @@ export interface LessonSchema {
   title: string;
   videoUrl: string;
   duration?: string;
+  /** How many days the student has for this lesson. Deadlines add up inside the module. */
+  days?: number;
 }
 
 export interface ModuleSchema {

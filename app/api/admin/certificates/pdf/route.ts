@@ -4,7 +4,7 @@ import { getCertificate } from '@/lib/admin-studio';
 import { buildCertificatePdf } from '@/lib/certificate-pdf';
 
 export async function GET(request: Request) {
-  const denied = requireAdmin();
+  const denied = await requireAdmin('Certificate');
   if (denied) return denied;
   const id = new URL(request.url).searchParams.get('id') || '';
   const certificate = getCertificate(id);

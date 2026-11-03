@@ -33,7 +33,7 @@ async function studentList() {
 
 // GET → all students; GET ?id → one student's full record (payments and results).
 export async function GET(request: Request) {
-  const denied = requireAdmin();
+  const denied = await requireAdmin('Students');
   if (denied) return denied;
   const id = new URL(request.url).searchParams.get('id') || '';
   if (!id) return NextResponse.json({ success: true, students: await studentList() });
@@ -68,7 +68,7 @@ async function enroll(student: { id: string; name: string; email: string }, inpu
 }
 
 export async function POST(request: Request) {
-  const denied = requireAdmin();
+  const denied = await requireAdmin('Students');
   if (denied) return denied;
   try {
     const body = await request.json();

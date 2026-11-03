@@ -1,14 +1,13 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getContactEnquiries, updateEnquiryStatus, deleteEnquiry } from '@/lib/cms-db';
-import { verifyAdminSession } from '@/lib/auth-server';
+import { requireAdmin } from '@/lib/admin-guard';
 
 export async function GET() {
   try {
     // Enquiries contain names, emails and phone numbers: admin only.
     const cookieStore = await import('next/headers').then(m => m.cookies());
-    if (!verifyAdminSession(cookieStore.get('admin_session')?.value)) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-    }
+    const denied = await requireAdmin('Landing Page CMS');
+    if (denied) return denied;
     const enquiries = await getContactEnquiries();
     return NextResponse.json({ enquiries });
   } catch (error) {
@@ -22,9 +21,8 @@ export async function PUT(request: NextRequest) {
     const cookieStore = await import('next/headers').then(m => m.cookies());
     const adminSession = cookieStore.get('admin_session');
 
-    if (!verifyAdminSession(adminSession?.value)) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-    }
+    const denied = await requireAdmin('Landing Page CMS');
+    if (denied) return denied;
 
     const { id, status } = await request.json();
     const success = await updateEnquiryStatus(id, status);
@@ -41,9 +39,8 @@ export async function DELETE(request: NextRequest) {
     const cookieStore = await import('next/headers').then(m => m.cookies());
     const adminSession = cookieStore.get('admin_session');
 
-    if (!verifyAdminSession(adminSession?.value)) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-    }
+    const denied = await requireAdmin('Landing Page CMS');
+    if (denied) return denied;
 
     const { searchParams } = new URL(request.url);
     const id = searchParams.get('id');

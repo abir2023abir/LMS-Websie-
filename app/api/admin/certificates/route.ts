@@ -3,13 +3,13 @@ import { requireAdmin } from '@/lib/admin-guard';
 import { deleteCertificate, listCertificates, saveCertificate } from '@/lib/admin-studio';
 
 export async function GET() {
-  const denied = requireAdmin();
+  const denied = await requireAdmin('Certificate');
   if (denied) return denied;
   return NextResponse.json({ success: true, certificates: listCertificates() });
 }
 
 export async function POST(request: Request) {
-  const denied = requireAdmin();
+  const denied = await requireAdmin('Certificate');
   if (denied) return denied;
   try {
     const body = await request.json();

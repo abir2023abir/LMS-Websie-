@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getHeroContent, saveHeroContent } from '@/lib/cms-db';
-import { verifyAdminSession } from '@/lib/auth-server';
+import { requireAdmin } from '@/lib/admin-guard';
 
 export async function GET() {
   try {
@@ -17,9 +17,8 @@ export async function POST(request: NextRequest) {
     const cookieStore = await import('next/headers').then(m => m.cookies());
     const adminSession = cookieStore.get('admin_session');
 
-    if (!verifyAdminSession(adminSession?.value)) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-    }
+    const denied = await requireAdmin('Landing Page CMS');
+    if (denied) return denied;
 
     const data = await request.json();
     const id = await saveHeroContent(data);

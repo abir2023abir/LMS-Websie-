@@ -1,7 +1,6 @@
 'use client';
 
-import { useState } from 'react';
-import { useRouter } from 'next/navigation';
+import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
 import dynamic from 'next/dynamic';
@@ -35,6 +34,7 @@ const AdminPaymentsBoard = dynamic(() => import('./AdminPaymentsBoard'), { loadi
 const AdminMessages = dynamic(() => import('./AdminMessages'), { loading: TabLoading });
 const AdminAccounts = dynamic(() => import('./AdminAccounts'), { loading: TabLoading });
 const LandingPageCMS = dynamic(() => import('./LandingPageCMS'), { loading: TabLoading });
+const InstructorAccess = dynamic(() => import('./InstructorAccess'), { loading: TabLoading });
 
 const navTabs = [
   { name: 'Overview', icon: LayoutDashboard },
@@ -52,13 +52,19 @@ const navTabs = [
   { name: 'Assignments', icon: FileText },
   { name: 'Payments', icon: Banknote },
   { name: 'Landing Page CMS', icon: Globe },
+  { name: 'Instructor Access', icon: Shield },
 ];
 
 const fetcher = (url: string) => fetch(url).then((res) => res.json());
 
-export default function AdminDashboard() {
-  const router = useRouter();
-  const [activeTab, setActiveTab] = useState('Overview');
+export default function AdminDashboard({
+  variant = 'admin',
+  allowedTabs,
+}: {
+  variant?: 'admin' | 'instructor';
+  allowedTabs?: string[];
+}) {
+  const [activeTab, setActiveTab] = useState(variant === 'instructor' ? (allowedTabs?.[0] || 'Overview') : 'Overview');
   const [searchTerm, setSearchTerm] = useState('');
   const [menuOpen, setMenuOpen] = useState(false);
   const [editingCourse, setEditingCourse] = useState<string | null>(null);
@@ -79,6 +85,17 @@ export default function AdminDashboard() {
     dedupingInterval: 10000,
   });
   const serviceRequests = requestData?.requests || [];
+  const visibleTabs = navTabs.filter((tab) => {
+    if (tab.name === 'Instructor Access') return variant === 'admin';
+    if (variant === 'admin') return true;
+    return (allowedTabs || []).includes(tab.name);
+  });
+
+  useEffect(() => {
+    if (variant === 'instructor' && allowedTabs && !allowedTabs.includes(activeTab)) {
+      setActiveTab(allowedTabs[0] || '');
+    }
+  }, [activeTab, allowedTabs, variant]);
 
   const stats = data?.stats || {};
   const coursesList = (stats?.courses || []).map((c: any) => applyCourseEdit(c, courseEdits[String(c.id)]));
@@ -86,10 +103,9 @@ export default function AdminDashboard() {
 
   const handleLogout = async () => {
     try {
-      await fetch('/api/admin/logout', { method: 'POST', cache: 'no-store' });
+      await fetch(variant === 'instructor' ? '/api/auth/logout' : '/api/admin/logout', { method: 'POST', cache: 'no-store' });
     } finally {
-      // Full reload so no cached admin data stays on screen after sign-out
-      window.location.replace('/admin');
+      window.location.replace(variant === 'instructor' ? '/instructor' : '/admin');
     }
   };
 
@@ -120,7 +136,7 @@ export default function AdminDashboard() {
               <span className="font-display text-[10px] font-extrabold uppercase leading-none tracking-wider text-[#FACC15]">Career Bridge</span>
               <span className="mt-0.5 font-display text-[8px] font-bold uppercase leading-none tracking-widest text-white">.Studio</span>
             </div>
-            <span className="text-[10px] font-bold uppercase tracking-widest text-slate-400">Admin</span>
+            <span className="text-[10px] font-bold uppercase tracking-widest text-slate-400">{variant === 'instructor' ? 'Instructor' : 'Admin'}</span>
           </div>
           <button type="button" onClick={() => setMenuOpen(false)} className="rounded-lg p-1.5 text-slate-400 hover:bg-white/10 hover:text-white lg:hidden" aria-label="Close menu">
             <X className="h-5 w-5" />
@@ -128,7 +144,7 @@ export default function AdminDashboard() {
         </div>
 
         <nav className="flex-1 space-y-1 overflow-y-auto px-3 py-4">
-          {navTabs.map((tab) => {
+          {visibleTabs.map((tab) => {
             const isActive = activeTab === tab.name;
             const Icon = tab.icon;
             return <button key={tab.name} onClick={() => { setActiveTab(tab.name); setMenuOpen(false); }} aria-current={isActive ? 'page' : undefined} className={`flex min-h-10 w-full items-center gap-3 rounded-xl px-3 py-2.5 text-left text-sm font-semibold transition-colors ${isActive ? 'bg-[#FACC15] text-[#111827]' : 'text-slate-300 hover:bg-white/10 hover:text-white'}`}>
@@ -139,7 +155,9 @@ export default function AdminDashboard() {
         </nav>
 
         <div className="space-y-2 border-t border-white/10 p-3">
-          <Link href="/teacher" className="flex min-h-10 items-center justify-center gap-2 rounded-xl bg-[#FACC15] px-3 text-sm font-extrabold text-[#111827] transition hover:bg-[#EAB308]"><Plus className="h-4 w-4 stroke-[3]" /><span>Add Course</span></Link>
+          {(variant === 'admin' || (allowedTabs || []).includes('Courses')) && (
+            <Link href="/teacher/build" className="flex min-h-10 items-center justify-center gap-2 rounded-xl bg-[#FACC15] px-3 text-sm font-extrabold text-[#111827] transition hover:bg-[#EAB308]"><Plus className="h-4 w-4 stroke-[3]" /><span>Add Course</span></Link>
+          )}
           <button type="button" onClick={handleLogout} className="flex min-h-10 w-full items-center justify-center gap-2 rounded-xl px-3 text-sm font-semibold text-slate-300 transition hover:bg-red-500/15 hover:text-red-300">
             <LogOut className="h-4 w-4" /><span>Log out</span>
           </button>
@@ -232,7 +250,7 @@ export default function AdminDashboard() {
                 <p className="text-xs text-slate-500">Live database inventory of all published courses.</p>
               </div>
               <Link
-                href="/teacher"
+                href="/teacher/build"
                 className="flex items-center gap-2 bg-[#FACC15] hover:bg-[#eab308] text-[#111827] font-bold text-xs px-4 py-2 rounded-full"
               >
                 <Plus className="w-3.5 h-3.5" />
@@ -344,6 +362,12 @@ export default function AdminDashboard() {
         {activeTab === 'Certificate' && <AdminCertificates />}
         {activeTab === 'Assignments' && <AdminAssignments />}
         {activeTab === 'Landing Page CMS' && <LandingPageCMS />}
+        {activeTab === 'Instructor Access' && variant === 'admin' && <InstructorAccess />}
+        {variant === 'instructor' && visibleTabs.length === 0 && (
+          <div className="rounded-3xl border border-slate-200 bg-white p-8 text-sm text-slate-600">
+            No tools are open on this instructor account yet. An admin can turn them on under Instructor Access.
+          </div>
+        )}
 
         </section>
       </main>

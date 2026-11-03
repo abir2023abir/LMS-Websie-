@@ -5,13 +5,13 @@ import { deleteReview, listReviews, saveReview } from '@/lib/reviews';
 export const dynamic = 'force-dynamic';
 
 export async function GET() {
-  const denied = requireAdmin();
+  const denied = await requireAdmin('Landing Page CMS');
   if (denied) return denied;
   return NextResponse.json({ success: true, reviews: await listReviews() });
 }
 
 export async function POST(request: Request) {
-  const denied = requireAdmin();
+  const denied = await requireAdmin('Landing Page CMS');
   if (denied) return denied;
   try {
     const body = await request.json();

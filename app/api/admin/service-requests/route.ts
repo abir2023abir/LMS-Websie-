@@ -1,14 +1,13 @@
 import { NextResponse } from 'next/server';
-import { cookies } from 'next/headers';
-import { verifyAdminSession } from '@/lib/auth-server';
+import { requireAdmin } from '@/lib/admin-guard';
 import { deleteServiceRequest, listServiceRequests, replyToServiceRequest, updateServiceRequest, type RequestStatus } from '@/lib/service-requests';
 
-function authorized() {
-  return verifyAdminSession(cookies().get('admin_session')?.value);
+async function authorized() {
+  return (await requireAdmin('Requests')) === null;
 }
 
 export async function GET() {
-  if (!authorized()) {
+  if (!(await authorized())) {
     return NextResponse.json({ success: false, message: 'Unauthorized' }, { status: 401 });
   }
 
@@ -22,7 +21,7 @@ export async function GET() {
 }
 
 export async function POST(request: Request) {
-  if (!authorized()) return NextResponse.json({ success: false, message: 'Unauthorized' }, { status: 401 });
+  if (!(await authorized())) return NextResponse.json({ success: false, message: 'Unauthorized' }, { status: 401 });
   try {
     const body = await request.json();
     const id = String(body.id || '');
