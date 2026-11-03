@@ -4,8 +4,7 @@ import { getAboutContent } from '@/lib/cms-db';
 function CardIllustration({ kind }: { kind: string }) {
   if (kind === 'practice') {
     return (
-      <svg viewBox="0 0 64 64" role="img" aria-label="Practical learning checklist illustration" className="h-16 w-16">
-        <rect x="8" y="8" width="48" height="48" rx="16" fill="#FEF3C7" />
+      <svg viewBox="0 0 64 64" role="img" aria-label="Practical learning checklist illustration" className="h-12 w-12">
         <rect x="18" y="17" width="28" height="34" rx="5" fill="white" stroke="#111827" strokeWidth="2.5" />
         <path d="m23 27 2.5 2.5 4-5M33 28h8M23 37l2.5 2.5 4-5M33 38h8" fill="none" stroke="#D97706" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" />
         <path d="m36 14 4 4-9 9-5 1 1-5 9-9Z" fill="#FACC15" stroke="#111827" strokeWidth="2" strokeLinejoin="round" />
@@ -15,8 +14,7 @@ function CardIllustration({ kind }: { kind: string }) {
 
   if (kind === 'progress') {
     return (
-      <svg viewBox="0 0 64 64" role="img" aria-label="Learning progress chart illustration" className="h-16 w-16">
-        <rect x="8" y="8" width="48" height="48" rx="16" fill="#DCFCE7" />
+      <svg viewBox="0 0 64 64" role="img" aria-label="Learning progress chart illustration" className="h-12 w-12">
         <path d="M18 46V36h7v10M29 46V29h7v17M40 46V20h7v26" fill="#86EFAC" stroke="#166534" strokeWidth="2.5" strokeLinejoin="round" />
         <path d="m18 30 10-7 8 2 11-9" fill="none" stroke="#111827" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" />
         <path d="M41 16h6v6" fill="none" stroke="#111827" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" />
@@ -26,8 +24,7 @@ function CardIllustration({ kind }: { kind: string }) {
 
   if (kind === 'goals') {
     return (
-      <svg viewBox="0 0 64 64" role="img" aria-label="Goal-focused learning target illustration" className="h-16 w-16">
-        <rect x="8" y="8" width="48" height="48" rx="16" fill="#FEF08A" />
+      <svg viewBox="0 0 64 64" role="img" aria-label="Goal-focused learning target illustration" className="h-12 w-12">
         <circle cx="31" cy="34" r="16" fill="white" stroke="#111827" strokeWidth="2.5" />
         <circle cx="31" cy="34" r="9" fill="#FDE68A" stroke="#D97706" strokeWidth="2.5" />
         <circle cx="31" cy="34" r="3" fill="#111827" />
@@ -37,8 +34,7 @@ function CardIllustration({ kind }: { kind: string }) {
   }
 
   return (
-    <svg viewBox="0 0 64 64" role="img" aria-label="Structured learning book illustration" className="h-16 w-16">
-      <rect x="8" y="8" width="48" height="48" rx="16" fill="#FEF08A" />
+    <svg viewBox="0 0 64 64" role="img" aria-label="Structured learning book illustration" className="h-12 w-12">
       <path d="M14 28c7-3 13-2 19 2v19c-6-4-12-5-19-2V28ZM33 30c6-4 12-5 19-2v19c-7-3-13-2-19 2V30Z" fill="white" stroke="#111827" strokeWidth="2.5" strokeLinejoin="round" />
       <path d="M33 30v19M19 34c3-.5 6 0 9 1.5M38 34c3-1.5 6-2 9-1.5" fill="none" stroke="#D97706" strokeWidth="2.5" strokeLinecap="round" />
       <path d="m32 13 1.6 3.5 3.9.6-2.8 2.7.7 3.9-3.4-1.9-3.4 1.9.7-3.9-2.8-2.7 3.9-.6L32 13Z" fill="#EAB308" />
@@ -81,23 +77,31 @@ export default async function About() {
           </p>
         </div>
 
-        <div className="grid grid-cols-1 min-[480px]:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6">
-          {aboutData.statCards.map(({ value, lead, detail, illustration, highlighted }, index) => (
+        <div className="grid grid-cols-1 min-[480px]:grid-cols-2 lg:grid-cols-4 gap-4">
+          {aboutData.statCards.map(({ value, lead, detail, illustration, highlighted }) => (
             <div
               key={value}
-              className={`min-h-52 rounded-3xl p-5 sm:p-7 flex flex-col items-center justify-between text-center border transition-all hover:-translate-y-1 ${
+              className={`group relative overflow-hidden rounded-[28px] border p-5 sm:p-6 text-left transition-transform duration-200 hover:-translate-y-1 ${
                 highlighted
-                  ? 'bg-[#FEF08A] border-[#FACC15] shadow-lg shadow-[#FACC15]/20'
-                  : 'bg-[#FEFCE8]/60 border-[#FEF9C3] hover:border-[#FACC15]/50'
+                  ? 'border-[#EAB308] bg-[#FACC15] shadow-[0_16px_40px_-24px_rgba(234,179,8,0.9)]'
+                  : 'border-[#F3E8A6] bg-[#FFFBEB] shadow-[0_10px_30px_-22px_rgba(17,24,39,0.45)]'
               }`}
             >
-              <div className="flex w-full items-center justify-between">
-                <span className="inline-flex h-8 min-w-8 items-center justify-center rounded-full bg-white/80 px-2 text-xs font-extrabold tracking-wide text-[#854D0E]">{value}</span>
-                <CardIllustration kind={illustration} />
+              <div className="flex items-center justify-between gap-3">
+                <span className="inline-flex h-7 min-w-7 items-center justify-center rounded-full bg-[#111827] px-2 text-[11px] font-extrabold tracking-wide text-[#FACC15]">
+                  {value}
+                </span>
+                <span
+                  className={`inline-flex h-14 w-14 shrink-0 items-center justify-center rounded-2xl ring-1 ${
+                    highlighted ? 'bg-white/85 ring-black/5' : 'bg-white ring-[#FDE68A]'
+                  }`}
+                >
+                  <CardIllustration kind={illustration} />
+                </span>
               </div>
-              <div className="mt-5 w-full">
-                <h3 className="font-bold text-sm sm:text-base text-[#111827]">{lead}</h3>
-                <p className="mt-1 text-sm text-slate-600 leading-snug">{detail}</p>
+              <div className="mt-6">
+                <h3 className="font-display text-lg font-extrabold tracking-tight text-[#111827]">{lead}</h3>
+                <p className="mt-1 text-sm font-medium leading-snug text-[#111827]/70">{detail}</p>
               </div>
             </div>
           ))}
