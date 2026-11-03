@@ -32,6 +32,7 @@ const AdminCertificates = dynamic(() => import('./AdminCertificates'), { loading
 const AdminEarnings = dynamic(() => import('./AdminEarnings'), { loading: TabLoading });
 const AdminPaymentsBoard = dynamic(() => import('./AdminPaymentsBoard'), { loading: TabLoading });
 const AdminMessages = dynamic(() => import('./AdminMessages'), { loading: TabLoading });
+const CourseUploadModal = dynamic(() => import('./CourseUploadModal'), { loading: () => null });
 const AdminAccounts = dynamic(() => import('./AdminAccounts'), { loading: TabLoading });
 const LandingPageCMS = dynamic(() => import('./LandingPageCMS'), { loading: TabLoading });
 const InstructorAccess = dynamic(() => import('./InstructorAccess'), { loading: TabLoading });
@@ -68,6 +69,7 @@ export default function AdminDashboard({
   const [searchTerm, setSearchTerm] = useState('');
   const [menuOpen, setMenuOpen] = useState(false);
   const [editingCourse, setEditingCourse] = useState<string | null>(null);
+  const [addingCourse, setAddingCourse] = useState(false);
   const [editsVersion, setEditsVersion] = useState(0);
   const courseEdits = useCourseEdits(editsVersion);
 
@@ -156,7 +158,7 @@ export default function AdminDashboard({
 
         <div className="space-y-2 border-t border-white/10 p-3">
           {(variant === 'admin' || (allowedTabs || []).includes('Courses')) && (
-            <Link href="/teacher/build" className="flex min-h-10 items-center justify-center gap-2 rounded-xl bg-[#FACC15] px-3 text-sm font-extrabold text-[#111827] transition hover:bg-[#EAB308]"><Plus className="h-4 w-4 stroke-[3]" /><span>Add Course</span></Link>
+            <button type="button" onClick={() => { setAddingCourse(true); setActiveTab('Courses'); setMenuOpen(false); }} className="flex min-h-10 w-full items-center justify-center gap-2 rounded-xl bg-[#FACC15] px-3 text-sm font-extrabold text-[#111827] transition hover:bg-[#EAB308]"><Plus className="h-4 w-4 stroke-[3]" /><span>Add Course</span></button>
           )}
           <button type="button" onClick={handleLogout} className="flex min-h-10 w-full items-center justify-center gap-2 rounded-xl px-3 text-sm font-semibold text-slate-300 transition hover:bg-red-500/15 hover:text-red-300">
             <LogOut className="h-4 w-4" /><span>Log out</span>
@@ -243,19 +245,29 @@ export default function AdminDashboard({
 
         {/* ── TAB 2: COURSES MANAGEMENT ── */}
         {activeTab === 'Courses' && (
+          <div className="space-y-6">
+          <AdminMessages
+            listUrl="/api/messages?board=1"
+            replyUrl="/api/messages"
+            replyBody={(id, text) => ({ action: 'reply', id, text })}
+            title="Course messages"
+            intro="Student questions on a course arrive here, the same thread the instructor sees. You can read and reply from this panel."
+            initialFilter="student"
+          />
           <div className="bg-white rounded-3xl p-6 shadow-sm border border-slate-100 space-y-6">
             <div className="flex items-center justify-between">
               <div>
                 <h2 className="font-display font-extrabold text-xl text-slate-900">Manage Courses ({filteredCourses.length})</h2>
                 <p className="text-xs text-slate-500">Live database inventory of all published courses.</p>
               </div>
-              <Link
-                href="/teacher/build"
+              <button
+                type="button"
+                onClick={() => setAddingCourse(true)}
                 className="flex items-center gap-2 bg-[#FACC15] hover:bg-[#eab308] text-[#111827] font-bold text-xs px-4 py-2 rounded-full"
               >
                 <Plus className="w-3.5 h-3.5" />
                 <span>New Course</span>
-              </Link>
+              </button>
             </div>
 
             <div className="overflow-x-auto">
@@ -327,6 +339,7 @@ export default function AdminDashboard({
               </table>
             </div>
           </div>
+          </div>
         )}
 
         {/* ── TAB 3: STUDENTS DIRECTORY ── */}
@@ -337,7 +350,22 @@ export default function AdminDashboard({
         {activeTab === 'Earnings' && <AdminEarnings />}
 
         {activeTab === 'Requests' && <AdminRequests />}
-        {activeTab === 'Messages' && <AdminMessages />}
+        {activeTab === 'Messages' && (
+          <AdminMessages
+            listUrl={variant === 'instructor' ? '/api/messages?board=1' : '/api/admin/messages'}
+            replyUrl={variant === 'instructor' ? '/api/messages' : '/api/admin/messages'}
+            replyBody={variant === 'instructor' ? (id, text) => ({ action: 'reply', id, text }) : undefined}
+            title="Course messages"
+            intro="Student lesson questions land here for you and for the instructor on that course."
+          />
+        )}
+        {addingCourse && (
+          <CourseUploadModal
+            asAdmin={variant === 'admin'}
+            onClose={() => setAddingCourse(false)}
+            onCreated={() => mutate()}
+          />
+        )}
 
         {/* ── TAB 5, 6, 7: CERTIFICATE, QUIZZES, ASSIGNMENTS ── */}
         {editingCourse && (

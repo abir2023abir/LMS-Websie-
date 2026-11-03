@@ -56,16 +56,18 @@ export default function AdminMessages({
   replyBody,
   title = 'Messages',
   intro = 'Lesson questions from students and consultation requests from the contact page.',
+  initialFilter = 'all',
 }: {
   listUrl?: string;
   replyUrl?: string;
   replyBody?: (id: string, text: string) => Record<string, unknown>;
   title?: string;
   intro?: string;
+  initialFilter?: 'all' | 'student' | 'service';
 }) {
   const [threads, setThreads] = useState<Thread[]>([]);
   const [loading, setLoading] = useState(true);
-  const [filter, setFilter] = useState<'all' | 'student' | 'service'>('all');
+  const [filter, setFilter] = useState<'all' | 'student' | 'service'>(initialFilter);
   const [query, setQuery] = useState('');
   const [activeId, setActiveId] = useState<string | null>(null);
   const [showChatOnMobile, setShowChatOnMobile] = useState(false);
