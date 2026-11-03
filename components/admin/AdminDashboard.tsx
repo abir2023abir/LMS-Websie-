@@ -156,10 +156,7 @@ export default function AdminDashboard({
           })}
         </nav>
 
-        <div className="space-y-2 border-t border-white/10 p-3">
-          {(variant === 'admin' || (allowedTabs || []).includes('Courses')) && (
-            <button type="button" onClick={() => { setAddingCourse(true); setActiveTab('Courses'); setMenuOpen(false); }} className="flex min-h-10 w-full items-center justify-center gap-2 rounded-xl bg-[#FACC15] px-3 text-sm font-extrabold text-[#111827] transition hover:bg-[#EAB308]"><Plus className="h-4 w-4 stroke-[3]" /><span>Add Course</span></button>
-          )}
+        <div className="border-t border-white/10 p-3">
           <button type="button" onClick={handleLogout} className="flex min-h-10 w-full items-center justify-center gap-2 rounded-xl px-3 text-sm font-semibold text-slate-300 transition hover:bg-red-500/15 hover:text-red-300">
             <LogOut className="h-4 w-4" /><span>Log out</span>
           </button>
@@ -245,15 +242,6 @@ export default function AdminDashboard({
 
         {/* ── TAB 2: COURSES MANAGEMENT ── */}
         {activeTab === 'Courses' && (
-          <div className="space-y-6">
-          <AdminMessages
-            listUrl="/api/messages?board=1"
-            replyUrl="/api/messages"
-            replyBody={(id, text) => ({ action: 'reply', id, text })}
-            title="Course messages"
-            intro="Student questions on a course arrive here, the same thread the instructor sees. You can read and reply from this panel."
-            initialFilter="student"
-          />
           <div className="bg-white rounded-3xl p-6 shadow-sm border border-slate-100 space-y-6">
             <div className="flex items-center justify-between">
               <div>
@@ -338,7 +326,6 @@ export default function AdminDashboard({
                 </tbody>
               </table>
             </div>
-          </div>
           </div>
         )}
 
