@@ -159,12 +159,8 @@ export async function saveLessonCompletion(
 
   const isNowCompleted = progressPercentage >= 100;
 
-  let certificateId = existing.certificateId;
-  if (isNowCompleted && !certificateId) {
-    // Generate deterministic/unique certificate ID
-    const randomSuffix = Math.floor(1000 + Math.random() * 9000);
-    certificateId = `EC-2026-${randomSuffix}`;
-  }
+  // Certificates are issued by the server (/api/certificate/generate), never made up here.
+  const certificateId = existing.certificateId;
 
   const updatedRecord: CourseProgressRecord = {
     courseId,
@@ -193,6 +189,57 @@ export async function saveLessonCompletion(
 
 
   return updatedRecord;
+}
+
+/**
+ * Mirrors the server's strict lesson path into the browser copy.
+ * A lesson counts as done only when the server says every step of it is done.
+ */
+export function applyServerPath(
+  userId: string,
+  courseId: string,
+  courseModules: ModuleSchema[],
+  serverLessons: { lessonId: string; state: string }[]
+): CourseProgressRecord {
+  const storeKey = `${userId}_${courseId}`;
+  const localStore = getLocalProgressStore();
+  const existing = localStore[storeKey];
+
+  const doneIds = new Set(serverLessons.filter((item) => item.state === 'done').map((item) => item.lessonId));
+  const completedLessons: Record<string, boolean> = {};
+  const completedModules: Record<string, boolean> = {};
+  let total = 0;
+  let done = 0;
+  courseModules.forEach((mod) => {
+    const lessons = mod.lessons || [];
+    lessons.forEach((les) => {
+      total++;
+      if (doneIds.has(les.id)) {
+        completedLessons[les.id] = true;
+        done++;
+      }
+    });
+    completedModules[mod.id] = lessons.length > 0 && lessons.every((les) => completedLessons[les.id]);
+  });
+  const progressPercentage = total > 0 ? Math.round((done / total) * 100) : 0;
+  const isCompleted = progressPercentage >= 100;
+
+  const record: CourseProgressRecord = {
+    courseId,
+    userId,
+    completedLessons,
+    completedModules,
+    progressPercentage,
+    isCompleted,
+    completedAt: isCompleted ? existing?.completedAt || new Date().toISOString() : undefined,
+    certificateId: existing?.certificateId,
+    lastAccessedLessonId: existing?.lastAccessedLessonId,
+    lastAccessedModuleId: existing?.lastAccessedModuleId,
+    lastAccessedAt: existing?.lastAccessedAt || new Date().toISOString(),
+  };
+  localStore[storeKey] = record;
+  saveLocalProgressStore(localStore);
+  return record;
 }
 
 /**
@@ -330,6 +377,20 @@ export async function getEnrolledCoursesWithProgress(
 
     const storeKey = `${userId}_${courseId}`;
     let progress = localStore[storeKey];
+
+    // The server's lesson path decides what is finished.
+    if (typeof window !== 'undefined') {
+      try {
+        const res = await fetch(`/api/progress?courseId=${encodeURIComponent(courseId)}`, { cache: 'no-store' });
+        if (res.ok) {
+          const data = (await res.json()) as { lessons?: { lessonId: string; state: string }[] };
+          if (Array.isArray(data.lessons)) {
+            progress = applyServerPath(userId, courseId, course.modules || [], data.lessons);
+            localStore[storeKey] = progress;
+          }
+        }
+      } catch {}
+    }
 
     // New enrollments always start with no course progress.
     if (!progress) {

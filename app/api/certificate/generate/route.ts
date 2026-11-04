@@ -1,82 +1,71 @@
 import { NextResponse } from 'next/server';
-import { generateUniqueCertificateId, saveCertificateRecord, type CertificateRecord } from '@/lib/certificate-db';
+import { findCertificate, generateUniqueCertificateId, saveCertificateRecord, type CertificateRecord } from '@/lib/certificate-db';
 import { getCourseById } from '@/lib/db';
+import { getEnrollments } from '@/lib/payments';
+import { courseProgress } from '@/lib/progression';
+import { requireRole } from '@/lib/user-session';
 
+export const dynamic = 'force-dynamic';
+
+/**
+ * Issues the signed-in student's certificate for a course.
+ * Everything on the certificate comes from the server: the student must be enrolled
+ * and must have finished every step of every lesson, otherwise nothing is issued.
+ */
 export async function POST(request: Request) {
   try {
-    const body = await request.json();
-    const {
-      studentName,
-      courseTitle,
-      courseId,
-      completionDate,
-      grade,
-      instructorName,
-      studentEmail,
-    } = body;
+    const { profile, denied } = await requireRole('Student');
+    if (denied) return denied;
 
-    if (!studentName) {
+    const body = await request.json().catch(() => ({}));
+    const courseId = String(body?.courseId || '').trim();
+    if (!courseId) {
+      return NextResponse.json({ success: false, message: 'Course is required.' }, { status: 400 });
+    }
+
+    if (!(await getEnrollments(profile.id)).includes(courseId)) {
+      return NextResponse.json({ success: false, message: 'Enroll in this course first.' }, { status: 403 });
+    }
+
+    const progress = await courseProgress(profile.id, courseId);
+    if (!progress.lessons.length || progress.percent < 100) {
       return NextResponse.json(
-        { success: false, message: 'Student name is required for certificate generation' },
-        { status: 400 }
+        { success: false, message: 'Finish every lesson step (video, quiz, assignment, exam and live class or approval) to unlock your certificate.' },
+        { status: 403 }
       );
     }
 
-    // Resolve course title if needed
-    let resolvedTitle = courseTitle;
-    if (!resolvedTitle && courseId) {
-      const course = await getCourseById(courseId);
-      resolvedTitle = course?.title || 'Career Bridge.Studio Course';
-    }
-    if (!resolvedTitle) {
-      resolvedTitle = 'Career Bridge.Studio Course';
+    const existing = await findCertificate(profile.email, courseId);
+    if (existing && existing.status === 'VALID') {
+      return NextResponse.json({ success: true, certificateId: existing.certificateId, verificationUrl: existing.verificationUrl, certificate: existing });
     }
 
-    const certificateId = body.certificateId || generateUniqueCertificateId();
-
-    const host = request.headers.get('host') || 'localhost:3002';
+    const course = await getCourseById(courseId).catch(() => null);
+    const certificateId = generateUniqueCertificateId();
+    const host = request.headers.get('host') || 'localhost:3000';
     const protocol = request.headers.get('x-forwarded-proto') || 'http';
     const baseUrl = process.env.NEXT_PUBLIC_SITE_URL || `${protocol}://${host}`;
     const verificationUrl = `${baseUrl}/verify-certificate?id=${certificateId}`;
 
-    const formattedDate =
-      completionDate ||
-      new Date().toLocaleDateString('en-US', {
-        month: 'long',
-        day: 'numeric',
-        year: 'numeric',
-      });
-
-    const certRecord: CertificateRecord = {
+    const record: CertificateRecord = {
       certificateId,
-      studentName: studentName.trim(),
-      studentEmail: studentEmail || '',
-      courseTitle: resolvedTitle,
-      courseId: courseId || '1',
-      issueDate: formattedDate,
-      grade: grade || 'Pass with Distinction (100% Complete)',
-      instructorName: instructorName || 'Career Bridge.Studio Academic Team',
+      studentName: profile.name.trim(),
+      studentEmail: profile.email,
+      courseTitle: progress.courseTitle || course?.title || 'Career Bridge.Studio Course',
+      courseId,
+      issueDate: new Date().toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' }),
+      grade: 'Pass with Distinction (100% Complete)',
+      instructorName: course?.instructorName || 'Career Bridge.Studio Academic Team',
       verificationUrl,
       createdAt: new Date().toISOString(),
       status: 'VALID',
       verified: true,
     };
 
-    // Save record to database
-    const savedRecord = await saveCertificateRecord(certRecord);
-
-    return NextResponse.json({
-      success: true,
-      message: 'Certificate successfully generated and registered in database',
-      certificateId,
-      verificationUrl,
-      certificate: savedRecord,
-    });
+    const saved = await saveCertificateRecord(record);
+    return NextResponse.json({ success: true, certificateId: saved.certificateId, verificationUrl, certificate: saved });
   } catch (error: any) {
     console.error('[API Certificate Generate Error]:', error);
-    return NextResponse.json(
-      { success: false, message: error.message || 'Certificate generation failed' },
-      { status: 500 }
-    );
+    return NextResponse.json({ success: false, message: error.message || 'Certificate generation failed' }, { status: 500 });
   }
 }

@@ -421,10 +421,7 @@ export default function StudentDashboardPage() {
           <CertificateModal
             isOpen={isCertModalOpen}
             onClose={() => setIsCertModalOpen(false)}
-            courseTitle={selectedCertCourse.course.title}
-            studentName={userProfile?.name || user?.displayName || 'Learner'}
-            certificateId={selectedCertCourse.progress.certificateId || 'EC-2026-8921'}
-            completedAt={selectedCertCourse.progress.completedAt || new Date().toISOString()}
+            courseId={String(selectedCertCourse.course.id)}
           />
         )}
 

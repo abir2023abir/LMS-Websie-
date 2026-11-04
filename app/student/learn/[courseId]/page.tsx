@@ -10,7 +10,7 @@ import SecureVideoPlayer from '@/components/player/SecureVideoPlayer';
 import CertificateModal from '@/components/student/CertificateModal';
 import {
   getCourseProgress,
-  saveLessonCompletion,
+  applyServerPath,
   getFallbackCourseData,
   rankInCourse,
   type CourseProgressRecord,
@@ -190,58 +190,15 @@ export default function StudentLearnPage() {
   const hasNextLesson = currentFlatIndex < flattenedLessons.length - 1
     && (!path || path.lessons.find((item) => item.lessonId === flattenedLessons[currentFlatIndex + 1]?.lesson.id)?.state !== 'locked');
 
-  // Handle Mark Lesson Complete
-  const handleToggleLessonComplete = async (lessonId?: string, modId?: string) => {
-    const targetLessonId = lessonId || currentLesson?.id;
-    const targetModuleId = modId || currentModule?.id;
+  // Keep the browser copy of progress in step with the server's strict lesson path.
+  useEffect(() => {
+    if (!path || !course?.modules) return;
+    setProgress(applyServerPath(user?.uid || 'local_student', courseId, course.modules, path.lessons));
+  }, [path, course, courseId, user]);
 
-    if (!targetLessonId || !targetModuleId || !course?.modules) return;
-
-    const userId = user?.uid || 'local_student';
-    const isCurrentlyDone = !!progress?.completedLessons[targetLessonId];
-
-    const updated = await saveLessonCompletion(
-      userId,
-      courseId,
-      targetLessonId,
-      targetModuleId,
-      !isCurrentlyDone,
-      course.modules
-    );
-
-    setProgress(updated);
-
-    if (updated.progressPercentage === 100 && !isCurrentlyDone) {
-      setIsCertModalOpen(true);
-    }
-  };
-
-  // Video Finished: Auto-advance and mark module/lesson complete
-  const handleVideoEnded = async () => {
-    if (!currentLesson || !currentModule || !course?.modules) return;
-
-    const userId = user?.uid || 'local_student';
-
-    const updated = await saveLessonCompletion(
-      userId,
-      courseId,
-      currentLesson.id,
-      currentModule.id,
-      true,
-      course.modules
-    );
-
-    setProgress(updated);
-
-    if (updated.progressPercentage === 100) {
-      setIsCertModalOpen(true);
-    }
-
-    if (hasNextLesson) {
-      const next = flattenedLessons[currentFlatIndex + 1];
-      setActiveModuleIndex(next.moduleIndex);
-      setActiveLessonIndex(next.lessonIndex);
-    }
+  // Video finished: tell the server. The lesson is only complete once every later step is done too.
+  const handleVideoEnded = () => {
+    if (currentLesson) reportWatch(currentLesson.id, 100);
   };
 
   const handleNextLesson = () => {
@@ -300,7 +257,7 @@ export default function StudentLearnPage() {
 
   const completionPercent = progress?.progressPercentage || 0;
   const standing = rankInCourse(courseId, user?.uid || '', completionPercent);
-  const isCurrentLessonDone = !!progress?.completedLessons[currentLesson?.id || ''];
+  const isCurrentLessonDone = currentPath?.state === 'done';
 
   return (
     <AuthGuard allowedRole="Student">
@@ -446,17 +403,17 @@ export default function StudentLearnPage() {
                   <span className="hidden sm:inline">Previous</span>
                 </button>
 
-                <button
-                  onClick={() => handleToggleLessonComplete()}
-                  className={`flex-1 sm:flex-none px-4 py-2.5 rounded-xl text-xs font-extrabold transition-all flex items-center justify-center gap-1.5 ${
+                <div
+                  title="A lesson is complete once every step is done: video, quiz, assignment, exam and live class or approval."
+                  className={`flex-1 sm:flex-none px-4 py-2.5 rounded-xl text-xs font-extrabold flex items-center justify-center gap-1.5 ${
                     isCurrentLessonDone
                       ? 'bg-emerald-600 text-white shadow-md shadow-emerald-600/20'
-                      : 'bg-[#FACC15] hover:bg-[#eab308] text-[#111827] shadow-md shadow-[#FACC15]/20'
+                      : 'bg-slate-100 text-slate-500 border border-slate-200'
                   }`}
                 >
                   <CheckCircle2 className="w-4 h-4" />
-                  <span>{isCurrentLessonDone ? 'Completed ✓' : 'Mark Complete'}</span>
-                </button>
+                  <span>{isCurrentLessonDone ? 'Completed ✓' : 'Finish all steps'}</span>
+                </div>
 
                 <button
                   onClick={handleNextLesson}
@@ -700,10 +657,7 @@ export default function StudentLearnPage() {
         <CertificateModal
           isOpen={isCertModalOpen}
           onClose={() => setIsCertModalOpen(false)}
-          courseTitle={course.title}
-          studentName={userProfile?.name || user?.displayName || 'Learner'}
-          certificateId={progress?.certificateId || 'EC-2026-8921'}
-          completedAt={progress?.completedAt || new Date().toISOString()}
+          courseId={courseId}
         />
       </div>
     </AuthGuard>

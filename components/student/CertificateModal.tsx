@@ -21,44 +21,57 @@ import { certificateVerifyLabel } from '@/lib/contact';
 interface CertificateModalProps {
   isOpen: boolean;
   onClose: () => void;
-  studentName: string;
-  courseTitle: string;
-  certificateId?: string;
-  issueDate?: string;
-  completedAt?: string;
-  instructorName?: string;
+  courseId: string;
 }
 
-export default function CertificateModal({
-  isOpen,
-  onClose,
-  studentName,
-  courseTitle,
-  certificateId = 'EC-2026-8921',
-  issueDate,
-  completedAt,
-  instructorName = 'Sarah Jenkins',
-}: CertificateModalProps) {
+type IssuedCertificate = {
+  certificateId: string;
+  studentName: string;
+  courseTitle: string;
+  issueDate: string;
+  instructorName: string;
+};
+
+export default function CertificateModal({ isOpen, onClose, courseId }: CertificateModalProps) {
   const [isDownloading, setIsDownloading] = useState(false);
   const [copiedLink, setCopiedLink] = useState(false);
+  const [issued, setIssued] = useState<IssuedCertificate | null>(null);
+  const [error, setError] = useState('');
 
-  const formattedDate =
-    issueDate ||
-    (completedAt
-      ? new Date(completedAt).toLocaleDateString('en-US', {
-          month: 'long',
-          day: 'numeric',
-          year: 'numeric',
-        })
-      : new Date().toLocaleDateString('en-US', {
-          month: 'long',
-          day: 'numeric',
-          year: 'numeric',
-        }));
-
-  // Launch celebratory confetti when modal opens
+  // The server issues the certificate, and only to a signed-in student who finished the course.
   useEffect(() => {
-    if (isOpen) {
+    if (!isOpen) return;
+    let cancelled = false;
+    setIssued(null);
+    setError('');
+    fetch('/api/certificate/generate', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ courseId }),
+    })
+      .then((res) => res.json().catch(() => ({})))
+      .then((data) => {
+        if (cancelled) return;
+        if (data?.success && data.certificate) setIssued(data.certificate);
+        else setError(data?.message || 'Your certificate is not available yet.');
+      })
+      .catch(() => {
+        if (!cancelled) setError('Could not reach the server. Please try again.');
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [isOpen, courseId]);
+
+  const studentName = issued?.studentName || '';
+  const courseTitle = issued?.courseTitle || '';
+  const certificateId = issued?.certificateId || '';
+  const formattedDate = issued?.issueDate || '';
+  const instructorName = issued?.instructorName || 'Career Bridge.Studio Academic Team';
+
+  // Launch celebratory confetti when the certificate is ready
+  useEffect(() => {
+    if (isOpen && issued) {
       const end = Date.now() + 1.5 * 1000;
       const colors = ['#FACC15', '#10B981', '#6366F1', '#EC4899', '#38BDF8'];
 
@@ -83,26 +96,36 @@ export default function CertificateModal({
         }
       })();
     }
-  }, [isOpen]);
-
-  // Auto-register certificate in backend database when modal opens
-  useEffect(() => {
-    if (isOpen && certificateId && studentName) {
-      fetch('/api/certificate/generate', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          certificateId,
-          studentName,
-          courseTitle,
-          completionDate: formattedDate,
-          instructorName,
-        }),
-      }).catch((err) => console.warn('Certificate registry sync notice:', err));
-    }
-  }, [isOpen, certificateId, studentName, courseTitle, formattedDate, instructorName]);
+  }, [isOpen, issued]);
 
   if (!isOpen) return null;
+
+  if (!issued) {
+    return (
+      <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-md">
+        <div className="relative w-full max-w-md bg-[#111827] border border-white/15 rounded-3xl p-8 text-center space-y-4">
+          <button
+            onClick={onClose}
+            className="absolute top-4 right-4 p-2 rounded-xl bg-white/5 hover:bg-white/10 text-slate-400 hover:text-white transition-colors"
+          >
+            <X className="w-5 h-5" />
+          </button>
+          <Award className="w-10 h-10 text-[#FACC15] mx-auto" />
+          <p className="text-white font-semibold text-sm">
+            {error || 'Preparing your certificate...'}
+          </p>
+          {error && (
+            <button
+              onClick={onClose}
+              className="bg-[#FACC15] text-[#111827] font-extrabold text-xs px-5 py-2.5 rounded-xl"
+            >
+              Close
+            </button>
+          )}
+        </div>
+      </div>
+    );
+  }
 
   const handleDownloadPDF = async () => {
     try {

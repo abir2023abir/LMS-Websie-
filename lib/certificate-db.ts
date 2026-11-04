@@ -89,6 +89,19 @@ export async function saveCertificateRecord(record: CertificateRecord): Promise<
 }
 
 /**
+ * The certificate already issued to this student for this course, if any.
+ */
+export async function findCertificate(email: string, courseId: string): Promise<CertificateRecord | null> {
+  const store = await loadCertStore();
+  const wanted = email.trim().toLowerCase();
+  return (
+    Object.values(store).find(
+      (cert) => (cert.studentEmail || '').toLowerCase() === wanted && String(cert.courseId) === String(courseId)
+    ) || null
+  );
+}
+
+/**
  * Queries the database for a certificate by its unique alphanumeric ID.
  */
 export async function getCertificateById(certificateId: string): Promise<CertificateRecord | null> {
