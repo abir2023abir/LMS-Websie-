@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server';
 import { requireRole } from '@/lib/user-session';
 import { getEnrollments } from '@/lib/payments';
-import { courseProgress, createRequest, lessonOpen, markVideoDone } from '@/lib/progression';
+import { courseProgress, createRequest, lessonOpen, markVideoDone, recordModuleStarts } from '@/lib/progression';
 import { liveClassesForLesson } from '@/lib/live-classes';
 import { courseRanking } from '@/lib/rankings';
 
@@ -17,6 +17,7 @@ export async function GET(request: Request) {
     return NextResponse.json({ success: false, message: 'Enroll in this course first.' }, { status: 403 });
   }
   const progress = await courseProgress(profile.id, courseId);
+  await recordModuleStarts(profile.id, courseId, progress.lessons).catch(() => undefined); // starts each module's clock
   const lessonId = url.searchParams.get('lessonId') || progress.currentLessonId;
   const lesson = progress.lessons.find((item) => item.lessonId === lessonId);
   const liveStep = lesson?.steps.find((step) => step.key === 'live');
@@ -55,6 +56,17 @@ export async function POST(request: Request) {
         studentId: profile.id, studentName: profile.name || profile.email, studentEmail: profile.email,
         courseId, courseTitle: progress.courseTitle, lessonId, lessonTitle: lesson.lessonTitle,
         nextLessonTitle: progress.lessons[index + 1]?.lessonTitle || '', message: String(body.message || ''),
+      });
+      return NextResponse.json({ success: true });
+    }
+    if (body.action === 'extension') {
+      const progress = await courseProgress(profile.id, courseId);
+      const lesson = progress.lessons.find((item) => item.lessonId === lessonId);
+      if (!lesson || !lesson.overdue) throw new Error('You can ask for more time only after the deadline has passed.');
+      await createRequest({
+        studentId: profile.id, studentName: profile.name || profile.email, studentEmail: profile.email,
+        courseId, courseTitle: progress.courseTitle, lessonId, lessonTitle: lesson.lessonTitle,
+        nextLessonTitle: '', message: String(body.message || ''), kind: 'extension',
       });
       return NextResponse.json({ success: true });
     }

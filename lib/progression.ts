@@ -6,6 +6,7 @@ import { listQuizzes, listAttempts } from '@/lib/quizzes';
 import { listAssignments, listSubmissions } from '@/lib/assignments';
 import { attemptsFor, listExams } from '@/lib/exams';
 import { listLiveClasses } from '@/lib/live-classes';
+import { listCourseEdits } from '@/lib/course-edits';
 
 /*
  * Strict module path. Inside a module the lessons are watched in order; the module's quizzes,
@@ -25,14 +26,20 @@ export type LessonProgress = {
   hint: string; // what to do next when no step is open yet
   moduleLessons: number;
   moduleWatched: number;
+  dueAt: string; // ISO time this lesson should be finished by ('' = no deadline set)
+  overdue: boolean;
+  pendingExtension: boolean;
 };
 
 const VIDEO_KEY = 'lesson-video-done';
 const APPROVALS_KEY = 'lesson-approvals';
 const REQUESTS_KEY = 'progress-requests';
+const STARTS_KEY = 'module-started'; // studentId → courseId → moduleId → ISO time the module opened
+const EXTRA_KEY = 'module-extra-days'; // studentId → courseId → moduleId → extra days granted
+const DAY = 86400000;
 
 /* ── course structure (cached for 30 s: it changes rarely and every progress check needs it) ── */
-type CourseShape = { title: string; lessons: { lessonId: string; lessonTitle: string; moduleId: string; moduleTitle: string }[] };
+type CourseShape = { title: string; lessons: { lessonId: string; lessonTitle: string; moduleId: string; moduleTitle: string; days: number }[] };
 const shapeCache = new Map<string, { at: number; value: Promise<CourseShape> }>();
 
 export function courseLessons(courseId: string): Promise<CourseShape> {
@@ -47,10 +54,13 @@ export function courseLessons(courseId: string): Promise<CourseShape> {
 async function loadCourseLessons(courseId: string): Promise<CourseShape> {
   let course = await getCourseById(courseId).catch(() => null);
   if (!course?.modules?.length && featuredCourses.some((c) => c.id === courseId)) course = getFallbackCourseData(courseId);
-  const modules = course?.modules?.length ? course.modules : getFallbackCourseData(courseId)?.modules || [];
+  let modules = course?.modules?.length ? course.modules : getFallbackCourseData(courseId)?.modules || [];
+  // Lessons, titles and "days" the admin changed in the course editor.
+  const edit = (await listCourseEdits().catch(() => ({} as Record<string, { title?: string; modules?: typeof modules }>)))[courseId];
+  if (Array.isArray(edit?.modules) && edit.modules.length) modules = edit.modules;
   return {
-    title: course?.title || '',
-    lessons: modules.flatMap((mod) => (mod.lessons || []).map((lesson) => ({ lessonId: lesson.id, lessonTitle: lesson.title, moduleId: mod.id, moduleTitle: mod.title }))),
+    title: edit?.title || course?.title || '',
+    lessons: modules.flatMap((mod) => (mod.lessons || []).map((lesson) => ({ lessonId: lesson.id, lessonTitle: lesson.title, moduleId: mod.id, moduleTitle: mod.title, days: Number(lesson.days) > 0 ? Number(lesson.days) : 2 }))),
   };
 }
 
@@ -72,11 +82,38 @@ export async function approveLesson(studentId: string, courseId: string, lessonI
   await kvSet(APPROVALS_KEY, { ...all, [studentId]: { ...all[studentId], [courseId]: [...current, lessonId] } });
 }
 
+/* ── module clock: starts when the module opens for the student; admins can add days ── */
+type ModuleMap<T> = Record<string, Record<string, Record<string, T>>>;
+
+export async function extendModule(studentId: string, courseId: string, moduleId: string, days: number) {
+  const add = Math.max(1, Math.min(60, Math.round(Number(days) || 0)));
+  const all = await kvGet<ModuleMap<number>>(EXTRA_KEY, {});
+  const current = all[studentId]?.[courseId]?.[moduleId] || 0;
+  await kvSet(EXTRA_KEY, { ...all, [studentId]: { ...all[studentId], [courseId]: { ...all[studentId]?.[courseId], [moduleId]: current + add } } });
+  return add;
+}
+
+/** Remember when each open module started for this student (the first time it was seen open). */
+export async function recordModuleStarts(studentId: string, courseId: string, lessons: LessonProgress[]) {
+  const all = await kvGet<ModuleMap<string>>(STARTS_KEY, {});
+  const mine = { ...(all[studentId]?.[courseId] || {}) };
+  let changed = false;
+  const seen = new Set<string>();
+  for (const lesson of lessons) {
+    if (seen.has(lesson.moduleId)) continue;
+    seen.add(lesson.moduleId);
+    if (lesson.state !== 'locked' && !mine[lesson.moduleId]) { mine[lesson.moduleId] = new Date().toISOString(); changed = true; }
+  }
+  if (changed) await kvSet(STARTS_KEY, { ...all, [studentId]: { ...all[studentId], [courseId]: mine } });
+}
+
 export type ProgressRequest = {
   id: string; studentId: string; studentName: string; studentEmail: string;
   courseId: string; courseTitle: string; lessonId: string; lessonTitle: string; nextLessonTitle: string;
   message: string; status: 'pending' | 'approved' | 'rejected'; decidedBy: string; reply: string;
   createdAt: string; decidedAt: string;
+  kind?: 'move-on' | 'extension'; // older requests have no kind and are "move-on"
+  days?: number; // extension: days added when approved
 };
 
 export async function listRequests(): Promise<ProgressRequest[]> {
@@ -84,10 +121,11 @@ export async function listRequests(): Promise<ProgressRequest[]> {
   return Array.isArray(list) ? list : [];
 }
 
-export async function createRequest(input: Omit<ProgressRequest, 'id' | 'status' | 'decidedBy' | 'reply' | 'createdAt' | 'decidedAt'>) {
+export async function createRequest(input: Omit<ProgressRequest, 'id' | 'status' | 'decidedBy' | 'reply' | 'createdAt' | 'decidedAt' | 'days'>) {
   const list = await listRequests();
-  if (list.some((item) => item.studentId === input.studentId && item.courseId === input.courseId && item.lessonId === input.lessonId && item.status === 'pending')) {
-    throw new Error('You already asked to move on from this lesson. Your instructor will reply soon.');
+  const kind = input.kind || 'move-on';
+  if (list.some((item) => item.studentId === input.studentId && item.courseId === input.courseId && item.lessonId === input.lessonId && item.status === 'pending' && (item.kind || 'move-on') === kind)) {
+    throw new Error(kind === 'extension' ? 'You already asked for more time on this lesson. Your instructor will reply soon.' : 'You already asked to move on from this lesson. Your instructor will reply soon.');
   }
   const request: ProgressRequest = {
     ...input, message: input.message.trim().slice(0, 800),
@@ -98,13 +136,22 @@ export async function createRequest(input: Omit<ProgressRequest, 'id' | 'status'
   return request;
 }
 
-export async function decideRequest(id: string, status: 'approved' | 'rejected', decidedBy: string, reply: string) {
+export async function decideRequest(id: string, status: 'approved' | 'rejected', decidedBy: string, reply: string, days = 2) {
   const list = await listRequests();
   const request = list.find((item) => item.id === id);
   if (!request) throw new Error('Request not found.');
-  const next = { ...request, status, decidedBy, reply: reply.trim().slice(0, 800), decidedAt: new Date().toISOString() };
+  const extension = request.kind === 'extension';
+  const added = extension && status === 'approved' ? Math.max(1, Math.min(60, Math.round(Number(days) || 2))) : undefined;
+  const next = { ...request, status, decidedBy, reply: reply.trim().slice(0, 800), decidedAt: new Date().toISOString(), ...(added ? { days: added } : {}) };
   await kvSet(REQUESTS_KEY, list.map((item) => (item.id === id ? next : item)));
-  if (status === 'approved') await approveLesson(request.studentId, request.courseId, request.lessonId);
+  if (status === 'approved') {
+    if (extension) {
+      const lesson = (await courseLessons(request.courseId)).lessons.find((item) => item.lessonId === request.lessonId);
+      if (lesson && added) await extendModule(request.studentId, request.courseId, lesson.moduleId, added);
+    } else {
+      await approveLesson(request.studentId, request.courseId, request.lessonId);
+    }
+  }
   return next;
 }
 
@@ -112,12 +159,14 @@ export async function decideRequest(id: string, status: 'approved' | 'rejected',
 type RawStep = { key: StepKey; label: string; done: boolean; detail: string };
 
 export async function courseProgress(studentId: string, courseId: string): Promise<{ courseTitle: string; lessons: LessonProgress[]; percent: number; currentLessonId: string }> {
-  const [{ title, lessons }, videoAll, approvalsAll, quizzes, quizAttempts, assignments, submissions, exams, examAttempts, lives, requests] = await Promise.all([
+  const [{ title, lessons }, videoAll, approvalsAll, quizzes, quizAttempts, assignments, submissions, exams, examAttempts, lives, requests, startsAll, extraAll] = await Promise.all([
     courseLessons(courseId), kvGet<CourseSets>(VIDEO_KEY, {}), kvGet<CourseSets>(APPROVALS_KEY, {}),
     listQuizzes(), listAttempts(studentId), listAssignments(), listSubmissions(), listExams(), attemptsFor(studentId), listLiveClasses(), listRequests(),
+    kvGet<ModuleMap<string>>(STARTS_KEY, {}), kvGet<ModuleMap<number>>(EXTRA_KEY, {}),
   ]);
   const videos = new Set(videoAll[studentId]?.[courseId] || []);
   const approvals = new Set(approvalsAll[studentId]?.[courseId] || []);
+  const now = Date.now();
 
   // Lessons grouped by module (the list is already in course order).
   const groups: number[][] = [];
@@ -182,9 +231,15 @@ export async function courseProgress(studentId: string, courseId: string): Promi
     const allWatched = watched === count;
     let chainOpen = allWatched;
     let earlierWatched = true;
+    // Deadlines stack inside the module (2 + 2 + 2 = day 2, 4, 6), counted from the day it opened.
+    const moduleId = lessons[group[0]].moduleId;
+    const startedAt = startsAll[studentId]?.[courseId]?.[moduleId] || (moduleOpen ? new Date(now).toISOString() : '');
+    const extraDays = extraAll[studentId]?.[courseId]?.[moduleId] || 0;
+    let stacked = 0;
 
     group.forEach((i) => {
       const lesson = lessons[i];
+      stacked += lesson.days;
       const forced = approvals.has(lesson.lessonId); // an approval also unlocks the whole lesson by hand
       const lessonOpen = moduleOpen && earlierWatched;
       earlierWatched = earlierWatched && (videos.has(lesson.lessonId) || forced);
@@ -212,9 +267,13 @@ export async function courseProgress(studentId: string, courseId: string): Promi
           ? `Next, watch the remaining ${count - watched} lesson${count - watched === 1 ? '' : 's'} of this module. The quizzes and assignments open once every lesson is watched.`
           : 'Finish the earlier steps of this module first.';
       }
+      const dueAt = startedAt && stacked > 0 ? new Date(new Date(startedAt).getTime() + (stacked + extraDays) * DAY).toISOString() : '';
+      const mine = (kind: 'move-on' | 'extension') => requests.some((r) => r.studentId === studentId && r.courseId === courseId && r.lessonId === lesson.lessonId && r.status === 'pending' && (r.kind || 'move-on') === kind);
       result[i] = {
         ...lesson, state, steps, hint, moduleLessons: count, moduleWatched: watched,
-        pendingRequest: requests.some((r) => r.studentId === studentId && r.courseId === courseId && r.lessonId === lesson.lessonId && r.status === 'pending'),
+        pendingRequest: mine('move-on'),
+        dueAt, overdue: Boolean(dueAt) && state !== 'done' && now > new Date(dueAt).getTime(),
+        pendingExtension: mine('extension'),
       };
     });
     unlocked = moduleOpen && group.every((i) => result[i].state === 'done');

@@ -2,7 +2,7 @@ import { NextResponse } from 'next/server';
 import { staffDenied, staffIdentity } from '@/lib/user-session';
 import { listCourseSettings } from '@/lib/accounts';
 import { getCoursesByInstructor } from '@/lib/db';
-import { approveLesson, decideRequest, listRequests } from '@/lib/progression';
+import { approveLesson, decideRequest, extendModule, listRequests } from '@/lib/progression';
 
 export const dynamic = 'force-dynamic';
 
@@ -34,11 +34,15 @@ export async function POST(request: Request) {
       // Manual unlock: let a student past one lesson without a request.
       if (allowed && !allowed.has(String(body.courseId))) return staffDenied();
       await approveLesson(String(body.studentId || ''), String(body.courseId || ''), String(body.lessonId || ''));
+    } else if (body.action === 'extend') {
+      // Manual extension: give a student more days on one module without a request.
+      if (allowed && !allowed.has(String(body.courseId))) return staffDenied();
+      await extendModule(String(body.studentId || ''), String(body.courseId || ''), String(body.moduleId || ''), Number(body.days));
     } else {
       const current = (await listRequests()).find((item) => item.id === body.id);
       if (!current) throw new Error('Request not found.');
       if (allowed && !allowed.has(current.courseId)) return staffDenied();
-      await decideRequest(current.id, body.status === 'rejected' ? 'rejected' : 'approved', staff.admin ? 'Admin' : staff.profile.name || staff.who, String(body.reply || ''));
+      await decideRequest(current.id, body.status === 'rejected' ? 'rejected' : 'approved', staff.admin ? 'Admin' : staff.profile.name || staff.who, String(body.reply || ''), Number(body.days) || 2);
     }
     const requests = (await listRequests()).filter((item) => !allowed || allowed.has(item.courseId));
     return NextResponse.json({ success: true, requests });

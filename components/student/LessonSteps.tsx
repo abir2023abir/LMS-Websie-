@@ -2,11 +2,11 @@
 
 import { useState } from 'react';
 import Link from 'next/link';
-import { CalendarClock, Check, ClipboardList, GraduationCap, HelpCircle, Lock, PlayCircle, Send, UserCheck, Video } from 'lucide-react';
+import { CalendarClock, Check, Clock, ClipboardList, GraduationCap, HelpCircle, Lock, PlayCircle, Send, UserCheck, Video } from 'lucide-react';
 
 export type StepKey = 'video' | 'quiz' | 'assignment' | 'exam' | 'live' | 'approval';
 export type Step = { key: StepKey; label: string; state: 'done' | 'current' | 'locked'; detail: string };
-export type LessonProgress = { lessonId: string; lessonTitle: string; state: 'done' | 'current' | 'locked'; steps: Step[]; pendingRequest: boolean; hint?: string; moduleLessons?: number; moduleWatched?: number };
+export type LessonProgress = { lessonId: string; lessonTitle: string; state: 'done' | 'current' | 'locked'; steps: Step[]; pendingRequest: boolean; hint?: string; moduleLessons?: number; moduleWatched?: number; dueAt?: string; overdue?: boolean; pendingExtension?: boolean };
 export type LiveSession = { id: string; title: string; description: string; startsAt: string; durationMinutes: number; joinUrl: string; recordingUrl: string; attended: boolean };
 
 const icons: Record<StepKey, typeof PlayCircle> = { video: PlayCircle, quiz: HelpCircle, assignment: ClipboardList, exam: GraduationCap, live: Video, approval: UserCheck };
@@ -33,6 +33,26 @@ export default function LessonSteps({
   const current = lesson.steps.find((step) => step.state === 'current');
   const done = lesson.steps.filter((step) => step.state === 'done').length;
 
+  const [extMessage, setExtMessage] = useState('');
+  const dueDate = lesson.dueAt ? new Date(lesson.dueAt) : null;
+  const daysLeft = dueDate ? Math.ceil((dueDate.getTime() - Date.now()) / 86400000) : 0;
+
+  const askForTime = async () => {
+    setSending(true);
+    setNote('');
+    try {
+      const res = await fetch('/api/progress', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ action: 'extension', courseId, lessonId: lesson.lessonId, message: extMessage }) });
+      const data = await res.json();
+      if (!res.ok || !data.success) throw new Error(data.message || 'Could not send.');
+      setExtMessage('');
+      onChanged();
+    } catch (error) {
+      setNote(error instanceof Error ? error.message : 'Could not send.');
+    } finally {
+      setSending(false);
+    }
+  };
+
   const askToMoveOn = async () => {
     setSending(true);
     setNote('');
@@ -58,6 +78,26 @@ export default function LessonSteps({
         </div>
         {rank && <span className="rounded-full bg-[#111827] px-3 py-1 text-xs font-bold text-[#FACC15]">Rank #{rank} of {rankTotal}</span>}
       </div>
+
+      {/* Deadline */}
+      {dueDate && lesson.state !== 'done' && (
+        lesson.overdue ? (
+          <div className="space-y-2 rounded-2xl border border-rose-200 bg-rose-50 p-4 text-sm">
+            <p className="flex items-center gap-2 font-bold text-rose-800"><Clock className="h-4 w-4" />The deadline for this lesson was {dueDate.toLocaleDateString('en-BD', { day: 'numeric', month: 'short' })}. You can still continue, but please ask for more time.</p>
+            {lesson.pendingExtension ? (
+              <p className="font-semibold text-amber-800">Request sent — waiting for your instructor to give you more time.</p>
+            ) : (
+              <div className="flex flex-wrap gap-2">
+                <input value={extMessage} onChange={(e) => setExtMessage(e.target.value)} placeholder="Why do you need more time? (optional)" className="min-w-[200px] flex-1 rounded-xl border border-rose-200 bg-white px-3 py-2 text-sm" />
+                <button type="button" disabled={sending} onClick={askForTime} className="inline-flex items-center gap-1.5 rounded-xl bg-[#111827] px-4 py-2 text-sm font-extrabold text-white disabled:opacity-50"><Send className="h-4 w-4" />Request more time</button>
+              </div>
+            )}
+            {note && <p className="text-xs font-semibold text-rose-600">{note}</p>}
+          </div>
+        ) : (
+          <p className="flex items-center gap-2 text-xs font-semibold text-slate-600"><Clock className="h-3.5 w-3.5 text-amber-600" />Finish by {dueDate.toLocaleDateString('en-BD', { weekday: 'short', day: 'numeric', month: 'short' })} · {daysLeft} day{daysLeft === 1 ? '' : 's'} left</p>
+        )
+      )}
 
       {/* Step track */}
       <ol className="grid gap-2 sm:grid-cols-[repeat(auto-fit,minmax(110px,1fr))]">
