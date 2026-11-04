@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getHeroContent, saveHeroContent } from '@/lib/cms-db';
-import { requireAdmin } from '@/lib/admin-guard';
+import { requireAdmin, requireAdminWrite } from '@/lib/admin-guard';
 
 export async function GET() {
   try {
@@ -17,7 +17,7 @@ export async function POST(request: NextRequest) {
     const cookieStore = await import('next/headers').then(m => m.cookies());
     const adminSession = cookieStore.get('admin_session');
 
-    const denied = await requireAdmin('Landing Page CMS');
+    const denied = await requireAdminWrite('Landing Page CMS');
     if (denied) return denied;
 
     const data = await request.json();

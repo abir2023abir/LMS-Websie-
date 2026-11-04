@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server';
-import { requireAdmin } from '@/lib/admin-guard';
+import { requireAdmin, requireAdminWrite } from '@/lib/admin-guard';
 import { listCourseEdits, saveCourseEdit, type CourseEdit } from '@/lib/course-edits';
 
 export const dynamic = 'force-dynamic';
@@ -15,7 +15,7 @@ export async function GET() {
 }
 
 export async function PUT(request: Request) {
-  const denied = await requireAdmin('Courses');
+  const denied = await requireAdminWrite('Courses');
   if (denied) return denied;
   try {
     const body = await request.json();

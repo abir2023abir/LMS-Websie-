@@ -1,12 +1,16 @@
 import { NextResponse } from 'next/server';
-import { requireAdmin } from '@/lib/admin-guard';
+import { requireAdmin, requireAdminWrite } from '@/lib/admin-guard';
+import { mentorCourseScope, inScope, outOfScope } from '@/lib/mentor-scope';
 import { deleteQuiz, listAttempts, listQuizzes, saveQuiz } from '@/lib/quizzes';
 
 export const dynamic = 'force-dynamic';
 
 // Admins and mentors manage lesson quizzes.
 async function payload() {
-  const [quizzes, attempts] = await Promise.all([listQuizzes(), listAttempts()]);
+  const scope = await mentorCourseScope();
+  const [allQuizzes, allAttempts] = await Promise.all([listQuizzes(), listAttempts()]);
+  const quizzes = allQuizzes.filter((item) => inScope(scope, item.courseId));
+  const attempts = allAttempts.filter((item) => inScope(scope, item.courseId));
   const stats = Object.fromEntries(quizzes.map((quiz) => {
     const mine = attempts.filter((attempt) => attempt.quizId === quiz.id);
     const average = mine.length ? Math.round(mine.reduce((sum, attempt) => sum + attempt.percent, 0) / mine.length) : null;
@@ -22,10 +26,13 @@ export async function GET() {
 }
 
 export async function POST(request: Request) {
-  const denied = await requireAdmin('Quizzes');
+  const denied = await requireAdminWrite('Quizzes');
   if (denied) return denied;
   try {
     const body = await request.json();
+    const scope = await mentorCourseScope();
+    const existing = (await listQuizzes()).find((item) => item.id === body.id);
+    if (!inScope(scope, String(existing?.courseId || body.courseId || '')) || (existing && body.courseId && !inScope(scope, String(body.courseId)))) return NextResponse.json(outOfScope(), { status: 403 });
     if (body.action === 'delete') await deleteQuiz(String(body.id || ''));
     else await saveQuiz(body);
     return NextResponse.json(await payload());

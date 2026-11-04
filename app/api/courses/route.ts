@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server';
 import { getAllCourses, createCourse } from '@/lib/db';
+import { requireAdminWrite } from '@/lib/admin-guard';
 import { staffDenied, staffIdentity } from '@/lib/user-session';
 import type { CourseSchema, ModuleSchema } from '@/types/course';
 
@@ -33,6 +34,9 @@ export async function GET() {
  * Body requirements: title, description, instructorId, price, thumbnail, modules
  */
 export async function POST(request: Request) {
+  // The Courses tool must be open for this account; assistant mentors can only look.
+  const blocked = await requireAdminWrite('Courses');
+  if (blocked) return blocked;
   // Only admins and instructors may add courses; an instructor always adds under their own account.
   const staff = await staffIdentity();
   if (!staff) return staffDenied();

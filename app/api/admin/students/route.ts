@@ -1,6 +1,7 @@
 import crypto from 'crypto';
 import { NextResponse } from 'next/server';
-import { requireAdmin } from '@/lib/admin-guard';
+import { isAdminSession, requireAdmin, requireAdminWrite } from '@/lib/admin-guard';
+import { inScope, mentorCourseScope } from '@/lib/mentor-scope';
 import { createProfile, hashPassword, listProfiles, normalizeEmail, profileByEmail, profileById, updateProfile } from '@/lib/accounts';
 import { allEnrollments, grantEnrollment, listPayments, revokeEnrollment, savePayment } from '@/lib/payments';
 import { allStudentDetails, emptyDetails, saveStudentDetails } from '@/lib/students';
@@ -13,10 +14,13 @@ export const dynamic = 'force-dynamic';
 
 const newPassword = () => crypto.randomBytes(6).toString('base64').replace(/[^a-zA-Z0-9]/g, '').slice(0, 8) + Math.floor(10 + Math.random() * 89);
 
+// A mentor only sees students enrolled in their own courses, and only those courses.
 async function studentList() {
+  const scope = await mentorCourseScope();
   const [profiles, details, enrollments, payments] = await Promise.all([listProfiles(), allStudentDetails(), allEnrollments(), listPayments()]);
   return profiles
     .filter((profile) => profile.roles.includes('Student'))
+    .filter((profile) => scope === null || (enrollments[profile.id] || []).some((courseId) => inScope(scope, courseId)))
     .map((profile) => ({
       id: profile.id,
       name: profile.name,
@@ -25,7 +29,7 @@ async function studentList() {
       disabled: profile.disabled,
       createdAt: profile.created_at,
       details: { ...emptyDetails(), ...details[profile.id] },
-      courseIds: enrollments[profile.id] || [],
+      courseIds: (enrollments[profile.id] || []).filter((courseId) => inScope(scope, courseId)),
       paid: payments.filter((payment) => payment.studentId === profile.id && (payment.status === 'paid' || payment.status === 'approved')).reduce((sum, payment) => sum + payment.amount, 0),
     }))
     .sort((a, b) => String(b.createdAt).localeCompare(String(a.createdAt)));
@@ -37,6 +41,9 @@ export async function GET(request: Request) {
   if (denied) return denied;
   const id = new URL(request.url).searchParams.get('id') || '';
   if (!id) return NextResponse.json({ success: true, students: await studentList() });
+  if (!isAdminSession() && !(await studentList()).some((student) => student.id === id)) {
+    return NextResponse.json({ success: false, message: 'This student is not in a course assigned to you.' }, { status: 403 });
+  }
 
   const [payments, quizAttempts, examAttempts, submissions, assignments] = await Promise.all([listPayments(), listAttempts(id), attemptsFor(id), listSubmissions(), listAssignments()]);
   return NextResponse.json({
@@ -68,8 +75,12 @@ async function enroll(student: { id: string; name: string; email: string }, inpu
 }
 
 export async function POST(request: Request) {
-  const denied = await requireAdmin('Students');
+  const denied = await requireAdminWrite('Students');
   if (denied) return denied;
+  // Creating students, enrolling (which records payments), resetting passwords and switching accounts off stay with the admin.
+  if (!isAdminSession()) {
+    return NextResponse.json({ success: false, message: 'Only the admin can change student accounts or enrolments. You can view students in your courses.' }, { status: 403 });
+  }
   try {
     const body = await request.json();
 

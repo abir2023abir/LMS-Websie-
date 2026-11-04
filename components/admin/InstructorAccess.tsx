@@ -60,6 +60,12 @@ const PRESETS: { name: string; tabs: PanelTab[] }[] = [
   { name: 'Teacher', tabs: ['Courses', 'Quizzes', 'Assignments', 'Exams', 'Live Classes', 'Progress', 'Messages'] },
   { name: 'Teacher + students', tabs: [...TEACHING, 'Students', 'Messages', 'Requests'] },
   { name: 'Everything', tabs: [...PANEL_TABS] },
+  // The client's roles. A Teaching Assistant is an Assistant mentor (set in Accounts): the tools open, but view and reply only.
+  { name: 'Creator', tabs: ['Courses'] },
+  { name: 'Content Publisher', tabs: ['Landing Page CMS'] },
+  { name: 'Instructor / Mentor', tabs: ['Quizzes', 'Assignments', 'Exams', 'Live Classes', 'Progress', 'Students', 'Messages', 'Requests'] },
+  { name: 'Teaching Assistant', tabs: ['Quizzes', 'Assignments', 'Exams', 'Progress', 'Students', 'Messages'] },
+  { name: 'Client Services Manager', tabs: ['Requests', 'Messages'] },
 ];
 
 const sameSet = (a: PanelTab[], b: PanelTab[]) => a.length === b.length && a.every((tab) => b.includes(tab));

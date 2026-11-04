@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server';
-import { requireAdmin } from '@/lib/admin-guard';
+import { requireAdmin, requireAdminWrite } from '@/lib/admin-guard';
 import { deletePayment, listPayments, readProof, saveProof, savePayment, setPaymentStatus, type PaymentStatus } from '@/lib/payments';
 
 export const dynamic = 'force-dynamic';
@@ -20,7 +20,7 @@ export async function GET(request: Request) {
 }
 
 export async function POST(request: Request) {
-  const denied = await requireAdmin('Payments');
+  const denied = await requireAdminWrite('Payments');
   if (denied) return denied;
   try {
     const type = request.headers.get('content-type') || '';

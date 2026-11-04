@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server';
-import { requireAdmin } from '@/lib/admin-guard';
+import { requireAdmin, requireAdminWrite } from '@/lib/admin-guard';
 import { deleteServiceRequest, listServiceRequests, replyToServiceRequest, updateServiceRequest, type RequestStatus } from '@/lib/service-requests';
 
 async function authorized() {
@@ -25,6 +25,11 @@ export async function POST(request: Request) {
   try {
     const body = await request.json();
     const id = String(body.id || '');
+    // Replying to a customer is open to anyone with this tool; editing or deleting a request is not for assistants.
+    if (body.action !== 'reply') {
+      const blocked = await requireAdminWrite('Requests');
+      if (blocked) return blocked;
+    }
     if (body.action === 'delete') {
       await deleteServiceRequest(id);
       return NextResponse.json({ success: true, requests: await listServiceRequests() });

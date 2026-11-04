@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server';
-import { requireAdmin } from '@/lib/admin-guard';
+import { requireAdmin, requireAdminWrite } from '@/lib/admin-guard';
 import { getPaymentSettings, savePaymentSettings, type ManualMethodId, type PaymentSettings } from '@/lib/payments';
 
 export const dynamic = 'force-dynamic';
@@ -20,7 +20,7 @@ export async function GET() {
 }
 
 export async function POST(request: Request) {
-  const denied = await requireAdmin('Payments');
+  const denied = await requireAdminWrite('Payments');
   if (denied) return denied;
   try {
     const body = (await request.json()) as Partial<PaymentSettings>;

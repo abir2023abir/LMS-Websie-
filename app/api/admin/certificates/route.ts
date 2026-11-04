@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server';
-import { requireAdmin } from '@/lib/admin-guard';
+import { requireAdmin, requireAdminWrite } from '@/lib/admin-guard';
 import { deleteCertificate, listCertificates, saveCertificate } from '@/lib/admin-studio';
 
 export async function GET() {
@@ -9,7 +9,7 @@ export async function GET() {
 }
 
 export async function POST(request: Request) {
-  const denied = await requireAdmin('Certificate');
+  const denied = await requireAdminWrite('Certificate');
   if (denied) return denied;
   try {
     const body = await request.json();

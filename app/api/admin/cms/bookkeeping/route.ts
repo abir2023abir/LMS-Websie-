@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { requireAdmin } from '@/lib/admin-guard';
+import { requireAdmin, requireAdminWrite } from '@/lib/admin-guard';
 import { getBookkeepingPageContent, saveBookkeepingPageContent } from '@/lib/bookkeeping-content';
 
 export const dynamic = 'force-dynamic';
@@ -14,7 +14,8 @@ export async function GET() {
 }
 
 export async function POST(request: NextRequest) {
-  if (!(await isAdmin())) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+  const blocked = await requireAdminWrite('Landing Page CMS');
+  if (blocked) return blocked;
   try {
     const content = saveBookkeepingPageContent(await request.json());
     return NextResponse.json({ success: true, content });

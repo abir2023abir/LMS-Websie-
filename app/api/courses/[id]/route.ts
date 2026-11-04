@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server';
 import { deleteCourse, getCourseById } from '@/lib/db';
-import { requireAdmin } from '@/lib/admin-guard';
+import { requireAdmin, requireAdminWrite } from '@/lib/admin-guard';
 
 export const dynamic = 'force-dynamic';
 
@@ -13,7 +13,7 @@ export async function GET(_request: Request, { params }: { params: { id: string 
 
 // Admin only: remove a course.
 export async function DELETE(_request: Request, { params }: { params: { id: string } }) {
-  const denied = await requireAdmin('Courses');
+  const denied = await requireAdminWrite('Courses');
   if (denied) return denied;
   await deleteCourse(params.id);
   return NextResponse.json({ success: true });

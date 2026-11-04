@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server';
-import { requireAdmin } from '@/lib/admin-guard';
+import { requireAdmin, requireAdminWrite } from '@/lib/admin-guard';
 import { deleteReview, listReviews, saveReview } from '@/lib/reviews';
 
 export const dynamic = 'force-dynamic';
@@ -11,7 +11,7 @@ export async function GET() {
 }
 
 export async function POST(request: Request) {
-  const denied = await requireAdmin('Landing Page CMS');
+  const denied = await requireAdminWrite('Landing Page CMS');
   if (denied) return denied;
   try {
     const body = await request.json();

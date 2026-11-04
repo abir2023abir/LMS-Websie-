@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server';
-import { requireAdmin } from '@/lib/admin-guard';
+import { requireAdmin, requireAdminWrite } from '@/lib/admin-guard';
 import {
   deleteLocalOrientationProgramme,
   localOrientationProgrammes,
@@ -29,7 +29,7 @@ export async function GET() {
 }
 
 export async function POST(request: Request) {
-  const denied = await requireAdmin('Landing Page CMS');
+  const denied = await requireAdminWrite('Landing Page CMS');
   if (denied) return denied;
   if (process.env.VERCEL && !hasCmsDatabase()) {
     return NextResponse.json({ success: false, message: 'Configure Supabase to manage published programmes.' }, { status: 503 });
