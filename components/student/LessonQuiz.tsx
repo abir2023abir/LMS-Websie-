@@ -88,8 +88,16 @@ export default function LessonQuiz({ courseId, lessonId }: { courseId: string; l
             </div>
 
             {outcome && (
-              <div className={`rounded-2xl border p-4 text-sm font-semibold ${outcome.passed ? 'border-emerald-200 bg-emerald-50 text-emerald-800' : 'border-amber-200 bg-amber-50 text-amber-900'}`}>
-                You scored {outcome.correct} / {outcome.total} ({outcome.percent}%). {outcome.passed ? 'Well done — you passed!' : `You need ${outcome.passMark}% to pass. Review the lesson and try again.`}
+              <div className={`rounded-2xl border p-5 text-center ${outcome.passed ? 'border-emerald-200 bg-emerald-50 text-emerald-800' : 'border-amber-200 bg-amber-50 text-amber-900'}`}>
+                <Award className={`mx-auto h-9 w-9 ${outcome.passed ? 'text-emerald-600' : 'text-amber-600'}`} />
+                <p className="mt-2 font-display text-3xl font-extrabold">{outcome.percent}%</p>
+                <p className="text-xs font-semibold opacity-80">{outcome.correct} of {outcome.total} correct · pass mark {outcome.passMark}%</p>
+                <p className="mt-2 text-base font-bold">
+                  {outcome.passed
+                    ? `Congratulations! You passed — the pass mark was ${outcome.passMark}% and you scored ${outcome.percent}%.`
+                    : `Not passed yet. You need ${outcome.passMark}% and you scored ${outcome.percent}%. Review the lesson and try again.`}
+                </p>
+                {outcome.passed && <p className="mt-1 text-xs font-semibold opacity-80">Your next step is now open in the lesson path.</p>}
               </div>
             )}
 

@@ -159,7 +159,7 @@ export default function ExamsPage() {
                 <Award className={`mx-auto h-12 w-12 ${outcome.passed ? 'text-emerald-600' : 'text-amber-600'}`} />
                 <p className="mt-3 font-display text-4xl font-extrabold">{outcome.percent}%</p>
                 <p className="text-sm font-semibold text-slate-600">{outcome.score} of {outcome.total} marks · pass mark {outcome.passMark}%</p>
-                <p className={`mt-2 text-lg font-bold ${outcome.passed ? 'text-emerald-700' : 'text-amber-800'}`}>{outcome.passed ? 'Congratulations — you passed!' : 'Not passed this time.'}</p>
+                <p className={`mt-2 text-lg font-bold ${outcome.passed ? 'text-emerald-700' : 'text-amber-800'}`}>{outcome.passed ? `Congratulations! You passed — the pass mark was ${outcome.passMark}% and you scored ${outcome.percent}%.` : `Not passed this time. You need ${outcome.passMark}% and you scored ${outcome.percent}%.`}</p>
               </div>
               {outcome.review && outcome.review.map((item, index) => (
                 <div key={item.id} className="space-y-2 rounded-2xl border border-slate-200 bg-white p-4">
