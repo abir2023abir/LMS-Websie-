@@ -3,7 +3,9 @@
 import { useEffect, useState } from 'react';
 import CourseMentorsPanel from './CourseMentorsPanel';
 
-type Profile = { id: string; name: string; email: string; roles: string[]; disabled: boolean; mentor_level: 'lead' | 'assistant'; created_at: string };
+import TeacherPhoto from './TeacherPhoto';
+
+type Profile = { id: string; name: string; email: string; roles: string[]; disabled: boolean; mentor_level: 'lead' | 'assistant'; created_at: string; has_photo?: boolean };
 type GuardianLink = { id: string; guardian_id: string; student_email: string; status: 'pending' | 'approved' | 'rejected'; decided_by: string | null };
 type CourseRow = { course_id: string; mentor_email: string; mentor_history: { email: string; at: string }[] };
 
@@ -62,7 +64,7 @@ export default function AdminAccounts() {
         setNote(data.message || 'Could not add the instructor.');
         return;
       }
-      setAdded(`${form.name} was added. Open Instructor Access to choose their tools.`);
+      setAdded(`${form.name} was added. Upload their photo in the Accounts list below, then open Instructor Access to choose their tools.`);
       setForm({ name: '', email: '', password: '', mentorLevel: 'lead' });
       load();
     } finally {
@@ -143,6 +145,7 @@ export default function AdminAccounts() {
           <table className="w-full text-left text-xs">
             <thead>
               <tr className="border-b border-slate-100 text-slate-400 uppercase">
+                <th className="py-3 px-3">Photo</th>
                 <th className="py-3 px-3">Name</th>
                 <th className="py-3 px-3">Email</th>
                 <th className="py-3 px-3">Roles</th>
@@ -154,6 +157,13 @@ export default function AdminAccounts() {
             <tbody>
               {profiles.map((profile) => (
                 <tr key={profile.id} className="border-b border-slate-50">
+                  <td className="py-3 px-3">
+                    {profile.roles.includes('Instructor') ? (
+                      <TeacherPhoto profileId={profile.id} name={profile.name} hasPhoto={Boolean(profile.has_photo)} />
+                    ) : (
+                      <span className="text-slate-300">—</span>
+                    )}
+                  </td>
                   <td className="py-3 px-3 font-bold">{profile.name}</td>
                   <td className="py-3 px-3">{profile.email}</td>
                   <td className="py-3 px-3">{profile.roles.join(', ')}</td>
@@ -185,7 +195,7 @@ export default function AdminAccounts() {
                 </tr>
               ))}
               {profiles.length === 0 && (
-                <tr><td colSpan={6} className="py-6 text-center text-slate-400">No accounts yet.</td></tr>
+                <tr><td colSpan={7} className="py-6 text-center text-slate-400">No accounts yet.</td></tr>
               )}
             </tbody>
           </table>

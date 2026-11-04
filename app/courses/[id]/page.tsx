@@ -7,6 +7,7 @@ import { useParams } from 'next/navigation';
 import FloatingNavbar from '@/components/english/FloatingNavbar';
 import EnglishFooter from '@/components/english/EnglishFooter';
 import VideoPlayer from '@/components/player/VideoPlayer';
+import InstructorAvatar from '@/components/courses/InstructorAvatar';
 import CheckoutModal from '@/components/checkout/CheckoutModal';
 import { getCourseById } from '@/lib/course-client';
 import { getFallbackCourseData } from '@/lib/progress';
@@ -197,9 +198,7 @@ export default function CourseDetailsPage() {
           <div className="lg:col-span-7 space-y-6">
             {/* Instructor Details Card */}
             <div className="bg-white rounded-3xl border border-slate-200/80 p-6 flex items-center gap-4 shadow-sm">
-              <div className="w-12 h-12 rounded-2xl bg-[#FACC15] text-[#111827] font-extrabold flex items-center justify-center text-lg shadow-md flex-shrink-0">
-                {course.instructorName ? course.instructorName.charAt(0) : 'S'}
-              </div>
+              <InstructorAvatar instructorId={course.instructorId} name={course.instructorName} />
               <div>
                 <div className="text-xs text-slate-500 font-semibold uppercase tracking-wider">Instructor</div>
                 <div className="font-display font-bold text-base text-[#111827]">{course.instructorName || 'Lead Academic Faculty'}</div>

@@ -13,6 +13,7 @@ import {
 import { applyCourseEdit, useCourseEdits } from '@/lib/course-edits-client';
 import TopCoursesList from './TopCoursesList';
 import InboxButton from '@/components/inbox/InboxButton';
+import MyPhoto from '@/components/admin/MyPhoto';
 import { takaFromUsd } from '@/lib/utils';
 
 // Each tab loads its code only when opened, so the admin panel starts fast.
@@ -181,6 +182,7 @@ export default function AdminDashboard({
             <span className="hidden sm:inline">Refresh</span>
           </button>
           <InboxButton scope="all" />
+          {variant === 'instructor' && <MyPhoto />}
         </header>
 
       <main className="mx-auto max-w-[1400px] px-3 py-5 sm:px-5 lg:px-8 lg:py-8">

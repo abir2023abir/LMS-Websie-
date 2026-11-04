@@ -14,16 +14,18 @@ import {
   updateProfile,
 } from '@/lib/accounts';
 
+import { listPhotoOwners } from '@/lib/teacher-photos';
+
 export const dynamic = 'force-dynamic';
 
 export async function GET() {
   const denied = await requireAdmin('Accounts');
   if (denied) return denied;
   try {
-    const [profiles, links, courses] = await Promise.all([listProfiles(), listLinks(), listCourseSettings()]);
+    const [profiles, links, courses, photos] = await Promise.all([listProfiles(), listLinks(), listCourseSettings(), listPhotoOwners()]);
     return NextResponse.json({
       success: true,
-      profiles: profiles.map((item) => ({ ...publicProfile(item), mentor_level: item.mentor_level || 'lead' })),
+      profiles: profiles.map((item) => ({ ...publicProfile(item), mentor_level: item.mentor_level || 'lead', has_photo: photos.has(item.id) })),
       links,
       courses,
     });
