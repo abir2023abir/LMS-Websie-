@@ -42,8 +42,55 @@ export default function AdminAccounts() {
 
   const nameOf = (id: string) => profiles.find((item) => item.id === id)?.name || 'Unknown';
 
+  const [form, setForm] = useState({ name: '', email: '', password: '', mentorLevel: 'lead' });
+  const [adding, setAdding] = useState(false);
+  const [added, setAdded] = useState('');
+
+  const addInstructor = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setNote('');
+    setAdded('');
+    setAdding(true);
+    try {
+      const res = await fetch('/api/admin/accounts', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(form),
+      });
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok || data.success === false) {
+        setNote(data.message || 'Could not add the instructor.');
+        return;
+      }
+      setAdded(`${form.name} was added. Open Instructor Access to choose their tools.`);
+      setForm({ name: '', email: '', password: '', mentorLevel: 'lead' });
+      load();
+    } finally {
+      setAdding(false);
+    }
+  };
+
   return (
     <div className="space-y-6">
+      <section className="bg-white rounded-3xl p-6 shadow-sm border border-slate-100 space-y-4">
+        <div>
+          <h2 className="font-display font-extrabold text-xl">Add instructor</h2>
+          <p className="text-xs text-slate-500">Creates a mentor account. Give them the email and password so they can sign in.</p>
+        </div>
+        <form onSubmit={addInstructor} className="grid gap-3 sm:grid-cols-2 lg:grid-cols-5 items-end">
+          <input required value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} placeholder="Full name" className="border border-slate-200 rounded-xl px-3 py-2.5 text-sm" />
+          <input required type="email" value={form.email} onChange={(e) => setForm({ ...form, email: e.target.value })} placeholder="Email" className="border border-slate-200 rounded-xl px-3 py-2.5 text-sm" />
+          <input required minLength={6} type="text" value={form.password} onChange={(e) => setForm({ ...form, password: e.target.value })} placeholder="Password (6+ characters)" className="border border-slate-200 rounded-xl px-3 py-2.5 text-sm" />
+          <select aria-label="Mentor level" value={form.mentorLevel} onChange={(e) => setForm({ ...form, mentorLevel: e.target.value })} className="border border-slate-200 rounded-xl px-3 py-2.5 text-sm">
+            <option value="lead">Lead mentor</option>
+            <option value="assistant">Assistant mentor</option>
+          </select>
+          <button type="submit" disabled={adding} className="bg-[#FACC15] text-[#111827] font-extrabold px-4 py-2.5 rounded-xl text-sm disabled:opacity-60">
+            {adding ? 'Adding…' : 'Add instructor'}
+          </button>
+        </form>
+        {added && <p className="text-sm text-emerald-700">{added}</p>}
+      </section>
       <section className="bg-white rounded-3xl p-6 shadow-sm border border-slate-100 space-y-4">
         <div>
           <h2 className="font-display font-extrabold text-xl">Guardian links ({links.length})</h2>

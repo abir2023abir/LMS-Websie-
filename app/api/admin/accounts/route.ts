@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server';
 import { requireAdmin } from '@/lib/admin-guard';
 import {
   assignCourseMentor, unassignCourseMentor,
+  createProfile,
   decideLink,
   linkById,
   listCourseSettings,
@@ -28,6 +29,38 @@ export async function GET() {
     });
   } catch (error: any) {
     return NextResponse.json({ success: false, message: error.message }, { status: 500 });
+  }
+}
+
+/** Admin creates a mentor (instructor) account without signing the admin in as that person. */
+export async function POST(request: Request) {
+  const denied = await requireAdmin('Accounts');
+  if (denied) return denied;
+  try {
+    const body = await request.json();
+    const name = String(body.name || '').trim();
+    const email = String(body.email || '').trim();
+    const password = String(body.password || '');
+    const level = body.mentorLevel === 'assistant' ? 'assistant' : 'lead';
+    if (!name) return NextResponse.json({ success: false, message: 'Enter the instructor name.' }, { status: 400 });
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+      return NextResponse.json({ success: false, message: 'Enter a valid email address.' }, { status: 400 });
+    }
+    if (password.length < 6) {
+      return NextResponse.json({ success: false, message: 'Password must be at least 6 characters.' }, { status: 400 });
+    }
+    if (await profileByEmail(email)) {
+      return NextResponse.json({ success: false, message: 'An account with this email already exists.' }, { status: 409 });
+    }
+    const profile = await createProfile({ email, name, password, role: 'Instructor' });
+    if (level === 'assistant') await updateProfile(profile.id, { mentor_level: 'assistant' });
+    return NextResponse.json({ success: true, profile: publicProfile(profile) });
+  } catch (error: any) {
+    const duplicate = error.message === 'duplicate';
+    return NextResponse.json(
+      { success: false, message: duplicate ? 'An account with this email already exists.' : error.message || 'Could not create the account.' },
+      { status: duplicate ? 409 : 500 },
+    );
   }
 }
 
