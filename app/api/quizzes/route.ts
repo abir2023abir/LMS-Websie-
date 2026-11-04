@@ -21,7 +21,7 @@ export async function GET(request: Request) {
     return NextResponse.json({ success: false, message: 'Enroll in this course to take its quizzes.' }, { status: 403 });
   }
   if (profile && courseId && lessonId && !(await stepOpen(profile.id, courseId, lessonId, 'quiz'))) {
-    return NextResponse.json({ success: true, locked: true, message: 'Watch the lesson video first — the quiz opens after that.', quizzes: [] });
+    return NextResponse.json({ success: true, locked: true, message: 'Not open yet — watch every lesson of this module first, then the quiz opens.', quizzes: [] });
   }
   const quizzes = courseId && lessonId ? await quizzesForLesson(courseId, lessonId) : await quizzesForCourses(courseId ? [courseId] : enrolled);
   const attempts = profile ? await listAttempts(profile.id) : [];
