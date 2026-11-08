@@ -25,6 +25,7 @@ export type StudentRow = {
   percent: number; lessonsDone: number; lessonsTotal: number; currentLesson: string; currentStep: string;
   quizAverage: number | null; examAverage: number | null; assignmentsSubmitted: number;
   lastActive: string; atRisk: boolean; score: number;
+  timelineStatus: 'none' | 'on-track' | 'at-risk' | 'expired' | 'completed'; dueAt: string; endingAt: string;
 };
 
 const DAY = 24 * 60 * 60 * 1000;
@@ -59,6 +60,7 @@ export async function courseAnalytics(courseId: string) {
       lastActive,
       atRisk: progress.percent < 100 && (!lastActive || Date.now() - new Date(lastActive).getTime() > 7 * DAY),
       score: progress.percent * 100 + (examAverage ?? 0) * 2 + (quizAverage ?? 0),
+      timelineStatus: progress.timeline.status, dueAt: current?.dueAt || '', endingAt: progress.timeline.endingAt,
     };
     return { row, progress, quizzes: courseQuizzes, exams: courseExams };
   }));
