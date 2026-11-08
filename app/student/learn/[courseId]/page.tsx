@@ -498,11 +498,11 @@ export default function StudentLearnPage() {
 
               {/* TAB 2: KNOWLEDGE QUIZ */}
               {activeTab === 'quiz' && currentLesson && (
-                <LessonQuiz courseId={courseId} lessonId={currentLesson.id} />
+                <LessonQuiz courseId={courseId} lessonId={currentLesson.id} onChanged={() => loadPath(currentLesson.id)} />
               )}
 
               {activeTab === 'assignment' && currentLesson && (
-                <LessonAssignment courseId={courseId} lessonId={currentLesson.id} />
+                <LessonAssignment courseId={courseId} lessonId={currentLesson.id} onChanged={() => loadPath(currentLesson.id)} />
               )}
 
               {/* TAB 3: DISCUSSION COMMUNITY */}

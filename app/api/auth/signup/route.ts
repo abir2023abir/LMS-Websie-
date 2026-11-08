@@ -3,10 +3,12 @@ import { NextResponse } from 'next/server';
 import { ROLES, createProfile, profileByEmail, publicProfile, requestGuardianLink, type Role } from '@/lib/accounts';
 import { verifyAdminSession } from '@/lib/auth-server';
 import { setUserSession } from '@/lib/user-session';
+import { rateLimited, TOO_MANY } from '@/lib/rate-limit';
 
 export const dynamic = 'force-dynamic';
 
 export async function POST(request: Request) {
+  if (rateLimited(request, 'signup', 8, 60 * 60 * 1000)) return NextResponse.json(TOO_MANY, { status: 429 });
   try {
     const body = await request.json();
     const name = String(body.name || '').trim();

@@ -1,5 +1,4 @@
 import { NextResponse } from 'next/server';
-import { requireAdmin, requireAdminWrite } from '@/lib/admin-guard';
 import { staffDenied, staffIdentity } from '@/lib/user-session';
 import { staffCourses } from '@/lib/analytics';
 import { performAction, RISK_ACTIONS, riskAlerts, riskThreshold, setRiskThreshold, type RiskActionKind } from '@/lib/assessment-risk';
@@ -10,20 +9,19 @@ async function payload(allowed: Set<string> | null) {
   return { success: true, threshold: await riskThreshold(), actions: RISK_ACTIONS, alerts: await riskAlerts(allowed) };
 }
 
-// Students who failed a quiz or exam too many times (admins: all courses; mentors: their own courses).
+// Students who failed a quiz or exam too many times (admins: all courses; mentors: only the courses they teach or mentor).
 export async function GET() {
-  const denied = await requireAdmin('Progress');
-  if (denied) return denied;
   const staff = await staffIdentity();
   if (!staff) return staffDenied();
   return NextResponse.json(await payload(await staffCourses(staff)));
 }
 
 export async function POST(request: Request) {
-  const denied = await requireAdminWrite('Progress');
-  if (denied) return denied;
   const staff = await staffIdentity();
   if (!staff) return staffDenied();
+  if (!staff.admin && staff.level === 'assistant') {
+    return NextResponse.json({ success: false, message: 'Assistant mentors can view risk alerts but cannot take action.' }, { status: 403 });
+  }
   try {
     const body = await request.json();
     const allowed = await staffCourses(staff);

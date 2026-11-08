@@ -1,11 +1,14 @@
 import { NextResponse } from 'next/server';
-import { checkPassword, profileByEmail, publicProfile } from '@/lib/accounts';
+import { checkPassword, hashPassword, profileByEmail, publicProfile } from '@/lib/accounts';
 import { setUserSession } from '@/lib/user-session';
 import { attemptsLeftMessage, clientIp, loginFailed, loginLocked, loginSucceeded } from '@/lib/login-limit';
 
 export const dynamic = 'force-dynamic';
 
 const ATTEMPTS_KEY = 'user-login-attempts';
+const ACCOUNT_KEY = 'user-login-by-account';
+// Wrong passwords for an unknown email cost the same time as for a real one.
+const DUMMY_HASH = hashPassword('not-a-real-password');
 
 export async function POST(request: Request) {
   try {
@@ -14,11 +17,17 @@ export async function POST(request: Request) {
     if (locked) return NextResponse.json({ success: false, code: 'auth/too-many-requests', message: locked }, { status: 429 });
 
     const body = await request.json();
-    const email = String(body.email || '');
-    const password = String(body.password || '');
+    const email = String(body.email || '').slice(0, 200);
+    const password = String(body.password || '').slice(0, 200);
+    // A second lock per account, so changing the address does not give a guesser fresh tries.
+    const account = email.trim().toLowerCase() || 'empty';
+    const accountLocked = await loginLocked(ACCOUNT_KEY, account);
+    if (accountLocked) return NextResponse.json({ success: false, code: 'auth/too-many-requests', message: accountLocked }, { status: 429 });
     const profile = email && password ? await profileByEmail(email) : null;
 
-    if (!profile || !checkPassword(password, profile.password_hash)) {
+    const passwordOk = checkPassword(password, profile ? profile.password_hash : DUMMY_HASH);
+    if (!profile || !passwordOk) {
+      await loginFailed(ACCOUNT_KEY, account);
       const left = await loginFailed(ATTEMPTS_KEY, ip);
       return NextResponse.json(
         { success: false, code: left > 0 ? 'auth/invalid-credential' : 'auth/too-many-requests', message: attemptsLeftMessage(left, 'Invalid email or password.') },
@@ -30,6 +39,7 @@ export async function POST(request: Request) {
     }
 
     await loginSucceeded(ATTEMPTS_KEY, ip);
+    await loginSucceeded(ACCOUNT_KEY, account);
     const response = NextResponse.json({ success: true, profile: publicProfile(profile) });
     setUserSession(response, profile.id);
     return response;

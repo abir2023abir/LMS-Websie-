@@ -3,6 +3,7 @@ import { bookedTimesOn, continueDeskThread, getDeskThread, listDeskThreads, open
 import { currentProfile, staffDenied, staffIdentity } from '@/lib/user-session';
 import { getCourseById, getCoursesByInstructor } from '@/lib/db';
 import { listCourseSettings } from '@/lib/accounts';
+import { rateLimited, TOO_MANY } from '@/lib/rate-limit';
 
 async function visibleThreadsFor(staff: NonNullable<Awaited<ReturnType<typeof staffIdentity>>>) {
   const threads = await listDeskThreads();
@@ -42,6 +43,7 @@ export async function GET(request: Request) {
 }
 
 export async function POST(request: Request) {
+  if (rateLimited(request, 'messages', 30, 10 * 60 * 1000)) return NextResponse.json(TOO_MANY, { status: 429 });
   try {
     const body = await request.json();
     if (body.action === 'reply') {

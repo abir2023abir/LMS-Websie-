@@ -172,6 +172,7 @@ type WindowMap = Record<string, Record<string, Record<string, Window>>>;
 
 export async function courseProgress(studentId: string, courseId: string, options: { sync?: boolean } = {}): Promise<{
   courseTitle: string; lessons: LessonProgress[]; percent: number; currentLessonId: string; timeline: CourseTimeline;
+  finalExam: { total: number; passed: number; open: boolean };
 }> {
   const [{ title, lessons }, videoAll, partsAll, approvalsAll, quizzes, quizAttempts, assignments, submissions, exams, examAttempts, requests, windowsAll, timeline] = await Promise.all([
     courseLessons(courseId), kvGet<CourseSets>(VIDEO_KEY, {}), kvGet<PartMap>(PARTS_KEY, {}), kvGet<CourseSets>(APPROVALS_KEY, {}),
@@ -306,11 +307,18 @@ export async function courseProgress(studentId: string, courseId: string, option
     };
   }
 
+  // Course Final Exam: an exam that belongs to no module or lesson. It opens when every lesson is done
+  // and must be passed before the course counts as complete.
+  const finals = exams.filter((e) => e.published && e.courseId === courseId && !e.lessonId && !e.moduleId);
+  const finalsPassed = finals.filter((e) => examAttempts.some((a) => a.examId === e.id && a.status === 'submitted' && a.passed)).length;
+  const finalExam = { total: finals.length, passed: finalsPassed, open: total > 0 && completed === total };
+
   const current = result.find((lesson) => lesson.steps.some((step) => step.state === 'current')) || result.find((lesson) => lesson.state === 'current');
   return {
     courseTitle: title,
     lessons: result,
-    percent: total ? Math.round((completed / total) * 100) : 0,
+    finalExam,
+    percent: total ? Math.round(((completed + finalsPassed) / (total + finals.length)) * 100) : 0,
     currentLessonId: current?.lessonId || result[result.length - 1]?.lessonId || '',
     timeline: courseTimeline,
   };
@@ -323,6 +331,11 @@ export async function stepOpen(studentId: string, courseId: string, lessonId: st
   if (!lesson || lesson.state === 'locked') return false;
   const step = lesson.steps.find((item) => item.key === key);
   return step ? step.state !== 'locked' : true;
+}
+
+/** Is the Course Final Exam open? Only once every lesson of the course is done. */
+export async function finalExamOpen(studentId: string, courseId: string) {
+  return (await courseProgress(studentId, courseId)).finalExam.open;
 }
 
 export async function lessonOpen(studentId: string, courseId: string, lessonId: string) {

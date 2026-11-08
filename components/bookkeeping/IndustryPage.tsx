@@ -19,13 +19,15 @@ export default function IndustryPage({ industry }: { industry: BookkeepingIndust
         </div>
       </section>
       <section className="mx-auto max-w-6xl px-4 py-16 sm:px-6">
-        <p className="text-xs font-extrabold tracking-[0.16em] text-slate-500">WHERE WE FOCUS</p>
-        <h2 className="mt-2 font-display text-3xl font-extrabold">Core focus areas</h2>
-        <div className="mt-8 grid gap-4 md:grid-cols-3">
-          {industry.focuses.map((focus) => (
-            <article key={focus.title} className="rounded-3xl border border-slate-200 bg-white p-6 shadow-sm">
+        <p className="text-center text-xs font-extrabold tracking-[0.16em] text-slate-500">WHERE WE FOCUS</p>
+        <h2 className="mt-2 text-center font-display text-3xl font-extrabold">Services included for this business</h2>
+        <div className="mx-auto mt-8 grid max-w-5xl gap-5 md:grid-cols-3">
+          {industry.focuses.map((focus, index) => (
+            <article key={focus.title} className={`relative flex h-full flex-col rounded-3xl bg-white px-6 py-7 shadow-sm ${index === 0 ? 'border-2 border-[#111827]' : 'border border-slate-200'}`}>
+              {index === 0 && <span className="absolute -top-3 left-1/2 -translate-x-1/2 rounded-full bg-[#FACC15] px-4 py-1 text-[11px] font-extrabold uppercase tracking-wide text-[#111827]">Core service</span>}
               <h3 className="font-display text-xl font-bold">{focus.title}</h3>
-              <ul className="mt-4 space-y-3">
+              <p className="mt-6 text-sm font-bold">Included</p>
+              <ul className="mt-3 space-y-3">
                 {focus.points.map((point) => <li key={point} className="flex items-start gap-2 text-sm text-slate-600"><Check className="mt-0.5 h-4 w-4 shrink-0 text-emerald-600" strokeWidth={2.5} />{point}</li>)}
               </ul>
             </article>
@@ -33,14 +35,15 @@ export default function IndustryPage({ industry }: { industry: BookkeepingIndust
         </div>
       </section>
       <section className="bg-white px-4 py-16 sm:px-6">
-        <div className="mx-auto max-w-6xl">
-          <p className="text-xs font-extrabold tracking-[0.16em] text-slate-500">WHAT YOU GET</p>
-          <h2 className="mt-2 font-display text-3xl font-extrabold">Support that stays with the business</h2>
-          <div className="mt-8 grid gap-4 sm:grid-cols-2 lg:grid-cols-5">
-            {industry.values.map((value) => (
-              <article key={value.title} className="rounded-3xl border border-slate-200 bg-[#f5f7fa] p-5">
-                <h3 className="font-display text-base font-bold">{value.title}</h3>
-                <p className="mt-2 text-sm leading-relaxed text-slate-600">{value.detail}</p>
+        <div className="mx-auto max-w-5xl">
+          <p className="text-center text-xs font-extrabold tracking-[0.16em] text-slate-500">WHAT YOU GET</p>
+          <h2 className="mt-2 text-center font-display text-3xl font-extrabold">What stays with the service</h2>
+          <div className="mt-8 grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
+            {industry.values.map((value, index) => (
+              <article key={value.title} className={`relative flex h-full flex-col rounded-3xl bg-[#f5f7fa] px-6 py-7 ${index === 0 ? 'border-2 border-[#111827]' : 'border border-slate-200'}`}>
+                {index === 0 && <span className="absolute -top-3 left-6 rounded-full bg-[#FACC15] px-4 py-1 text-[11px] font-extrabold uppercase tracking-wide text-[#111827]">Included</span>}
+                <h3 className="font-display text-xl font-bold">{value.title}</h3>
+                <p className="mt-3 flex items-start gap-2 text-sm leading-relaxed text-slate-600"><Check className="mt-0.5 h-4 w-4 shrink-0 text-emerald-600" strokeWidth={2.5} />{value.detail}</p>
               </article>
             ))}
           </div>

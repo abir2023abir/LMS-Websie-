@@ -11,7 +11,12 @@ type Attempts = Record<string, { fails: number; first: number }>;
 const memory = new Map<string, Attempts>();
 
 export function clientIp(request: Request) {
-  return request.headers.get('x-forwarded-for')?.split(',')[0].trim() || request.headers.get('x-real-ip') || 'unknown';
+  // Vercel sets these itself, so a visitor cannot choose them. A visitor can add to the front of
+  // x-forwarded-for, so when only that header exists the last hop (added by the proxy) is used.
+  const trusted = request.headers.get('x-vercel-forwarded-for') || request.headers.get('x-real-ip');
+  if (trusted) return trusted.split(',')[0].trim();
+  const hops = (request.headers.get('x-forwarded-for') || '').split(',').map((hop) => hop.trim()).filter(Boolean);
+  return hops[hops.length - 1] || 'unknown';
 }
 
 function fresh(all: Attempts): Attempts {

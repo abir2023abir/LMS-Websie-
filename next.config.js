@@ -32,6 +32,21 @@ const nextConfig = {
     ];
   },
   async headers() {
+    const csp = [
+      "default-src 'self'",
+      // Next.js injects small inline scripts, so 'unsafe-inline' stays; eval is only for the dev server.
+      `script-src 'self' 'unsafe-inline'${process.env.NODE_ENV === 'production' ? '' : " 'unsafe-eval'"} https://www.youtube.com https://s.ytimg.com`,
+      "style-src 'self' 'unsafe-inline'",
+      "img-src 'self' data: blob: https:",
+      "media-src 'self' blob: https:",
+      "font-src 'self' data:",
+      "connect-src 'self' https:",
+      "frame-src https://www.youtube.com https://www.youtube-nocookie.com https://www.google.com https://maps.google.com",
+      "object-src 'none'",
+      "base-uri 'self'",
+      "form-action 'self' https://*.sslcommerz.com",
+      "frame-ancestors 'self'",
+    ].join('; ');
     return [
       {
         source: '/(.*)',
@@ -56,6 +71,10 @@ const nextConfig = {
             key: 'Referrer-Policy',
             value: 'origin-when-cross-origin',
           },
+          { key: 'Content-Security-Policy', value: csp },
+          { key: 'Strict-Transport-Security', value: 'max-age=63072000; includeSubDomains' },
+          { key: 'Permissions-Policy', value: 'camera=(), microphone=(), geolocation=(), payment=(), usb=()' },
+          { key: 'Cross-Origin-Opener-Policy', value: 'same-origin' },
         ],
       },
     ];

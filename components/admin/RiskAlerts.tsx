@@ -15,7 +15,7 @@ type ActionDef = { key: string; label: string; hint: string };
 const when = (iso: string) => new Date(iso).toLocaleString('en-BD', { day: 'numeric', month: 'short', hour: 'numeric', minute: '2-digit' });
 
 /** Admin → Progress: students who keep failing a quiz or exam, and what was done about it. */
-export default function RiskAlerts() {
+export default function RiskAlerts({ mentor = false }: { mentor?: boolean }) {
   const [alerts, setAlerts] = useState<Alert[]>([]);
   const [defs, setDefs] = useState<ActionDef[]>([]);
   const [threshold, setThreshold] = useState(3);
@@ -26,6 +26,7 @@ export default function RiskAlerts() {
   const [note, setNote] = useState('');
   const [extra, setExtra] = useState(1);
   const [busy, setBusy] = useState(false);
+  const [blocked, setBlocked] = useState(false);
 
   const apply = (data: { alerts?: Alert[]; actions?: ActionDef[]; threshold?: number }) => {
     setAlerts(data.alerts || []); setDefs(data.actions || []); setThreshold(data.threshold || 3); setLoaded(true);
@@ -33,6 +34,7 @@ export default function RiskAlerts() {
   const load = useCallback(async () => {
     const res = await fetch('/api/admin/risk-alerts', { cache: 'no-store' });
     if (res.ok) apply(await res.json());
+    else if (res.status === 401 || res.status === 403) setBlocked(true);
   }, []);
   useEffect(() => { void load(); }, [load]);
 
@@ -45,6 +47,7 @@ export default function RiskAlerts() {
     apply(data); toast.success(done); return true;
   };
 
+  if (blocked) return null;
   const shown = alerts.filter((item) => item.status === show);
   const openCount = alerts.filter((item) => item.status === 'open').length;
 
@@ -55,12 +58,12 @@ export default function RiskAlerts() {
           <h2 className="flex items-center gap-2 font-display text-lg font-extrabold text-[#111827]"><AlertTriangle className="h-5 w-5 text-amber-600" />Risk alerts</h2>
           <p className="text-sm text-slate-500">Students who failed the same quiz or exam {threshold} or more times. A failed student is never removed automatically. You decide what to do.</p>
         </div>
-        <div className="flex flex-wrap items-center gap-2 text-xs font-bold text-slate-600">
+        {!mentor && <div className="flex flex-wrap items-center gap-2 text-xs font-bold text-slate-600">
           <label className="flex items-center gap-1.5">Alert after
             <input type="number" min={1} max={20} value={threshold} onChange={(e) => setThreshold(Math.max(1, Number(e.target.value) || 1))} className="w-14 rounded-lg border border-slate-200 px-2 py-1.5" /> failed attempts
           </label>
           <button type="button" disabled={busy} onClick={() => send({ action: 'threshold', threshold }, 'Threshold saved')} className="rounded-full bg-slate-100 px-3 py-1.5 hover:bg-slate-200">Save</button>
-        </div>
+        </div>}
       </div>
 
       <div className="flex gap-2">

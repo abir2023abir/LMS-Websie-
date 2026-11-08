@@ -1,3 +1,4 @@
+import { randomBytes } from 'node:crypto';
 import { NextResponse } from 'next/server';
 import { requireRole } from '@/lib/user-session';
 import { getEnrollments, publicPaymentMethods, savePayment } from '@/lib/payments';
@@ -34,7 +35,7 @@ export async function POST(request: Request) {
       amount: price.amount,
       method: 'SSLCommerz',
       status: 'pending',
-      transactionId: `CBS${Date.now()}${Math.random().toString(36).slice(2, 6).toUpperCase()}`,
+      transactionId: `CBS${Date.now()}${randomBytes(6).toString('hex').toUpperCase()}`,
       source: 'sslcommerz',
     });
     const url = await startSslSession(payment, profile.phone || '', siteUrl(request));

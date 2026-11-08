@@ -22,7 +22,7 @@ export async function GET(request: Request) {
     const file = await readSubmissionFile(fileId);
     if (!file) return NextResponse.json({ success: false, message: 'File not found.' }, { status: 404 });
     return new NextResponse(new Uint8Array(file.bytes), {
-      headers: { 'Content-Type': file.type, 'Content-Disposition': `attachment; filename="${encodeURIComponent(file.name)}"` },
+      headers: { 'Content-Type': file.type, 'X-Content-Type-Options': 'nosniff', 'Content-Security-Policy': "sandbox; default-src 'none'", 'Content-Disposition': `attachment; filename="${encodeURIComponent(file.name)}"` },
     });
   }
   return NextResponse.json(await payload());

@@ -8,6 +8,7 @@ import FloatingNavbar from '@/components/english/FloatingNavbar';
 import EnglishFooter from '@/components/english/EnglishFooter';
 import LessonVideoField from '@/components/admin/LessonVideoField';
 import ProgressRequests from '@/components/admin/ProgressRequests';
+import RiskAlerts from '@/components/admin/RiskAlerts';
 import dynamic from 'next/dynamic';
 // Charts load after the page, so the mentor panel opens quickly.
 const CourseAnalytics = dynamic(() => import('@/components/admin/CourseAnalytics'), { loading: () => <div className="h-64 animate-pulse rounded-3xl bg-white" /> });
@@ -61,7 +62,6 @@ export default function TeacherPanelPage() {
           title: 'Welcome to Career Bridge.Studio',
           videoUrl: '',
           duration: '05:30',
-          days: 2,
         },
       ],
     },
@@ -156,7 +156,6 @@ export default function TeacherPanelPage() {
                 title: `Lesson ${m.lessons.length + 1}: Video Lecture`,
                 videoUrl: '',
                 duration: '10:00',
-                days: 2,
               },
             ],
           };
@@ -327,6 +326,7 @@ export default function TeacherPanelPage() {
             intro="Questions for your courses show the module, lesson, student progress, and your instructor assignment. Admin sees the same thread."
           />
           <ProgressRequests />
+          <RiskAlerts mentor />
           <CourseAnalytics />
           {/* ── QUICK METRICS (computed from the mentor's real course records) ── */}
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
@@ -702,22 +702,6 @@ export default function TeacherPanelPage() {
                                   placeholder={`Lesson ${lesIdx + 1} Title`}
                                   className="bg-slate-50 border border-slate-200 rounded-lg px-2.5 py-1.5 text-[#111827] flex-1 focus:outline-none focus:border-[#111827]"
                                 />
-                                <label className="flex items-center gap-1 font-bold text-slate-500">
-                                  Days
-                                  <input
-                                    type="number"
-                                    min="1"
-                                    value={les.days || 2}
-                                    onChange={(e) => updateLesson(mod.id, les.id, 'days', Math.max(1, Number(e.target.value) || 1))}
-                                    className="w-16 bg-slate-50 border border-slate-200 rounded-lg px-2 py-1.5"
-                                  />
-                                </label>
-                                <span className="basis-full text-[11px] font-semibold text-amber-700">
-                                  {(() => {
-                                    const due = mod.lessons.slice(0, lesIdx + 1).reduce((sum, item) => sum + (Number(item.days) || 2), 0);
-                                    return `Finish by day ${due} of this module`;
-                                  })()}
-                                </span>
                                 <button
                                   type="button"
                                   onClick={() => removeLesson(mod.id, les.id)}

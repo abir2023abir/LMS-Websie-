@@ -9,7 +9,7 @@ type Assignment = { id: string; title: string; instructions: string; dueDate: st
 const day = (value: string) => (value ? new Date(`${value.slice(0, 10)}T12:00:00`).toLocaleDateString('en-BD', { day: 'numeric', month: 'short', year: 'numeric' }) : '');
 
 /** The assignments attached to one lesson, with the student's submission, score and feedback. */
-export default function LessonAssignment({ courseId, lessonId }: { courseId: string; lessonId: string }) {
+export default function LessonAssignment({ courseId, lessonId, onChanged }: { courseId: string; lessonId: string; onChanged?: () => void }) {
   const [assignments, setAssignments] = useState<Assignment[]>([]);
   const [loading, setLoading] = useState(true);
   const [message, setMessage] = useState('');
@@ -45,6 +45,7 @@ export default function LessonAssignment({ courseId, lessonId }: { courseId: str
       setEditing((prev) => ({ ...prev, [assignment.id]: false }));
       setFiles((prev) => ({ ...prev, [assignment.id]: null }));
       await load();
+      onChanged?.();
     } catch (error) {
       setMessage(error instanceof Error ? error.message : 'Could not submit.');
     } finally {

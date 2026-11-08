@@ -1,3 +1,4 @@
+import { rateLimited, TOO_MANY } from '@/lib/rate-limit';
 import { NextResponse } from 'next/server';
 import { getOffer } from '@/lib/service-catalog';
 import { createServiceRequest, getServiceRequest, replyToServiceRequest } from '@/lib/service-requests';
@@ -15,6 +16,7 @@ export async function GET(request: Request) {
 }
 
 export async function POST(request: Request) {
+  if (rateLimited(request, 'service-request', 5, 10 * 60 * 1000)) return NextResponse.json(TOO_MANY, { status: 429 });
   try {
     const body = await request.json();
     const planId = String(body.planId || '');

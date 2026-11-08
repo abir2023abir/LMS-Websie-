@@ -14,7 +14,7 @@ const starterModules = (): ModuleSchema[] => [
   {
     id: 'mod-1',
     title: 'Module 1: Getting Started',
-    lessons: [{ id: 'les-1', title: 'Welcome to Career Bridge.Studio', videoUrl: '', duration: '05:30', days: 2 }],
+    lessons: [{ id: 'les-1', title: 'Welcome to Career Bridge.Studio', videoUrl: '', duration: '05:30' }],
   },
 ];
 
@@ -40,6 +40,7 @@ export default function CourseUploadModal({
   const [submitting, setSubmitting] = useState(false);
   const [formError, setFormError] = useState('');
   const [formSuccess, setFormSuccess] = useState('');
+  const [dates, setDates] = useState({ firstEnrolled: '', lastEnrolled: '', lastCounting: '', courseEnding: '' });
 
   const handleThumbnailChange = (e: ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -65,6 +66,8 @@ export default function CourseUploadModal({
     setFormSuccess('');
     if (!title.trim()) { setFormError('Please enter a course title.'); return; }
     if (!description.trim()) { setFormError('Please provide a course description.'); return; }
+    const filled = Object.values(dates).filter(Boolean).length;
+    if (asAdmin && filled > 0 && filled < 4) { setFormError('Fill all four timeline dates, or leave all four empty and set them later.'); return; }
     setSubmitting(true);
     try {
       const res = await fetch('/api/courses', {
@@ -85,6 +88,11 @@ export default function CourseUploadModal({
       });
       const data = await res.json();
       if (!res.ok || !data.success) throw new Error(data.error || 'Failed to create course');
+      if (asAdmin && filled === 4) {
+        const saved = await fetch('/api/courses/timeline', { method: 'PUT', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ courseId: draftCourseId, ...Object.fromEntries(Object.entries(dates).map(([key, value]) => [key, new Date(value).toISOString()])) }) });
+        const result = await saved.json().catch(() => ({}));
+        if (!saved.ok || !result.success) throw new Error(`The course was created, but the dates were not saved: ${result.message || 'please set them in the course editor.'}`);
+      }
       setFormSuccess('Course uploaded successfully!');
       onCreated();
       setTimeout(onClose, 700);
@@ -153,6 +161,28 @@ export default function CourseUploadModal({
             </div>
           </div>
 
+          {asAdmin && (
+            <div className="space-y-3 rounded-2xl border border-slate-200 bg-slate-50 p-4">
+              <div>
+                <h3 className="text-sm font-bold text-[#111827]">Course timeline</h3>
+                <p className="text-[11px] text-slate-500">Four dates that drive enrollment and the time each lesson gets. You can also set them later in the course editor.</p>
+              </div>
+              <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+                {([
+                  ['firstEnrolled', 'First enrolled date', 'Enrollment opens'],
+                  ['lastEnrolled', 'Last enrolled date', 'No new students after this'],
+                  ['lastCounting', 'Last counting date', 'Used for the minimum lesson time'],
+                  ['courseEnding', 'Course ending date', 'Final deadline to finish'],
+                ] as const).map(([key, label, hint]) => (
+                  <label key={key} className="block space-y-1 text-[11px] font-bold text-slate-500">{label}
+                    <input type="datetime-local" value={dates[key]} onChange={(e) => setDates({ ...dates, [key]: e.target.value })} className="w-full rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm focus:border-[#111827] focus:outline-none" />
+                    <span className="block font-medium">{hint}</span>
+                  </label>
+                ))}
+              </div>
+            </div>
+          )}
+
           <div className="border-t border-slate-200 pt-6">
             <div className="mb-4 flex items-center justify-between">
               <h3 className="flex items-center gap-2 font-display text-base font-semibold"><Layers className="h-4 w-4 text-amber-600" /> Modules and lessons</h3>
@@ -167,21 +197,16 @@ export default function CourseUploadModal({
                   </div>
                   <div className="space-y-2 border-l-2 border-[#FACC15] pl-4">
                     {mod.lessons.map((lesson, lesIdx) => {
-                      const due = mod.lessons.slice(0, lesIdx + 1).reduce((sum, item) => sum + (Number(item.days) || 2), 0);
                       return (
                         <div key={lesson.id} className="flex flex-wrap items-center gap-2 rounded-xl border border-slate-200 bg-white p-3 text-xs">
                           <Film className="hidden h-4 w-4 text-slate-400 sm:block" />
                           <input value={lesson.title} onChange={(e) => updateLesson(mod.id, lesson.id, 'title', e.target.value)} placeholder={`Lesson ${lesIdx + 1} Title`} className="min-w-[10rem] flex-1 rounded-lg border border-slate-200 bg-slate-50 px-2.5 py-1.5 focus:border-[#111827] focus:outline-none" />
-                          <label className="flex items-center gap-1 font-bold text-slate-500">Days
-                            <input type="number" min="1" value={lesson.days || 2} onChange={(e) => updateLesson(mod.id, lesson.id, 'days', Math.max(1, Number(e.target.value) || 1))} className="w-16 rounded-lg border border-slate-200 bg-slate-50 px-2 py-1.5" />
-                          </label>
-                          <span className="basis-full text-[11px] font-semibold text-amber-700">Finish by day {due} of this module</span>
                           <button type="button" onClick={() => setModules((current) => current.map((item) => item.id === mod.id ? { ...item, lessons: item.lessons.filter((row) => row.id !== lesson.id) } : item))} className="text-slate-400 hover:text-rose-500" aria-label="Remove lesson"><X className="h-3.5 w-3.5" /></button>
                           <LessonVideoField className="basis-full" courseId={draftCourseId} lessonId={lesson.id} value={lesson.videoUrl} onChange={(value) => updateLesson(mod.id, lesson.id, 'videoUrl', value)} />
                         </div>
                       );
                     })}
-                    <button type="button" onClick={() => setModules((current) => current.map((item) => item.id === mod.id ? { ...item, lessons: [...item.lessons, { id: `les-${Date.now()}`, title: `Lesson ${item.lessons.length + 1}: Video Lecture`, videoUrl: '', duration: '10:00', days: 2 }] } : item))} className="flex items-center gap-1 pt-1 text-xs font-bold text-amber-600"><Plus className="h-3.5 w-3.5" /> Add Video Lesson</button>
+                    <button type="button" onClick={() => setModules((current) => current.map((item) => item.id === mod.id ? { ...item, lessons: [...item.lessons, { id: `les-${Date.now()}`, title: `Lesson ${item.lessons.length + 1}: Video Lecture`, videoUrl: '', duration: '10:00' }] } : item))} className="flex items-center gap-1 pt-1 text-xs font-bold text-amber-600"><Plus className="h-3.5 w-3.5" /> Add Video Lesson</button>
                   </div>
                 </div>
               ))}

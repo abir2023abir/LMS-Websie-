@@ -14,7 +14,7 @@ export async function GET(request: Request) {
   if (proof) {
     const file = await readProof(proof);
     if (!file) return NextResponse.json({ success: false }, { status: 404 });
-    return new NextResponse(new Uint8Array(file.bytes), { headers: { 'Content-Type': file.type, 'Cache-Control': 'private, max-age=300' } });
+    return new NextResponse(new Uint8Array(file.bytes), { headers: { 'Content-Type': file.type, 'X-Content-Type-Options': 'nosniff', 'Content-Security-Policy': "sandbox; default-src 'none'; img-src 'self' data:", 'Cache-Control': 'private, max-age=300' } });
   }
   return NextResponse.json({ success: true, payments: await listPayments() });
 }

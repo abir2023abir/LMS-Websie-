@@ -9,7 +9,7 @@ type Result = { id: string; chosen: number; correctIndex: number; correct: boole
 type Outcome = { correct: number; total: number; percent: number; passed: boolean; passMark: number; results: Result[] };
 
 /** The quizzes attached to one lesson: answer, submit, and see the marked result. */
-export default function LessonQuiz({ courseId, lessonId }: { courseId: string; lessonId: string }) {
+export default function LessonQuiz({ courseId, lessonId, onChanged }: { courseId: string; lessonId: string; onChanged?: () => void }) {
   const [quizzes, setQuizzes] = useState<Quiz[]>([]);
   const [loading, setLoading] = useState(true);
   const [message, setMessage] = useState('');
@@ -44,6 +44,7 @@ export default function LessonQuiz({ courseId, lessonId }: { courseId: string; l
       if (!res.ok || !data.success) throw new Error(data.message || 'Could not submit.');
       setOutcomes((prev) => ({ ...prev, [quiz.id]: data }));
       setQuizzes((prev) => prev.map((item) => (item.id === quiz.id ? { ...item, attempts: item.attempts + 1, best: Math.max(item.best ?? 0, data.percent), passed: item.passed || data.passed } : item)));
+      onChanged?.();
     } catch (error) {
       setMessage(error instanceof Error ? error.message : 'Could not submit.');
     } finally {
