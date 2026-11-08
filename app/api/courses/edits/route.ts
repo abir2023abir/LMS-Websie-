@@ -60,7 +60,8 @@ export async function PUT(request: Request) {
               title: String(lesson?.title || `Lesson ${lessonIndex + 1}`).slice(0, 160),
               videoUrl: String(lesson?.videoUrl || '').trim(),
               duration: lesson?.duration ? String(lesson.duration).slice(0, 20) : undefined,
-              days: Math.max(1, Math.min(365, Math.round(Number(lesson?.days) || 2))),
+              overview: String(lesson?.overview || '').trim().slice(0, 6000),
+              notes: String(lesson?.notes || '').trim().slice(0, 6000),
             }))
           : [],
       }));

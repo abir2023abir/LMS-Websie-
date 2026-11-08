@@ -1,13 +1,13 @@
 import { NextResponse } from 'next/server';
 import { requireRole } from '@/lib/user-session';
 import { getEnrollments } from '@/lib/payments';
-import { courseProgress, createRequest, lessonOpen, markVideoDone, recordModuleStarts } from '@/lib/progression';
-import { liveClassesForLesson } from '@/lib/live-classes';
+import { courseProgress, createRequest, lessonOpen, markPartDone, markVideoDone } from '@/lib/progression';
+import { JOIN_EARLY_MS, liveClassesForLesson, recordJoin } from '@/lib/live-classes';
 import { courseRanking } from '@/lib/rankings';
 
 export const dynamic = 'force-dynamic';
 
-// The student's step-by-step path through a course, plus the chosen lesson's live classes.
+// The student's path through a course, the timeline, and the chosen lesson's live classes.
 export async function GET(request: Request) {
   const { profile, denied } = await requireRole('Student');
   if (denied) return denied;
@@ -16,19 +16,20 @@ export async function GET(request: Request) {
   if (!(await getEnrollments(profile.id)).includes(courseId)) {
     return NextResponse.json({ success: false, message: 'Enroll in this course first.' }, { status: 403 });
   }
-  const progress = await courseProgress(profile.id, courseId);
-  await recordModuleStarts(profile.id, courseId, progress.lessons).catch(() => undefined); // starts each module's clock
+  const progress = await courseProgress(profile.id, courseId, { sync: true });
   const lessonId = url.searchParams.get('lessonId') || progress.currentLessonId;
-  const lesson = progress.lessons.find((item) => item.lessonId === lessonId);
-  const liveStep = lesson?.steps.find((step) => step.key === 'live');
-  const liveOpen = Boolean(liveStep && liveStep.state !== 'locked');
-  const lives = (await liveClassesForLesson(courseId, lessonId)).map((live) => ({
-    id: live.id, title: live.title, description: live.description, startsAt: live.startsAt, durationMinutes: live.durationMinutes,
-    // The meeting link is only shared once every earlier step is done.
-    joinUrl: liveOpen ? live.joinUrl : '',
-    recordingUrl: liveOpen ? live.recordingUrl : '',
-    attended: live.attendees.includes(profile.id),
-  }));
+  const now = Date.now();
+  // Live classes never depend on the lesson path: a student can join even when behind.
+  const lives = (await liveClassesForLesson(courseId, lessonId)).map((live) => {
+    const start = new Date(live.startsAt).getTime();
+    return {
+      id: live.id, title: live.title, description: live.description, startsAt: live.startsAt, durationMinutes: live.durationMinutes,
+      joinUrl: live.joinUrl,
+      recordingUrl: live.recordingUrl,
+      joinable: now >= start - JOIN_EARLY_MS && now <= start + live.durationMinutes * 60000,
+      attended: live.attendees.includes(profile.id),
+    };
+  });
   const ranking = await courseRanking(courseId);
   const myRank = ranking.findIndex((row) => row.studentId === profile.id);
   return NextResponse.json({ success: true, ...progress, lives, rank: myRank >= 0 ? myRank + 1 : null, rankTotal: ranking.length });
@@ -46,26 +47,32 @@ export async function POST(request: Request) {
       if (Number(body.percent) >= 80 && (await lessonOpen(profile.id, courseId, lessonId))) await markVideoDone(profile.id, courseId, lessonId);
       return NextResponse.json({ success: true });
     }
-    if (body.action === 'request') {
-      const progress = await courseProgress(profile.id, courseId);
-      const index = progress.lessons.findIndex((item) => item.lessonId === lessonId);
-      const lesson = progress.lessons[index];
-      const step = lesson?.steps.find((item) => item.key === 'approval' || item.key === 'live');
-      if (!lesson || !step || step.state !== 'current') throw new Error('Finish the earlier steps of this lesson first.');
-      await createRequest({
-        studentId: profile.id, studentName: profile.name || profile.email, studentEmail: profile.email,
-        courseId, courseTitle: progress.courseTitle, lessonId, lessonTitle: lesson.lessonTitle,
-        nextLessonTitle: progress.lessons[index + 1]?.lessonTitle || '', message: String(body.message || ''),
-      });
-      return NextResponse.json({ success: true });
-    }
-    if (body.action === 'extension') {
+    if (body.action === 'part') {
+      // The student confirms the overview or the notes were read. The lesson must be open.
+      const part = body.part === 'notes' ? 'notes' : body.part === 'overview' ? 'overview' : '';
+      if (!part) throw new Error('Unknown part.');
       const progress = await courseProgress(profile.id, courseId);
       const lesson = progress.lessons.find((item) => item.lessonId === lessonId);
-      if (!lesson || !lesson.overdue) throw new Error('You can ask for more time only after the deadline has passed.');
+      const step = lesson?.steps.find((item) => item.key === part);
+      if (!lesson || !step) throw new Error('This lesson has no such part.');
+      if (step.state === 'locked') throw new Error(step.detail || 'This part is not open yet.');
+      await markPartDone(profile.id, courseId, lessonId, part);
+      return NextResponse.json({ success: true });
+    }
+    if (body.action === 'join') {
+      const live = await recordJoin(String(body.liveId || ''), profile.id);
+      if (live.courseId !== courseId) throw new Error('Live class not found.');
+      return NextResponse.json({ success: true, joinUrl: live.joinUrl });
+    }
+    if (body.action === 'extension') {
+      // Only when the student is behind schedule or the course has ended.
+      const progress = await courseProgress(profile.id, courseId);
+      const status = progress.timeline.status;
+      if (status !== 'at-risk' && status !== 'expired') throw new Error('You can ask for more time only when you are behind schedule or the course has ended.');
+      const lesson = progress.lessons.find((item) => item.lessonId === lessonId) || progress.lessons.find((item) => item.state !== 'done');
       await createRequest({
         studentId: profile.id, studentName: profile.name || profile.email, studentEmail: profile.email,
-        courseId, courseTitle: progress.courseTitle, lessonId, lessonTitle: lesson.lessonTitle,
+        courseId, courseTitle: progress.courseTitle, lessonId: lesson?.lessonId || lessonId, lessonTitle: lesson?.lessonTitle || '',
         nextLessonTitle: '', message: String(body.message || ''), kind: 'extension',
       });
       return NextResponse.json({ success: true });

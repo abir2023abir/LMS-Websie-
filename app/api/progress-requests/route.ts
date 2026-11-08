@@ -2,7 +2,7 @@ import { NextResponse } from 'next/server';
 import { staffDenied, staffIdentity } from '@/lib/user-session';
 import { listCourseSettings } from '@/lib/accounts';
 import { getCoursesByInstructor } from '@/lib/db';
-import { approveLesson, decideRequest, extendModule, listRequests } from '@/lib/progression';
+import { approveLesson, decideRequest, extendCourse, listRequests } from '@/lib/progression';
 
 export const dynamic = 'force-dynamic';
 
@@ -35,9 +35,9 @@ export async function POST(request: Request) {
       if (allowed && !allowed.has(String(body.courseId))) return staffDenied();
       await approveLesson(String(body.studentId || ''), String(body.courseId || ''), String(body.lessonId || ''));
     } else if (body.action === 'extend') {
-      // Manual extension: give a student more days on one module without a request.
+      // Manual extension: move one student's course ending date later without a request.
       if (allowed && !allowed.has(String(body.courseId))) return staffDenied();
-      await extendModule(String(body.studentId || ''), String(body.courseId || ''), String(body.moduleId || ''), Number(body.days));
+      await extendCourse(String(body.studentId || ''), String(body.courseId || ''), Number(body.days));
     } else {
       const current = (await listRequests()).find((item) => item.id === body.id);
       if (!current) throw new Error('Request not found.');

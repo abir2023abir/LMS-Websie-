@@ -57,7 +57,7 @@ export default function ProgressRequests() {
       <div className="flex flex-wrap items-start justify-between gap-3">
         <div>
           <h2 className="font-display text-xl font-extrabold">Student requests</h2>
-          <p className="text-sm text-slate-500">Two kinds: a module with no live class asks to open the next module, and a student who missed a deadline asks for more time. Approving a time request adds the days you choose to that module.</p>
+          <p className="text-sm text-slate-500">A student who is behind schedule or whose course has ended asks for more time. Approving a request moves that student's course ending date later by the days you choose.</p>
         </div>
         <div className="flex rounded-xl bg-slate-100 p-1 text-sm font-bold">
           <button type="button" onClick={() => setView('pending')} className={`flex items-center gap-1.5 rounded-lg px-3 py-1.5 ${view === 'pending' ? 'bg-white shadow-sm' : 'text-slate-500'}`}>Waiting{pending.length > 0 && <span className="rounded-full bg-[#FACC15] px-1.5 text-[11px] text-[#111827]">{pending.length}</span>}</button>

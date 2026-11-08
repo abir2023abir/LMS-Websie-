@@ -74,3 +74,19 @@ export async function setAttendance(id: string, studentIds: string[]) {
   const unique = Array.from(new Set(studentIds.map(String)));
   await kvSet(KEY, list.map((item) => (item.id === id ? { ...item, attendees: unique, updatedAt: new Date().toISOString() } : item)));
 }
+
+/** A student joins a live class: attendance is recorded the moment they join, within the class schedule. */
+export async function recordJoin(id: string, studentId: string, now = Date.now()) {
+  const list = await listLiveClasses();
+  const live = list.find((item) => item.id === id);
+  if (!live || !live.published) throw new Error('Live class not found.');
+  const start = new Date(live.startsAt).getTime();
+  if (now < start - JOIN_EARLY_MS) throw new Error('This class has not opened yet. You can join 15 minutes before it starts.');
+  if (now > start + live.durationMinutes * 60000) throw new Error('This class has ended.');
+  if (!live.attendees.includes(studentId)) {
+    await kvSet(KEY, list.map((item) => (item.id === id ? { ...item, attendees: [...item.attendees, studentId], updatedAt: new Date().toISOString() } : item)));
+  }
+  return live;
+}
+
+export const JOIN_EARLY_MS = 15 * 60000;

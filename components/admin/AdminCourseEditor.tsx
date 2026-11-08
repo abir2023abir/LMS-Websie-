@@ -7,7 +7,6 @@ import LessonVideoField from './LessonVideoField';
 import { getFallbackCourseData } from '@/lib/progress';
 import { loadCourseEdits, shrinkImage } from '@/lib/course-edits-client';
 import { usdToBdt, USD_TO_BDT } from '@/lib/utils';
-import { lessonWindowLabel } from '@/lib/lesson-schedule';
 import type { ModuleSchema } from '@/types/course';
 
 export default function AdminCourseEditor({
@@ -36,7 +35,7 @@ export default function AdminCourseEditor({
   const [modules, setModules] = useState<ModuleSchema[]>(
     (course?.modules || []).map((mod) => ({
       ...mod,
-      lessons: (mod.lessons || []).map((lesson) => ({ ...lesson, days: lesson.days || 2 })),
+      lessons: (mod.lessons || []).map((lesson) => ({ ...lesson })),
     })),
   );
   const [busy, setBusy] = useState(false);
@@ -94,7 +93,7 @@ export default function AdminCourseEditor({
       if (Array.isArray(edit.modules) && edit.modules.length) {
         setModules(edit.modules.map((mod) => ({
           ...mod,
-          lessons: (mod.lessons || []).map((lesson) => ({ ...lesson, days: lesson.days || 2 })),
+          lessons: (mod.lessons || []).map((lesson) => ({ ...lesson })),
         })));
       }
     });
@@ -129,7 +128,7 @@ export default function AdminCourseEditor({
         videos,
         modules: modules.map((mod) => ({
           ...mod,
-          lessons: mod.lessons.map((lesson) => ({ ...lesson, videoUrl: videos[lesson.id] ?? lesson.videoUrl, days: lesson.days || 2 })),
+          lessons: mod.lessons.map((lesson) => ({ ...lesson, videoUrl: videos[lesson.id] ?? lesson.videoUrl })),
         })),
       }),
     });
@@ -241,19 +240,22 @@ export default function AdminCourseEditor({
                       onChange={(e) => setModules((prev) => prev.map((item) => item.id === mod.id ? { ...item, lessons: item.lessons.map((row) => row.id === lesson.id ? { ...row, title: e.target.value } : row) } : item))}
                       className={`${fieldClass} min-w-0 flex-1`}
                     />
-                    <label className="flex items-center gap-1 text-[11px] font-bold text-slate-500">
-                      Days
-                      <input
-                        type="number"
-                        min="1"
-                        value={lesson.days || 2}
-                        onChange={(e) => setModules((prev) => prev.map((item) => item.id === mod.id ? { ...item, lessons: item.lessons.map((row) => row.id === lesson.id ? { ...row, days: Math.max(1, Number(e.target.value) || 1) } : row) } : item))}
-                        className="w-16 rounded-lg border border-slate-200 px-2 py-1.5"
-                      />
-                    </label>
                     <button type="button" onClick={() => setModules((prev) => prev.map((item) => item.id === mod.id ? { ...item, lessons: item.lessons.filter((row) => row.id !== lesson.id) } : item))} className="text-[11px] font-bold text-rose-600">Remove</button>
                   </div>
-                  <p className="text-[11px] font-semibold text-amber-700">{lessonWindowLabel(mod.lessons, lessonIndex) || 'Set days for this lesson'}</p>
+                  <textarea
+                    value={lesson.overview || ''}
+                    onChange={(e) => setModules((prev) => prev.map((item) => item.id === mod.id ? { ...item, lessons: item.lessons.map((row) => row.id === lesson.id ? { ...row, overview: e.target.value } : row) } : item))}
+                    rows={2}
+                    placeholder="Overview (optional). The student reads it and confirms before the quiz opens."
+                    className={fieldClass}
+                  />
+                  <textarea
+                    value={lesson.notes || ''}
+                    onChange={(e) => setModules((prev) => prev.map((item) => item.id === mod.id ? { ...item, lessons: item.lessons.map((row) => row.id === lesson.id ? { ...row, notes: e.target.value } : row) } : item))}
+                    rows={2}
+                    placeholder="Notes and resource links (optional). Opens after the quiz is passed."
+                    className={fieldClass}
+                  />
                   <LessonVideoField
                     courseId={courseId}
                     lessonId={lesson.id}
@@ -264,14 +266,14 @@ export default function AdminCourseEditor({
               ))}
               <button
                 type="button"
-                onClick={() => setModules((prev) => prev.map((item) => item.id === mod.id ? { ...item, lessons: [...item.lessons, { id: `les-${Date.now()}`, title: `Lesson ${item.lessons.length + 1}`, videoUrl: '', days: 2 }] } : item))}
+                onClick={() => setModules((prev) => prev.map((item) => item.id === mod.id ? { ...item, lessons: [...item.lessons, { id: `les-${Date.now()}`, title: `Lesson ${item.lessons.length + 1}`, videoUrl: '' }] } : item))}
                 className="text-[11px] font-bold text-amber-700"
               >
                 Add lesson to module {modIndex + 1}
               </button>
             </div>
           ))}
-          <p className="text-[11px] text-slate-500">Three lessons at 2 days each must be finished by day 2, day 4, and day 6.</p>
+          <p className="text-[11px] text-slate-500">Each lesson has an overview, video, quiz, notes, assignment and exam. A part left empty is skipped. The time per lesson comes from the course timeline dates above.</p>
         </div>
 
         <div className="flex items-center gap-3 pt-2">

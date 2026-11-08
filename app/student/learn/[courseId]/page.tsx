@@ -21,7 +21,7 @@ import { lessonWindowLabel } from '@/lib/lesson-schedule';
 import LessonQuestions from '@/components/student/LessonQuestions';
 import LessonQuiz from '@/components/student/LessonQuiz';
 import LessonAssignment from '@/components/student/LessonAssignment';
-import LessonSteps, { type LessonProgress, type LiveSession } from '@/components/student/LessonSteps';
+import LessonSteps, { type CourseTimeline, type LessonProgress, type LiveSession } from '@/components/student/LessonSteps';
 import { lessonNote, lessonVideo, recordWatch, saveLessonNote, watchPercent } from '@/lib/workspace';
 import type { CourseSchema, ModuleSchema, LessonSchema } from '@/types/course';
 import {
@@ -73,8 +73,9 @@ export default function StudentLearnPage() {
   // Active tab beneath the video player
   const [activeTab, setActiveTab] = useState<'overview' | 'quiz' | 'assignment' | 'discussion' | 'resources'>('overview');
 
-  // Strict lesson path from the server (video → quiz → assignment → exam → live/approval)
-  const [path, setPath] = useState<{ lessons: LessonProgress[]; lives: LiveSession[]; rank: number | null; rankTotal: number } | null>(null);
+  // Lesson path from the server: overview + video → quiz → notes + assignment → exam. Live classes stay open.
+  const [path, setPath] = useState<{ lessons: LessonProgress[]; lives: LiveSession[]; timeline?: CourseTimeline; rank: number | null; rankTotal: number } | null>(null);
+  const [partBusy, setPartBusy] = useState(false);
   const [videoReported, setVideoReported] = useState<Record<string, boolean>>({});
 
   // Certificate Modal state
@@ -181,6 +182,23 @@ export default function StudentLearnPage() {
   };
 
   const currentPath = path?.lessons.find((item) => item.lessonId === currentLesson?.id);
+
+  // The student confirms the overview or the notes were read (opening the tab alone does not count).
+  const markPart = async (part: 'overview' | 'notes') => {
+    if (!currentLesson) return;
+    setPartBusy(true);
+    try {
+      await fetch('/api/progress', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ action: 'part', part, courseId, lessonId: currentLesson.id }) });
+      await loadPath(currentLesson.id);
+    } finally { setPartBusy(false); }
+  };
+  const partButton = (part: 'overview' | 'notes') => {
+    const step = currentPath?.steps.find((item) => item.key === part);
+    if (!step) return null;
+    if (step.state === 'done') return <p className="rounded-xl bg-emerald-50 px-4 py-2 text-xs font-bold text-emerald-800">Marked as read ✓</p>;
+    if (step.state === 'locked') return <p className="rounded-xl bg-slate-100 px-4 py-2 text-xs font-semibold text-slate-600">{step.detail}</p>;
+    return <button type="button" disabled={partBusy} onClick={() => markPart(part)} className="rounded-xl bg-[#FACC15] px-4 py-2 text-xs font-extrabold text-[#111827] disabled:opacity-50">I have read this</button>;
+  };
 
   const currentFlatIndex = flattenedLessons.findIndex(
     (item) => item.moduleIndex === activeModuleIndex && item.lessonIndex === activeLessonIndex
@@ -371,6 +389,7 @@ export default function StudentLearnPage() {
                 courseId={courseId}
                 lesson={currentPath}
                 lives={path.lives}
+                timeline={path.timeline}
                 rank={path.rank}
                 rankTotal={path.rankTotal}
                 onOpenTab={(tab) => setActiveTab(tab)}
@@ -453,29 +472,18 @@ export default function StudentLearnPage() {
                 ))}
               </div>
 
-              {/* TAB 1: OVERVIEW & NOTES */}
+              {/* TAB 1: OVERVIEW */}
               {activeTab === 'overview' && (
-                <div className="space-y-6 text-xs sm:text-sm text-slate-700 leading-relaxed font-medium">
-                  <div className="space-y-2">
-                    <h3 className="font-display font-bold text-base text-[#111827]">
-                      Lecture Core Takeaways & Drill Focus
-                    </h3>
-                    <p>
-                      In this lecture, we deconstruct real-life conversation patterns, rhythm cadence, and natural idioms. Focus on mimicking the audio pitch contours and practicing full sentences without mental translation.
-                    </p>
-                  </div>
-
-                  <div className="bg-slate-50 border border-slate-200 rounded-2xl p-4 space-y-2">
-                    <div className="font-bold text-[#111827] flex items-center gap-2">
-                      <Sparkles className="w-4 h-4 text-amber-500" />
-                      <span>Action Step For This Lesson:</span>
-                    </div>
-                    <ul className="list-disc list-inside space-y-1 text-slate-600">
-                      <li>Record yourself repeating the 3 primary situational phrases from minute 03:15.</li>
-                      <li>Pay close attention to linking word endings to following vowels.</li>
-                      <li>Complete the Knowledge Drill Quiz tab to test your comprehension.</li>
-                    </ul>
-                  </div>
+                <div className="space-y-4 text-xs sm:text-sm text-slate-700 leading-relaxed font-medium">
+                  {currentLesson?.overview ? (
+                    <>
+                      <h3 className="font-display font-bold text-base text-[#111827]">Lesson overview</h3>
+                      <p className="whitespace-pre-line">{currentLesson.overview}</p>
+                      {partButton('overview')}
+                    </>
+                  ) : (
+                    <div className="rounded-2xl border border-dashed border-slate-200 py-10 text-center text-sm text-slate-500">No overview for this lesson. Watch the video to continue.</div>
+                  )}
                 </div>
               )}
 
@@ -504,11 +512,19 @@ export default function StudentLearnPage() {
                 />
               )}
 
-              {/* TAB 4: RESOURCES */}
+              {/* TAB 4: NOTES & RESOURCES */}
               {activeTab === 'resources' && (
-                <div className="rounded-2xl border border-dashed border-slate-200 py-10 text-center text-sm text-slate-500">
-                  No downloadable resources for this lesson yet.
-                </div>
+                currentLesson?.notes ? (
+                  <div className="space-y-4 text-xs sm:text-sm text-slate-700 leading-relaxed font-medium">
+                    <h3 className="font-display font-bold text-base text-[#111827]">Notes and resources</h3>
+                    <p className="whitespace-pre-line break-words">{currentLesson.notes}</p>
+                    {partButton('notes')}
+                  </div>
+                ) : (
+                  <div className="rounded-2xl border border-dashed border-slate-200 py-10 text-center text-sm text-slate-500">
+                    No notes or resources for this lesson.
+                  </div>
+                )
               )}
             </div>
           </div>

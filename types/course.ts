@@ -3,8 +3,12 @@ export interface LessonSchema {
   title: string;
   videoUrl: string;
   duration?: string;
-  /** How many days the student has for this lesson. Deadlines add up inside the module. */
+  /** Older courses stored a number of days here. The timeline now comes from the course dates. */
   days?: number;
+  /** Short overview text the student reads before the quiz opens. Empty means the part is skipped. */
+  overview?: string;
+  /** Notes and resources for the lesson. Empty means the part is skipped. */
+  notes?: string;
 }
 
 export interface ModuleSchema {
