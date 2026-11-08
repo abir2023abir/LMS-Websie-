@@ -40,6 +40,42 @@ export default function AdminCourseEditor({
     })),
   );
   const [busy, setBusy] = useState(false);
+  const blankDates = { firstEnrolled: '', lastEnrolled: '', lastCounting: '', courseEnding: '' };
+  const [dates, setDates] = useState(blankDates);
+  const [minHours, setMinHours] = useState(0);
+  const [savingDates, setSavingDates] = useState(false);
+  // <input type="datetime-local"> wants local time without a zone; the server stores real instants.
+  const toLocal = (iso: string) => {
+    const at = new Date(iso);
+    if (Number.isNaN(at.getTime())) return '';
+    return new Date(at.getTime() - at.getTimezoneOffset() * 60000).toISOString().slice(0, 16);
+  };
+
+  useEffect(() => {
+    fetch(`/api/courses/timeline?courseId=${encodeURIComponent(courseId)}`, { cache: 'no-store' })
+      .then((res) => res.json())
+      .then((data) => {
+        if (data.timeline) setDates({ firstEnrolled: toLocal(data.timeline.firstEnrolled), lastEnrolled: toLocal(data.timeline.lastEnrolled), lastCounting: toLocal(data.timeline.lastCounting), courseEnding: toLocal(data.timeline.courseEnding) });
+        setMinHours(Number(data.minimumLessonHours) || 0);
+      })
+      .catch(() => undefined);
+  }, [courseId]);
+
+  const saveDates = async () => {
+    setSavingDates(true);
+    const iso = (value: string) => (value ? new Date(value).toISOString() : '');
+    const res = await fetch('/api/courses/timeline', {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ courseId, firstEnrolled: iso(dates.firstEnrolled), lastEnrolled: iso(dates.lastEnrolled), lastCounting: iso(dates.lastCounting), courseEnding: iso(dates.courseEnding) }),
+    });
+    const data = await res.json().catch(() => ({}));
+    setSavingDates(false);
+    if (!res.ok || !data.success) { toast.error(data.message || 'Could not save the dates'); return; }
+    const fresh = await fetch(`/api/courses/timeline?courseId=${encodeURIComponent(courseId)}`, { cache: 'no-store' }).then((r) => r.json()).catch(() => null);
+    setMinHours(Number(fresh?.minimumLessonHours) || 0);
+    toast.success('Timeline dates saved.');
+  };
 
   useEffect(() => {
     loadCourseEdits(true).then((all) => {
@@ -147,6 +183,34 @@ export default function AdminCourseEditor({
           Description
           <textarea value={form.description} onChange={set('description')} rows={4} className={fieldClass} />
         </label>
+
+        <div className="space-y-3 rounded-2xl border border-slate-200 bg-slate-50 p-3">
+          <p className="text-xs font-bold text-slate-500">Course timeline</p>
+          <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+            <label className="block space-y-1 text-[11px] font-bold text-slate-500">First enrolled date
+              <input type="datetime-local" value={dates.firstEnrolled} onChange={(e) => setDates({ ...dates, firstEnrolled: e.target.value })} className={fieldClass} />
+              <span className="block font-medium">Enrollment opens</span>
+            </label>
+            <label className="block space-y-1 text-[11px] font-bold text-slate-500">Last enrolled date
+              <input type="datetime-local" value={dates.lastEnrolled} onChange={(e) => setDates({ ...dates, lastEnrolled: e.target.value })} className={fieldClass} />
+              <span className="block font-medium">No new students after this</span>
+            </label>
+            <label className="block space-y-1 text-[11px] font-bold text-slate-500">Last counting date
+              <input type="datetime-local" value={dates.lastCounting} onChange={(e) => setDates({ ...dates, lastCounting: e.target.value })} className={fieldClass} />
+              <span className="block font-medium">Used for the minimum lesson time</span>
+            </label>
+            <label className="block space-y-1 text-[11px] font-bold text-slate-500">Course ending date
+              <input type="datetime-local" value={dates.courseEnding} onChange={(e) => setDates({ ...dates, courseEnding: e.target.value })} className={fieldClass} />
+              <span className="block font-medium">Final deadline to finish</span>
+            </label>
+          </div>
+          <p className="text-[11px] font-semibold text-amber-700">
+            {minHours
+              ? `Minimum lesson time: ${minHours} hours (${(minHours / 24).toFixed(2)} days) for each lesson. It changes when the dates or the lesson count change.`
+              : 'Save all four dates to see the minimum time each lesson gets.'}
+          </p>
+          <button type="button" disabled={savingDates} onClick={saveDates} className="rounded-full bg-[#111827] px-4 py-2 text-[11px] font-bold text-white disabled:opacity-60">{savingDates ? 'Saving…' : 'Save dates'}</button>
+        </div>
 
         <div className="space-y-3">
           <div className="flex items-center justify-between gap-3">

@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server';
 import { requireRole } from '@/lib/user-session';
 import { findPayment, getEnrollments, manualMethodLabels, publicPaymentMethods, saveProof, savePayment, type ManualMethodId } from '@/lib/payments';
 import { coursePrice } from '@/lib/course-pricing';
+import { enrollmentClosedReason } from '@/lib/course-timeline';
 
 export const dynamic = 'force-dynamic';
 
@@ -27,6 +28,8 @@ export async function POST(request: Request) {
     const price = await coursePrice(courseId);
     if (!price) return NextResponse.json({ success: false, message: 'This course is not available for purchase.' }, { status: 404 });
     if ((await getEnrollments(profile.id)).includes(courseId)) return NextResponse.json({ success: false, message: 'You are already enrolled in this course.' }, { status: 409 });
+    const closed = await enrollmentClosedReason(courseId);
+    if (closed) return NextResponse.json({ success: false, message: closed }, { status: 403 });
     if (await findPayment((payment) => payment.transactionId === transactionId && payment.source === 'manual')) {
       return NextResponse.json({ success: false, message: 'This Transaction ID has already been submitted.' }, { status: 409 });
     }

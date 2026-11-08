@@ -181,6 +181,11 @@ export async function grantEnrollment(studentId: string, courseId: string) {
   const current = all[studentId] || [];
   if (current.includes(courseId)) return;
   await kvSet(ENROLLMENTS_KEY, { ...all, [studentId]: [...current, courseId] });
+  // The timeline starts from the real enrollment moment (server time).
+  const dates = await kvGet<Record<string, Record<string, string>>>('enrollment-dates', {});
+  if (!dates[studentId]?.[courseId]) {
+    await kvSet('enrollment-dates', { ...dates, [studentId]: { ...dates[studentId], [courseId]: new Date().toISOString() } });
+  }
 }
 
 export async function revokeEnrollment(studentId: string, courseId: string) {

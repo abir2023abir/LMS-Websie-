@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server';
 import { requireRole } from '@/lib/user-session';
 import { getEnrollments, publicPaymentMethods, savePayment } from '@/lib/payments';
 import { coursePrice } from '@/lib/course-pricing';
+import { enrollmentClosedReason } from '@/lib/course-timeline';
 import { siteUrl, startSslSession } from '@/lib/sslcommerz';
 
 export const dynamic = 'force-dynamic';
@@ -20,6 +21,8 @@ export async function POST(request: Request) {
     if ((await getEnrollments(profile.id)).includes(price.courseId)) {
       return NextResponse.json({ success: false, message: 'You are already enrolled in this course.' }, { status: 409 });
     }
+    const closed = await enrollmentClosedReason(price.courseId);
+    if (closed) return NextResponse.json({ success: false, message: closed }, { status: 403 });
     if (price.amount <= 0) return NextResponse.json({ success: false, message: 'This course is free — no payment is needed.' }, { status: 400 });
 
     const payment = await savePayment({
