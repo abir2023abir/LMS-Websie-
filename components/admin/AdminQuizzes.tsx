@@ -11,14 +11,14 @@ type Quiz = {
   courseId: string; courseTitle: string;
   moduleId: string; moduleTitle: string;
   lessonId: string; lessonTitle: string;
-  title: string; passMark: number; published: boolean;
+  title: string; passMark: number; maxAttempts: number; published: boolean;
   questions: Question[];
 };
 type Stats = Record<string, { attempts: number; average: number | null; passed: number }>;
 type Outline = { id: string; title: string; modules: { id: string; title: string; lessons: { id: string; title: string }[] }[] }[];
 
 const blankQuestion = (): Question => ({ prompt: '', choices: ['', '', '', ''], correctIndex: 0, explanation: '' });
-const blankQuiz = (): Quiz => ({ courseId: '', courseTitle: '', moduleId: '', moduleTitle: '', lessonId: '', lessonTitle: '', title: '', passMark: 70, published: true, questions: [blankQuestion()] });
+const blankQuiz = (): Quiz => ({ courseId: '', courseTitle: '', moduleId: '', moduleTitle: '', lessonId: '', lessonTitle: '', title: '', passMark: 70, maxAttempts: 0, published: true, questions: [blankQuestion()] });
 const labelClass = 'mb-1 block text-xs font-bold uppercase tracking-wide text-slate-500';
 
 export default function AdminQuizzes() {
@@ -174,9 +174,10 @@ export default function AdminQuizzes() {
               </div>
             </div>
 
-            <div className="grid gap-3 sm:grid-cols-[1fr_120px]">
+            <div className="grid gap-3 sm:grid-cols-[1fr_120px_150px]">
               <label><span className={labelClass}>Quiz title</span><input className={fieldClass} value={draft.title} onChange={(e) => setDraft({ ...draft, title: e.target.value })} placeholder="e.g. Ledgers — Quick Check" /></label>
               <label><span className={labelClass}>Pass mark %</span><input type="number" min={0} max={100} className={fieldClass} value={draft.passMark} onChange={(e) => setDraft({ ...draft, passMark: Number(e.target.value) })} /></label>
+              <label><span className={labelClass}>Attempts (0 = no limit)</span><input type="number" min={0} max={50} className={fieldClass} value={draft.maxAttempts ?? 0} onChange={(e) => setDraft({ ...draft, maxAttempts: Number(e.target.value) })} /></label>
             </div>
 
             {/* Questions */}

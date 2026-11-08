@@ -19,6 +19,7 @@ export type LessonQuiz = {
   lessonTitle: string;
   title: string;
   passMark: number; // percent needed to pass
+  maxAttempts: number; // 0 = unlimited
   published: boolean;
   questions: QuizQuestion[];
   createdAt: string;
@@ -87,6 +88,7 @@ export async function saveQuiz(input: Partial<LessonQuiz>): Promise<LessonQuiz> 
     lessonTitle: clean(input.lessonTitle, 200),
     title,
     passMark: Math.min(100, Math.max(0, Math.round(Number(input.passMark ?? 70)))),
+    maxAttempts: Math.min(50, Math.max(0, Math.round(Number(input.maxAttempts ?? 0)))),
     published: Boolean(input.published),
     questions,
     createdAt: existing?.createdAt || now,

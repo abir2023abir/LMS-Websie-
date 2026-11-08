@@ -74,7 +74,7 @@ export default function StudentLearnPage() {
   const [activeTab, setActiveTab] = useState<'overview' | 'quiz' | 'assignment' | 'discussion' | 'resources'>('overview');
 
   // Lesson path from the server: overview + video → quiz → notes + assignment → exam. Live classes stay open.
-  const [path, setPath] = useState<{ lessons: LessonProgress[]; lives: LiveSession[]; timeline?: CourseTimeline; rank: number | null; rankTotal: number } | null>(null);
+  const [path, setPath] = useState<{ lessons: LessonProgress[]; lives: LiveSession[]; timeline?: CourseTimeline; notices?: { id: string; kind: string; text: string; by: string }[]; examsPaused?: boolean; rank: number | null; rankTotal: number } | null>(null);
   const [partBusy, setPartBusy] = useState(false);
   const [videoReported, setVideoReported] = useState<Record<string, boolean>>({});
 
@@ -384,6 +384,15 @@ export default function StudentLearnPage() {
               </div>
             )}
 
+            {path?.examsPaused && (
+              <div className="rounded-2xl border border-rose-200 bg-rose-50 p-4 text-sm font-semibold text-rose-800">Exams are paused for you in this course. Please contact your instructor.</div>
+            )}
+            {path?.notices?.map((notice) => (
+              <div key={notice.id} className={`rounded-2xl border p-4 text-sm ${notice.kind === 'warning' ? 'border-amber-300 bg-amber-50 text-amber-900' : 'border-sky-200 bg-sky-50 text-sky-900'}`}>
+                <p className="text-[11px] font-extrabold uppercase tracking-wide">{notice.kind === 'warning' ? 'Warning' : notice.kind === 'study' ? 'Recommended study' : 'Message'} from {notice.by}</p>
+                <p className="mt-1 whitespace-pre-line font-medium">{notice.text}</p>
+              </div>
+            ))}
             {currentPath && path && (
               <LessonSteps
                 courseId={courseId}

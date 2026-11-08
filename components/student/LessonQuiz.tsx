@@ -4,7 +4,7 @@ import { useEffect, useState } from 'react';
 import { Award, Check, HelpCircle, RotateCcw, X } from 'lucide-react';
 
 type Question = { id: string; prompt: string; choices: string[] };
-type Quiz = { id: string; title: string; passMark: number; questions: Question[]; best: number | null; passed: boolean; attempts: number };
+type Quiz = { id: string; title: string; passMark: number; questions: Question[]; best: number | null; passed: boolean; attempts: number; maxAttempts?: number };
 type Result = { id: string; chosen: number; correctIndex: number; correct: boolean; explanation: string };
 type Outcome = { correct: number; total: number; percent: number; passed: boolean; passMark: number; results: Result[] };
 
@@ -78,7 +78,7 @@ export default function LessonQuiz({ courseId, lessonId }: { courseId: string; l
             <div className="flex flex-wrap items-center justify-between gap-2 rounded-2xl bg-[#111827] p-4 text-white">
               <div>
                 <p className="font-display font-bold">{quiz.title}</p>
-                <p className="text-xs text-slate-300">{quiz.questions.length} question{quiz.questions.length === 1 ? '' : 's'} · pass mark {quiz.passMark}%</p>
+                <p className="text-xs text-slate-300">{quiz.questions.length} question{quiz.questions.length === 1 ? '' : 's'} · pass mark {quiz.passMark}%{quiz.maxAttempts ? ` · ${Math.max(0, quiz.maxAttempts - quiz.attempts)} of ${quiz.maxAttempts} attempts left` : ''}</p>
               </div>
               {quiz.best !== null && (
                 <span className={`flex items-center gap-1 rounded-full px-3 py-1 text-xs font-bold ${quiz.passed ? 'bg-emerald-500/20 text-emerald-300' : 'bg-white/10 text-slate-200'}`}>
@@ -129,7 +129,9 @@ export default function LessonQuiz({ courseId, lessonId }: { courseId: string; l
               );
             })}
 
-            {outcome ? (
+            {outcome && !quiz.passed && quiz.maxAttempts && quiz.attempts >= quiz.maxAttempts ? (
+              <p className="rounded-xl bg-amber-50 px-4 py-3 text-sm font-semibold text-amber-900">You have used all {quiz.maxAttempts} attempts. Your instructor will review your progress and can give you more attempts.</p>
+            ) : outcome ? (
               <button type="button" onClick={() => retake(quiz.id)} className="inline-flex items-center gap-1.5 rounded-xl border border-slate-200 bg-white px-5 py-2.5 text-sm font-bold text-[#111827] hover:bg-slate-50"><RotateCcw className="h-4 w-4" />Try again</button>
             ) : (
               <button type="button" onClick={() => submit(quiz)} disabled={!answeredAll || submitting === quiz.id} className="rounded-xl bg-[#FACC15] px-6 py-3 text-sm font-extrabold text-[#111827] hover:bg-[#EAB308] disabled:opacity-50">

@@ -1,8 +1,9 @@
 import { NextResponse } from 'next/server';
 import { requireRole } from '@/lib/user-session';
 import { getEnrollments } from '@/lib/payments';
-import { gradeQuiz, listQuizzes } from '@/lib/quizzes';
+import { gradeQuiz, listAttempts, listQuizzes } from '@/lib/quizzes';
 import { stepOpen } from '@/lib/progression';
+import { attemptLimit } from '@/lib/assessment-risk';
 
 export const dynamic = 'force-dynamic';
 
@@ -18,6 +19,11 @@ export async function POST(request: Request) {
   }
   if (!(await stepOpen(profile.id, quiz.courseId, quiz.lessonId, 'quiz'))) {
     return NextResponse.json({ success: false, message: 'Finish the earlier steps of this lesson first.' }, { status: 403 });
+  }
+  const used = (await listAttempts(profile.id)).filter((item) => item.quizId === quiz.id).length;
+  const limit = await attemptLimit(profile.id, 'quiz', quiz.id, quiz.maxAttempts || 0);
+  if (limit && used >= limit) {
+    return NextResponse.json({ success: false, message: 'You have used all your attempts for this quiz. Ask your instructor for more attempts.' }, { status: 403 });
   }
   const answers = (body.answers && typeof body.answers === 'object' ? body.answers : {}) as Record<string, number>;
   const { attempt, results } = await gradeQuiz(quiz, profile.id, answers);

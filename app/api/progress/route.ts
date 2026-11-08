@@ -4,6 +4,7 @@ import { getEnrollments } from '@/lib/payments';
 import { courseProgress, createRequest, lessonOpen, markPartDone, markVideoDone } from '@/lib/progression';
 import { JOIN_EARLY_MS, liveClassesForLesson, recordJoin } from '@/lib/live-classes';
 import { courseRanking } from '@/lib/rankings';
+import { examsRestricted, noticesFor } from '@/lib/assessment-risk';
 
 export const dynamic = 'force-dynamic';
 
@@ -32,7 +33,8 @@ export async function GET(request: Request) {
   });
   const ranking = await courseRanking(courseId);
   const myRank = ranking.findIndex((row) => row.studentId === profile.id);
-  return NextResponse.json({ success: true, ...progress, lives, rank: myRank >= 0 ? myRank + 1 : null, rankTotal: ranking.length });
+  const [notices, examsPaused] = await Promise.all([noticesFor(profile.id, courseId), examsRestricted(profile.id, courseId)]);
+  return NextResponse.json({ success: true, ...progress, lives, notices, examsPaused, rank: myRank >= 0 ? myRank + 1 : null, rankTotal: ranking.length });
 }
 
 export async function POST(request: Request) {

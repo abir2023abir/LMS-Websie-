@@ -3,6 +3,7 @@ import { requireRole } from '@/lib/user-session';
 import { getEnrollments } from '@/lib/payments';
 import { attemptsFor, examWindow, listExams, saveProgress, startAttempt, submitAttempt, type Exam } from '@/lib/exams';
 import { courseLessons, stepOpen } from '@/lib/progression';
+import { attemptLimit, examsRestricted } from '@/lib/assessment-risk';
 
 // The lesson whose path an exam belongs to: its own lesson, or a module's last lesson. Course-wide exams are not gated.
 async function gateLesson(exam: Exam) {
@@ -25,7 +26,11 @@ export async function GET() {
   if (denied) return denied;
   const [exams, enrolled, mine] = await Promise.all([listExams(), getEnrollments(profile.id), attemptsFor(profile.id)]);
   const visible = exams.filter((exam) => exam.published && enrolled.includes(exam.courseId));
-  const locks = await Promise.all(visible.map((exam) => examLocked(profile.id, exam)));
+  const [locks, limits, restricted] = await Promise.all([
+    Promise.all(visible.map((exam) => examLocked(profile.id, exam))),
+    Promise.all(visible.map((exam) => attemptLimit(profile.id, 'exam', exam.id, exam.maxAttempts))),
+    Promise.all(visible.map((exam) => examsRestricted(profile.id, exam.courseId))),
+  ]);
   return NextResponse.json({
     success: true,
     exams: visible.map((exam, index) => {
@@ -36,7 +41,7 @@ export async function GET() {
         id: exam.id, title: exam.title, description: exam.description,
         courseId: exam.courseId, courseTitle: exam.courseTitle, moduleTitle: exam.moduleTitle, lessonTitle: exam.lessonTitle,
         durationMinutes: exam.durationMinutes, opensAt: exam.opensAt, closesAt: exam.closesAt, passMark: exam.passMark,
-        maxAttempts: exam.maxAttempts, questionCount: exam.questions.length,
+        maxAttempts: limits[index], restricted: restricted[index], questionCount: exam.questions.length,
         window: examWindow(exam),
         locked: locks[index],
         attemptsUsed: attempts.length,
@@ -60,8 +65,10 @@ export async function POST(request: Request) {
     }
     const answers = (body.answers && typeof body.answers === 'object' ? body.answers : {}) as Record<string, number>;
     if (body.action === 'start') {
-      if (await examLocked(profile.id, exam)) throw new Error('Finish the lesson, quiz and assignment before this exam.');
-      const started = await startAttempt(exam, { id: profile.id, name: profile.name || profile.email, email: profile.email });
+      if (await examsRestricted(profile.id, exam.courseId)) throw new Error('Exams are paused for you in this course. Please contact your instructor.');
+      if (await examLocked(profile.id, exam)) throw new Error('Finish every earlier part of this lesson before the exam.');
+      const limit = await attemptLimit(profile.id, 'exam', exam.id, exam.maxAttempts);
+      const started = await startAttempt({ ...exam, maxAttempts: limit }, { id: profile.id, name: profile.name || profile.email, email: profile.email });
       return NextResponse.json({ success: true, title: exam.title, durationMinutes: exam.durationMinutes, ...started });
     }
     if (body.action === 'save') {
