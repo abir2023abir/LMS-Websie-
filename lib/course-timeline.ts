@@ -65,6 +65,9 @@ export async function enrollmentClosedReason(courseId: string, now = Date.now())
 
 /** When the student really enrolled (server time). Older enrollments fall back to the approved payment. */
 export async function enrollmentDate(studentId: string, courseId: string): Promise<number> {
+  const single = await kvGet<string | null>(`enroll-at:${studentId}:${courseId}`, null);
+  const singleAt = Date.parse(single || '');
+  if (Number.isFinite(singleAt)) return singleAt;
   const all = await kvGet<Record<string, Record<string, string>>>(ENROLL_DATES_KEY, {});
   const saved = Date.parse(all[studentId]?.[courseId] || '');
   if (Number.isFinite(saved)) return saved;

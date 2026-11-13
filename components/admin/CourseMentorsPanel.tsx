@@ -4,7 +4,7 @@ import { useEffect, useMemo, useState } from 'react';
 import { AlertTriangle, BookOpen, ChevronDown, History, Search, UserCheck, UserMinus, Users } from 'lucide-react';
 import { toast } from 'sonner';
 
-type Profile = { id: string; name: string; email: string; roles: string[]; disabled: boolean; mentor_level: 'lead' | 'assistant' };
+type Profile = { id: string; name: string; email: string; roles: string[]; disabled: boolean; mentor_level: 'lead' | 'assistant'; has_photo?: boolean; card?: { university?: string; degree?: string } };
 type CourseRow = { course_id: string; mentor_email: string; mentor_history: { email: string; at: string }[] };
 type OutlineCourse = { id: string; title: string };
 
@@ -97,9 +97,15 @@ export default function CourseMentorsPanel({
           <div className="flex gap-2 overflow-x-auto pb-1">
             {workload.map(({ mentor, courses: mine }) => (
               <div key={mentor.id} className="flex min-w-[220px] items-center gap-3 rounded-2xl border border-slate-200 p-3">
-                <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-[#111827] text-xs font-bold text-[#FACC15]">{initials(mentor.name)}</span>
+                {mentor.has_photo ? (
+                  // eslint-disable-next-line @next/next/no-img-element
+                  <img src={`/api/instructor/photo?id=${encodeURIComponent(mentor.id)}`} alt="" className="h-10 w-10 shrink-0 rounded-full object-cover" />
+                ) : (
+                  <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-[#111827] text-xs font-bold text-[#FACC15]">{initials(mentor.name)}</span>
+                )}
                 <div className="min-w-0">
                   <p className="truncate text-sm font-bold">{mentor.name}</p>
+                  {(mentor.card?.degree || mentor.card?.university) && <p className="truncate text-[11px] font-semibold text-slate-500">{[mentor.card?.degree, mentor.card?.university].filter(Boolean).join(' · ')}</p>}
                   <p className="text-[11px] text-slate-500"><span className={`mr-1 rounded-full px-1.5 py-0.5 font-bold ${mentor.mentor_level === 'lead' ? 'bg-[#FEF9C3] text-[#A16207]' : 'bg-slate-100 text-slate-600'}`}>{mentor.mentor_level === 'lead' ? 'Lead' : 'Assistant'}</span>{mine.length} course{mine.length === 1 ? '' : 's'}</p>
                 </div>
               </div>

@@ -6,6 +6,7 @@ import { useRouter, useSearchParams } from 'next/navigation';
 import { Mail, Lock, ArrowRight, ArrowLeft, AlertCircle } from 'lucide-react';
 import { useAuth } from '@/context/AuthContext';
 import { homeForRole } from '@/lib/roles';
+import GoogleSignInButton from '@/components/auth/GoogleSignInButton';
 
 export default function LoginPage() {
   return (
@@ -25,6 +26,7 @@ function LoginPageContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const nextPath = searchParams.get('next');
+  const googleError = searchParams.get('error');
   const { loginWithEmail, user, role, loading: authLoading } = useAuth();
 
   const [email, setEmail] = useState('');
@@ -105,6 +107,18 @@ function LoginPageContent() {
               <span>{error}</span>
             </div>
           )}
+          {googleError && !error && (
+            <div className="p-4 rounded-xl bg-rose-50 border border-rose-200 text-xs font-medium text-rose-700">
+              {googleError === 'google-not-ready'
+                ? 'Google sign-in is not switched on yet. The Client ID and Client secret still need to be added.'
+                : googleError === 'google-denied'
+                  ? 'Google sign-in was cancelled.'
+                  : 'Google sign-in did not finish. Try again.'}
+            </div>
+          )}
+
+          <GoogleSignInButton nextPath={nextPath || ''} />
+          <p className="text-center text-[11px] font-bold uppercase tracking-wider text-slate-400">or use email</p>
 
           {/* Form */}
           <form onSubmit={handleEmailLogin} className="space-y-4">

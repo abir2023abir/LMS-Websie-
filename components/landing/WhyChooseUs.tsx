@@ -1,4 +1,3 @@
-import Image from 'next/image';
 import { ChevronsRight, Award, Users, ShieldCheck, Banknote, BookOpen, Clock, CheckCircle, Star } from 'lucide-react';
 import { getFeatures } from '@/lib/cms-db';
 
@@ -45,40 +44,20 @@ export default async function WhyChooseUs() {
         </div>
 
         {/* Two Column Layout: Left Image, Right 4 Grid Feature Cards */}
-        <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 sm:gap-8 items-center">
-          {/* Left Column: Student Image */}
-          <div className="lg:col-span-5 relative aspect-[5/4] sm:aspect-[4/5] rounded-3xl overflow-hidden shadow-xl border-4 border-[#FEF9C3]">
-            <Image
-              src="https://images.unsplash.com/photo-1522071820081-009f0129c71c?w=600&h=750&fit=crop"
-              alt="Learner studying online"
-              fill
-              className="object-cover"
-              sizes="(max-width: 640px) 100vw, (max-width: 1024px) 80vw, 42vw"
-            />
-          </div>
-
-          {/* Right Column: 4 Feature Grid Cards */}
-          <div className="lg:col-span-7 grid grid-cols-1 sm:grid-cols-2 auto-rows-fr gap-4 sm:gap-5">
-            {featuresData.map((feat, idx) => {
-              const Icon = iconMap[feat.icon] || ShieldCheck;
-              return (
-                <div
-                  key={feat.title}
-                  className="min-h-52 bg-[#FEFCE8]/70 border border-[#FEF9C3] rounded-3xl p-5 sm:p-6 space-y-3 hover:border-[#FACC15]/60 hover:shadow-lg hover:shadow-[#FACC15]/10 transition-all shadow-sm hover:-translate-y-1"
-                >
-                  <div className="w-10 h-10 rounded-2xl bg-[#FACC15] text-[#111827] flex items-center justify-center shadow-md">
-                    <Icon className="w-5 h-5" />
-                  </div>
-                  <h3 className="font-display font-bold text-base text-[#111827]">
-                    {feat.title}
-                  </h3>
-                  <p className="text-xs text-slate-600 leading-relaxed">
-                    {feat.description}
-                  </p>
-                </div>
-              );
-            })}
-          </div>
+        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+          {featuresData.map((feat) => {
+            const Icon = iconMap[feat.icon] || ShieldCheck;
+            return (
+              <article key={feat.title} className="flex min-h-44 flex-col items-center rounded-3xl border border-slate-200 bg-white px-6 py-8 text-center shadow-[0_16px_36px_-24px_rgba(17,24,39,0.35)]">
+                <span className="flex h-20 w-20 items-center justify-center rounded-3xl bg-[#111827] text-[#FACC15]">
+                  <Icon className="h-10 w-10" strokeWidth={2.25} />
+                </span>
+                <h3 className="mt-5 font-display text-xl font-extrabold text-[#111827]">{feat.title}</h3>
+                <span className="mt-3 h-1 w-10 rounded-full bg-[#FACC15]" />
+                <p className="mt-3 max-w-sm text-sm leading-relaxed text-slate-600">{feat.description}</p>
+              </article>
+            );
+          })}
         </div>
       </div>
     </section>

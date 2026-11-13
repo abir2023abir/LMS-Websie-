@@ -6,6 +6,7 @@ import { useRouter } from 'next/navigation';
 import { GraduationCap, Mail, Lock, User, Phone, ArrowRight, ArrowLeft, AlertCircle } from 'lucide-react';
 import { useAuth } from '@/context/AuthContext';
 import { homeForRole } from '@/lib/roles';
+import GoogleSignInButton from '@/components/auth/GoogleSignInButton';
 
 export default function SignUpPage() {
   const router = useRouter();
@@ -107,6 +108,9 @@ export default function SignUpPage() {
             </div>
           )}
 
+          <GoogleSignInButton />
+          <p className="text-center text-[11px] font-bold uppercase tracking-wider text-slate-400">or create with email</p>
+
           <form onSubmit={handleEmailSignUp} className="space-y-4">
             <div>
               <label htmlFor="signup-name" className="block text-xs font-bold text-slate-700 mb-1.5 uppercase tracking-wider">
@@ -118,10 +122,10 @@ export default function SignUpPage() {
                   id="signup-name"
                   type="text"
                   required
+                  autoComplete="name"
                   value={name}
                   onChange={(e) => setName(e.target.value)}
-                  placeholder="Sarah Ahmed"
-                  className="w-full bg-slate-50 border border-slate-200 rounded-xl pl-10 pr-4 py-3 text-xs sm:text-sm text-[#111827] placeholder-slate-400 focus:outline-none focus:border-[#111827] transition-colors font-medium"
+                  className="w-full bg-slate-50 border border-slate-200 rounded-xl pl-10 pr-4 py-3 text-xs sm:text-sm text-[#111827] focus:outline-none focus:border-[#111827] transition-colors font-medium"
                 />
               </div>
             </div>
@@ -136,16 +140,16 @@ export default function SignUpPage() {
                   id="signup-email"
                   type="email"
                   required
+                  autoComplete="email"
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
-                  placeholder="sarah@example.com"
-                  className="w-full bg-slate-50 border border-slate-200 rounded-xl pl-10 pr-4 py-3 text-xs sm:text-sm text-[#111827] placeholder-slate-400 focus:outline-none focus:border-[#111827] transition-colors font-medium"
+                  className="w-full bg-slate-50 border border-slate-200 rounded-xl pl-10 pr-4 py-3 text-xs sm:text-sm text-[#111827] focus:outline-none focus:border-[#111827] transition-colors font-medium"
                 />
               </div>
             </div>
 
             <div>
-              <label htmlFor="signup-password" className="block text-xs font-bold text-slate-700 mb-1.5 uppercase tracking-wider">
+              <label htmlFor="signup-phone" className="block text-xs font-bold text-slate-700 mb-1.5 uppercase tracking-wider">
                 Phone Number <span aria-hidden="true" className="text-rose-600">*</span>
               </label>
               <div className="relative">
@@ -165,7 +169,7 @@ export default function SignUpPage() {
             </div>
 
             <div>
-              <label htmlFor="signup-phone" className="block text-xs font-bold text-slate-700 mb-1.5 uppercase tracking-wider">
+              <label htmlFor="signup-password" className="block text-xs font-bold text-slate-700 mb-1.5 uppercase tracking-wider">
                 Password
               </label>
               <div className="relative">
@@ -175,12 +179,13 @@ export default function SignUpPage() {
                   type="password"
                   required
                   minLength={6}
+                  autoComplete="new-password"
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
-                  placeholder="At least 6 characters"
-                  className="w-full bg-slate-50 border border-slate-200 rounded-xl pl-10 pr-4 py-3 text-xs sm:text-sm text-[#111827] placeholder-slate-400 focus:outline-none focus:border-[#111827] transition-colors font-medium"
+                  className="w-full bg-slate-50 border border-slate-200 rounded-xl pl-10 pr-4 py-3 text-xs sm:text-sm text-[#111827] focus:outline-none focus:border-[#111827] transition-colors font-medium"
                 />
               </div>
+              <p className="mt-1.5 text-[11px] font-semibold text-slate-500">At least 6 characters</p>
             </div>
 
             <button

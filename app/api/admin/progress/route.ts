@@ -15,5 +15,8 @@ export async function GET(request: Request) {
   if (!courseId) return NextResponse.json({ success: false, message: 'Choose a course.' }, { status: 400 });
   const allowed = await staffCourses(staff);
   if (allowed && !allowed.has(courseId)) return staffDenied();
-  return NextResponse.json({ success: true, allowedCourses: allowed ? [...allowed] : null, ...(await courseAnalytics(courseId)) });
+  return NextResponse.json(
+    { success: true, allowedCourses: allowed ? [...allowed] : null, updatedAt: new Date().toISOString(), ...(await courseAnalytics(courseId)) },
+    { headers: { 'Cache-Control': 'no-store' } },
+  );
 }

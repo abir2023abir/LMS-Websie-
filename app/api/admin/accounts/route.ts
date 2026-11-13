@@ -14,7 +14,8 @@ import {
   updateProfile,
 } from '@/lib/accounts';
 
-import { listPhotoOwners } from '@/lib/teacher-photos';
+import { listPhotoOwners, setPhoto, validPhoto } from '@/lib/teacher-photos';
+import { cleanCard, listCards, saveCard, type InstructorCard } from '@/lib/instructor-cards';
 
 export const dynamic = 'force-dynamic';
 
@@ -22,10 +23,15 @@ export async function GET() {
   const denied = await requireAdmin('Accounts');
   if (denied) return denied;
   try {
-    const [profiles, links, courses, photos] = await Promise.all([listProfiles(), listLinks(), listCourseSettings(), listPhotoOwners()]);
+    const [profiles, links, courses, photos, cards] = await Promise.all([listProfiles(), listLinks(), listCourseSettings(), listPhotoOwners(), listCards()]);
     return NextResponse.json({
       success: true,
-      profiles: profiles.map((item) => ({ ...publicProfile(item), mentor_level: item.mentor_level || 'lead', has_photo: photos.has(item.id) })),
+      profiles: profiles.map((item) => ({
+        ...publicProfile(item),
+        mentor_level: item.mentor_level || 'lead',
+        has_photo: photos.has(item.id),
+        card: cleanCard(cards[item.id]),
+      })),
       links,
       courses,
     });
@@ -56,7 +62,14 @@ export async function POST(request: Request) {
     }
     const profile = await createProfile({ email, name, password, role: 'Instructor' });
     if (level === 'assistant') await updateProfile(profile.id, { mentor_level: 'assistant' });
-    return NextResponse.json({ success: true, profile: publicProfile(profile) });
+    const card = await saveCard(profile.id, body.card || {});
+    if (body.photo) {
+      if (!validPhoto(body.photo)) {
+        return NextResponse.json({ success: true, profile: { ...publicProfile(profile), card }, photoSaved: false, message: 'Account saved. Use a JPG, PNG or WebP picture under 250 KB.' });
+      }
+      await setPhoto(profile.id, body.photo);
+    }
+    return NextResponse.json({ success: true, profile: { ...publicProfile(profile), card }, photoSaved: Boolean(body.photo) });
   } catch (error: any) {
     const duplicate = error.message === 'duplicate';
     return NextResponse.json(
@@ -106,6 +119,16 @@ export async function PATCH(request: Request) {
         }
         await updateProfile(profile.id, { mentor_level: body.mentorLevel });
         return NextResponse.json({ success: true });
+      }
+      if (body.card) {
+        if (!profile.roles.includes('Instructor')) {
+          return NextResponse.json({ success: false, message: 'Only mentor accounts have a profile card.' }, { status: 400 });
+        }
+        const name = String(body.name || profile.name).trim();
+        if (!name) return NextResponse.json({ success: false, message: 'Enter the instructor name.' }, { status: 400 });
+        if (name !== profile.name) await updateProfile(profile.id, { name });
+        const card = await saveCard(profile.id, body.card as Partial<InstructorCard>);
+        return NextResponse.json({ success: true, card });
       }
     }
     return NextResponse.json({ success: false, message: 'Nothing to change.' }, { status: 400 });

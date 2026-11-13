@@ -26,16 +26,27 @@ export type StudentRow = {
   quizAverage: number | null; examAverage: number | null; assignmentsSubmitted: number;
   lastActive: string; atRisk: boolean; score: number;
   timelineStatus: 'none' | 'on-track' | 'at-risk' | 'expired' | 'completed'; dueAt: string; endingAt: string;
+  lessons: { module: string; title: string; state: 'done' | 'current' | 'locked' }[];
 };
 
 const DAY = 24 * 60 * 60 * 1000;
 const average = (list: number[]) => (list.length ? Math.round(list.reduce((sum, value) => sum + value, 0) / list.length) : null);
+const analyticsCache = new Map<string, { at: number; value: Awaited<ReturnType<typeof computeCourseAnalytics>> }>();
 
-/** Everything the analytics dashboard shows for one course, computed in one pass. */
+/** Everything the analytics dashboard shows for one course, computed in one pass. Repeated live polls reuse the last result for a few seconds. */
 export async function courseAnalytics(courseId: string) {
+  const hit = analyticsCache.get(courseId);
+  if (hit && Date.now() - hit.at < 4000) return hit.value;
+  const value = await computeCourseAnalytics(courseId);
+  analyticsCache.set(courseId, { at: Date.now(), value });
+  return value;
+}
+
+async function computeCourseAnalytics(courseId: string) {
   const [enrollments, profiles, submissions, lives, requests] = await Promise.all([allEnrollments(), listProfiles(), listSubmissions(), listLiveClasses(), listRequests()]);
+  const profileIds = new Set(profiles.map((profile) => profile.id));
   const studentIds = Object.entries(enrollments).filter(([, courses]) => courses.includes(courseId)).map(([id]) => id)
-    .filter((id) => profiles.some((profile) => profile.id === id));
+    .filter((id) => profileIds.has(id));
 
   const perStudent = await Promise.all(studentIds.map(async (studentId) => {
     const profile = profiles.find((item) => item.id === studentId)!;
@@ -61,6 +72,7 @@ export async function courseAnalytics(courseId: string) {
       atRisk: progress.percent < 100 && (!lastActive || Date.now() - new Date(lastActive).getTime() > 7 * DAY),
       score: progress.percent * 100 + (examAverage ?? 0) * 2 + (quizAverage ?? 0),
       timelineStatus: progress.timeline.status, dueAt: current?.dueAt || '', endingAt: progress.timeline.endingAt,
+      lessons: progress.lessons.map((lesson) => ({ module: lesson.moduleTitle, title: lesson.lessonTitle, state: lesson.state })),
     };
     return { row, progress, quizzes: courseQuizzes, exams: courseExams };
   }));

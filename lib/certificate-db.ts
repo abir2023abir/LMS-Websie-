@@ -104,6 +104,14 @@ export async function findCertificate(email: string, courseId: string): Promise<
 /**
  * Queries the database for a certificate by its unique alphanumeric ID.
  */
+export async function revokeCertificateRecord(certificateId: string) {
+  const store = await loadCertStore();
+  const key = certificateId.trim().toUpperCase();
+  if (!store[key]) return;
+  store[key] = { ...store[key], status: 'REVOKED' };
+  await kvSet(CERTS_KEY, store);
+}
+
 export async function getCertificateById(certificateId: string): Promise<CertificateRecord | null> {
   if (!certificateId) return null;
   const normalizedId = certificateId.trim().toUpperCase();

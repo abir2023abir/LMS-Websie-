@@ -44,6 +44,14 @@ export default function CourseDetailsPage() {
   const [lessonVideos, setLessonVideos] = useState<Record<string, string>>({});
   const [activeLessonTitle, setActiveLessonTitle] = useState<string>('Introduction & Course Orientation');
   const [openModules, setOpenModules] = useState<Record<string, boolean>>({ 'mod-1': true, 'mod-0': true });
+  const [mentor, setMentor] = useState<{ id: string; name: string; bio: string; university: string; degree: string } | null>(null);
+
+  useEffect(() => {
+    fetch(`/api/instructor/card?courseId=${encodeURIComponent(courseId)}`, { cache: 'no-store' })
+      .then((res) => res.json())
+      .then((data) => setMentor(data.mentor || null))
+      .catch(() => setMentor(null));
+  }, [courseId]);
 
   useEffect(() => {
     async function loadCourse() {
@@ -197,13 +205,22 @@ export default function CourseDetailsPage() {
           {/* Left Column (7 Cols): Tabs & Curriculum */}
           <div className="lg:col-span-7 space-y-6">
             {/* Instructor Details Card */}
-            <div className="bg-white rounded-3xl border border-slate-200/80 p-6 flex items-center gap-4 shadow-sm">
-              <InstructorAvatar instructorId={course.instructorId} name={course.instructorName} />
-              <div>
-                <div className="text-xs text-slate-500 font-semibold uppercase tracking-wider">Instructor</div>
-                <div className="font-display font-bold text-base text-[#111827]">{course.instructorName || 'Lead Academic Faculty'}</div>
-                <div className="text-xs text-slate-500">Career Bridge.Studio Faculty</div>
+            <div className="bg-white rounded-3xl border border-slate-200/80 p-6 shadow-sm">
+              <div className="flex items-center gap-4">
+                <InstructorAvatar instructorId={mentor?.id || course.instructorId} name={mentor?.name || course.instructorName} />
+                <div>
+                  <div className="text-xs text-slate-500 font-semibold uppercase tracking-wider">Instructor</div>
+                  <div className="font-display font-bold text-base text-[#111827]">{mentor?.name || course.instructorName || 'Lead Academic Faculty'}</div>
+                  {mentor?.bio ? <p className="mt-1 text-xs leading-relaxed text-slate-600">{mentor.bio}</p> : !mentor && <div className="text-xs text-slate-500">Career Bridge.Studio Faculty</div>}
+                </div>
               </div>
+              {(mentor?.university || mentor?.degree) && (
+                <div className="mt-4 border-t border-slate-100 pt-4">
+                  <div className="text-[11px] font-bold uppercase tracking-wider text-slate-400">Education</div>
+                  {mentor.degree && <p className="mt-1 text-sm font-semibold text-[#111827]">{mentor.degree}</p>}
+                  {mentor.university && <p className="text-sm text-slate-600">{mentor.university}</p>}
+                </div>
+              )}
             </div>
 
             {/* Tabs */}

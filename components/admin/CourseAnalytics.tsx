@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useMemo, useState } from 'react';
+import { Fragment, useEffect, useMemo, useRef, useState } from 'react';
 import { Bar, BarChart, CartesianGrid, Cell, ResponsiveContainer, Tooltip, XAxis, YAxis } from 'recharts';
 import {
   Activity, AlertTriangle, ArrowDownUp, CheckCircle2, ClipboardCheck, GraduationCap, HelpCircle, Medal, Search, TrendingUp, Trophy, UserCheck, Users, Video,
@@ -12,6 +12,7 @@ type Row = {
   currentLesson: string; currentStep: string; quizAverage: number | null; examAverage: number | null;
   assignmentsSubmitted: number; lastActive: string; atRisk: boolean;
   timelineStatus: 'none' | 'on-track' | 'at-risk' | 'expired' | 'completed'; dueAt: string; endingAt: string;
+  lessons?: { module: string; title: string; state: 'done' | 'current' | 'locked' }[];
 };
 type Data = {
   summary: {
@@ -45,26 +46,57 @@ export default function CourseAnalytics() {
   const [query, setQuery] = useState('');
   const [onlyAtRisk, setOnlyAtRisk] = useState(false);
   const [sort, setSort] = useState<SortKey>('rank');
+  const [from, setFrom] = useState('');
+  const [to, setTo] = useState('');
+  const [openId, setOpenId] = useState('');
+  const [updatedAt, setUpdatedAt] = useState(0);
+  const stamp = useRef('');
+  const [now, setNow] = useState(() => Date.now());
 
   useEffect(() => { if (!courseId && outline[0]) setCourseId(outline[0].id); }, [outline, courseId]);
   useEffect(() => {
+    const clock = setInterval(() => setNow(Date.now()), 1000);
+    return () => clearInterval(clock);
+  }, []);
+  useEffect(() => {
     if (!courseId) return;
     let alive = true;
-    setLoading(true);
-    setError('');
-    fetch(`/api/admin/progress?courseId=${encodeURIComponent(courseId)}`, { cache: 'no-store' })
-      .then(async (res) => { const body = await res.json(); if (!res.ok) throw new Error(body.message || 'Could not load analytics.'); return body; })
-      .then((body) => { if (alive) setData(body); })
-      .catch((err) => { if (alive) setError(err instanceof Error ? err.message : 'Could not load analytics.'); })
-      .finally(() => { if (alive) setLoading(false); });
-    return () => { alive = false; };
+    stamp.current = '';
+    const load = (first: boolean) => {
+      if (!first && document.hidden) return;
+      if (first) setLoading(true);
+      setError('');
+      fetch(`/api/admin/progress?courseId=${encodeURIComponent(courseId)}&t=${Date.now()}`, { cache: 'no-store' })
+        .then(async (res) => { const body = await res.json(); if (!res.ok) throw new Error(body.message || 'Could not load analytics.'); return body; })
+        .then((body) => {
+          if (!alive) return;
+          const mark = JSON.stringify(body.summary) + (body.rows || []).map((row: Row) => `${row.studentId}:${row.percent}:${row.lessonsDone}:${row.lastActive}`).join('|');
+          if (mark === stamp.current) { setUpdatedAt(Date.now()); return; }
+          stamp.current = mark;
+          setData(body);
+          setUpdatedAt(Date.now());
+        })
+        .catch((err) => { if (alive) setError(err instanceof Error ? err.message : 'Could not load analytics.'); })
+        .finally(() => { if (alive && first) setLoading(false); });
+    };
+    load(true);
+    const timer = setInterval(() => load(false), 5000);
+    const onVisible = () => { if (!document.hidden) load(false); };
+    document.addEventListener('visibilitychange', onVisible);
+    return () => { alive = false; clearInterval(timer); document.removeEventListener('visibilitychange', onVisible); };
   }, [courseId]);
 
   const rows = useMemo(() => {
     if (!data) return [];
     const ranked = data.rows.map((row, index) => ({ ...row, rank: index + 1 }));
     const q = query.trim().toLowerCase();
-    const filtered = ranked.filter((row) => (!onlyAtRisk || row.atRisk) && (!q || row.name.toLowerCase().includes(q) || row.email.toLowerCase().includes(q)));
+    const inDates = (iso: string) => {
+      if (!from && !to) return true;
+      if (!iso) return false;
+      const day = iso.slice(0, 10);
+      return (!from || day >= from) && (!to || day <= to);
+    };
+    const filtered = ranked.filter((row) => (!onlyAtRisk || row.atRisk) && inDates(row.lastActive) && (!q || row.name.toLowerCase().includes(q) || row.email.toLowerCase().includes(q)));
     const by: Record<SortKey, (a: typeof ranked[number], b: typeof ranked[number]) => number> = {
       rank: (a, b) => a.rank - b.rank,
       progress: (a, b) => b.percent - a.percent,
@@ -73,7 +105,7 @@ export default function CourseAnalytics() {
       active: (a, b) => String(b.lastActive).localeCompare(String(a.lastActive)),
     };
     return [...filtered].sort(by[sort]);
-  }, [data, query, onlyAtRisk, sort]);
+  }, [data, query, onlyAtRisk, sort, from, to]);
 
   const s = data?.summary;
   const kpis = s ? [
@@ -94,12 +126,26 @@ export default function CourseAnalytics() {
       <div className="flex flex-wrap items-start justify-between gap-3">
         <div>
           <h2 className="font-display text-xl font-extrabold">Course analytics</h2>
-          <p className="text-sm text-slate-500">How students are moving through the course, where they get stuck, and who needs a nudge.</p>
+          <p className="mt-1 flex items-center gap-2 text-sm text-slate-500">
+            <span className="inline-flex items-center gap-1.5 rounded-full bg-emerald-50 px-2 py-0.5 text-[11px] font-bold text-emerald-700">
+              <span className="h-2 w-2 animate-pulse rounded-full bg-emerald-500" />
+              Live{updatedAt ? ` · ${Math.max(0, Math.round((now - updatedAt) / 1000))}s ago` : ''}
+            </span>
+            Ranking, charts, and lesson breakdown refresh every few seconds. Open a student for the module list.
+          </p>
         </div>
-        <select aria-label="Course" value={courseId} onChange={(e) => setCourseId(e.target.value)} className="rounded-xl border border-slate-200 px-3 py-2 text-sm font-semibold">
+        <div className="flex flex-wrap items-center gap-2">
+          <label className="text-xs font-bold text-slate-500">From
+            <input type="date" value={from} onChange={(e) => setFrom(e.target.value)} className="mt-1 block rounded-xl border border-slate-200 px-3 py-2 text-sm font-semibold" />
+          </label>
+          <label className="text-xs font-bold text-slate-500">To
+            <input type="date" value={to} onChange={(e) => setTo(e.target.value)} className="mt-1 block rounded-xl border border-slate-200 px-3 py-2 text-sm font-semibold" />
+          </label>
+          <select aria-label="Course" value={courseId} onChange={(e) => setCourseId(e.target.value)} className="rounded-xl border border-slate-200 px-3 py-2 text-sm font-semibold">
           {outline.length === 0 && <option value="">No courses</option>}
           {outline.map((course) => <option key={course.id} value={course.id}>{course.title}</option>)}
-        </select>
+          </select>
+        </div>
       </div>
 
       {error && <p className="rounded-2xl bg-rose-50 p-4 text-sm font-semibold text-rose-700">{error}</p>}
@@ -157,6 +203,42 @@ export default function CourseAnalytics() {
             </div>
           </div>
 
+          <div className="grid gap-4 lg:grid-cols-5">
+            <div className="rounded-2xl border border-slate-100 bg-[#0c1222] p-4 text-white lg:col-span-2">
+              <p className="font-bold">Leaderboard</p>
+              <p className="mb-3 text-xs text-slate-400">Top of this course by the same ranking score.</p>
+              <div className="space-y-2">
+                {[...rows].sort((a, b) => a.rank - b.rank).slice(0, 3).map((row) => (
+                  <div key={row.studentId} className="flex items-center gap-3 rounded-2xl bg-white/10 px-3 py-2">
+                    <span className="font-display text-lg font-black text-[#FACC15]">#{row.rank}</span>
+                    <div className="min-w-0 flex-1">
+                      <p className="truncate text-sm font-bold">{row.name}</p>
+                      <div className="mt-1 h-1.5 overflow-hidden rounded-full bg-white/15"><div className="h-full rounded-full bg-[#FACC15]" style={{ width: `${row.percent}%` }} /></div>
+                    </div>
+                    <span className="text-sm font-bold">{row.percent}%</span>
+                  </div>
+                ))}
+                {rows.length === 0 && <p className="text-sm text-slate-400">No students in this view.</p>}
+              </div>
+            </div>
+            <div className="rounded-2xl border border-slate-100 p-4 lg:col-span-3">
+              <p className="font-bold">Progress comparison</p>
+              <p className="mb-3 text-xs text-slate-500">Each bar is a student. The line is the course average.</p>
+              <div className="h-[220px]">
+                <ResponsiveContainer width="100%" height="100%">
+                  <BarChart data={[...rows].sort((a, b) => a.rank - b.rank).slice(0, 8).map((row) => ({ name: row.name.split(' ')[0], progress: row.percent, average: s?.averageProgress || 0 }))}>
+                    <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f1f5f9" />
+                    <XAxis dataKey="name" tick={{ fontSize: 11 }} />
+                    <YAxis domain={[0, 100]} tick={{ fontSize: 11 }} />
+                    <Tooltip />
+                    <Bar dataKey="progress" name="Progress" fill="#111827" radius={[6, 6, 0, 0]} />
+                    <Bar dataKey="average" name="Course average" fill="#FACC15" radius={[6, 6, 0, 0]} />
+                  </BarChart>
+                </ResponsiveContainer>
+              </div>
+            </div>
+          </div>
+
           {/* Ranking table */}
           <div className="space-y-3">
             <div className="flex flex-wrap items-center gap-2">
@@ -181,7 +263,8 @@ export default function CourseAnalytics() {
                   <thead><tr className="border-b border-slate-100 text-xs uppercase tracking-wide text-slate-400"><th className="w-14 py-2">Rank</th><th>Student</th><th className="w-56">Progress</th><th>Now on</th><th>Timeline</th><th>Quiz</th><th>Exam</th><th>Last active</th></tr></thead>
                   <tbody>
                     {rows.map((row) => (
-                      <tr key={row.studentId} className="border-b border-slate-50">
+                      <Fragment key={row.studentId}>
+                      <tr className="cursor-pointer border-b border-slate-50 hover:bg-slate-50" onClick={() => setOpenId(openId === row.studentId ? '' : row.studentId)}>
                         <td className="py-3 font-display font-extrabold">{row.rank <= 3 ? <Medal className={`h-5 w-5 ${medal[row.rank - 1]}`} /> : `#${row.rank}`}</td>
                         <td>
                           <p className="flex items-center gap-1.5 font-semibold">{row.name}{row.atRisk && <span className="rounded-full bg-rose-50 px-1.5 py-0.5 text-[10px] font-bold text-rose-700">At risk</span>}</p>
@@ -212,6 +295,35 @@ export default function CourseAnalytics() {
                         <td className="text-sm">{pct(row.examAverage)}</td>
                         <td className={`text-xs ${row.atRisk ? 'font-semibold text-rose-700' : 'text-slate-500'}`}>{ago(row.lastActive)}</td>
                       </tr>
+                      {openId === row.studentId && (
+                        <tr key={`${row.studentId}-detail`} className="border-b border-slate-100 bg-slate-50">
+                          <td colSpan={8} className="px-3 py-4">
+                            <p className="mb-2 text-xs font-bold uppercase tracking-wide text-slate-500">Lessons</p>
+                            {(row.lessons || []).length === 0 ? <p className="text-sm text-slate-500">No lesson breakdown for this student.</p> : (
+                              <div className="grid gap-3 md:grid-cols-2">
+                                {Object.entries((row.lessons || []).reduce<Record<string, { title: string; state: string }[]>>((groups, lesson) => {
+                                  (groups[lesson.module] ||= []).push(lesson);
+                                  return groups;
+                                }, {})).map(([module, lessons]) => (
+                                  <div key={module} className="rounded-2xl bg-white p-3">
+                                    <p className="text-sm font-bold">{module}</p>
+                                    <ul className="mt-2 space-y-1.5">
+                                      {lessons.map((lesson) => (
+                                        <li key={lesson.title} className="flex items-center gap-2 text-xs">
+                                          <span className={`h-1.5 w-16 overflow-hidden rounded-full bg-slate-100`}><span className={`block h-full ${lesson.state === 'done' ? 'w-full bg-emerald-500' : lesson.state === 'current' ? 'w-1/2 bg-[#FACC15]' : 'w-0'}`} /></span>
+                                          <span className="min-w-0 flex-1 truncate">{lesson.title}</span>
+                                          <span className="font-semibold text-slate-500">{lesson.state}</span>
+                                        </li>
+                                      ))}
+                                    </ul>
+                                  </div>
+                                ))}
+                              </div>
+                            )}
+                          </td>
+                        </tr>
+                      )}
+                      </Fragment>
                     ))}
                   </tbody>
                 </table>

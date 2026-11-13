@@ -3,18 +3,27 @@ import { kvGet, kvSet } from '@/lib/kv-store';
 // CMS content is kept with kv-store (Supabase app_kv on Vercel, a local file in development).
 const localId = (prefix: string) => `${prefix}-${Date.now().toString(36)}${Math.random().toString(36).slice(2, 6)}`;
 
+const CMS_TTL = 60_000;
+const cmsCache = new Map<string, { at: number; value: unknown }>();
+
 async function localList<T extends { id?: string }>(name: string, defaults: T[]): Promise<T[]> {
+  const hit = cmsCache.get(name);
+  if (hit && Date.now() - hit.at < CMS_TTL) return hit.value as T[];
   const saved = await kvGet<T[] | null>(`cms-${name}`, null);
-  return saved ?? defaults.map((item, index) => ({ ...item, id: item.id || `${name}-${index + 1}` }));
+  const value = saved ?? defaults.map((item, index) => ({ ...item, id: item.id || `${name}-${index + 1}` }));
+  cmsCache.set(name, { at: Date.now(), value });
+  return value;
 }
 
 async function localCreate<T extends { id?: string }>(name: string, defaults: T[], data: T): Promise<string> {
+  cmsCache.delete(name);
   const id = localId(name);
   await kvSet(`cms-${name}`, [...(await localList(name, defaults)), { ...data, id, updatedAt: new Date().toISOString() }]);
   return id;
 }
 
 async function localUpdate<T extends { id?: string }>(name: string, defaults: T[], id: string, data: Partial<T>): Promise<boolean> {
+  cmsCache.delete(name);
   const list = await localList(name, defaults);
   if (!list.some((item) => item.id === id)) return false;
   await kvSet(`cms-${name}`, list.map((item) => (item.id === id ? { ...item, ...data, updatedAt: new Date().toISOString() } : item)));
@@ -22,6 +31,7 @@ async function localUpdate<T extends { id?: string }>(name: string, defaults: T[
 }
 
 async function localDelete<T extends { id?: string }>(name: string, defaults: T[], id: string): Promise<boolean> {
+  cmsCache.delete(name);
   const list = await localList(name, defaults);
   await kvSet(`cms-${name}`, list.filter((item) => item.id !== id));
   return true;

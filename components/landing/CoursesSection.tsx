@@ -5,7 +5,9 @@ import Image from 'next/image';
 import Link from 'next/link';
 import { ArrowRight, ChevronsRight, Sparkles, Clock, ChevronRight, CalendarDays, Timer, MonitorPlay } from 'lucide-react';
 import { motion } from 'framer-motion';
-import CheckoutModal from '@/components/checkout/CheckoutModal';
+import dynamic from 'next/dynamic';
+
+const CheckoutModal = dynamic(() => import('@/components/checkout/CheckoutModal'), { ssr: false });
 import { homepageFeaturedCourses } from '@/lib/data';
 import type { CourseSchema } from '@/types/course';
 import { takaFromUsd } from '@/lib/utils';

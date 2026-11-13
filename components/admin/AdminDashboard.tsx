@@ -129,48 +129,53 @@ export default function AdminDashboard({
   );
 
   return (
-    <div className="min-h-screen bg-slate-50 font-sans text-slate-900 lg:flex">
-      {/* ── SIDEBAR: fixed column on desktop, slide-in drawer on phones ── */}
-      {menuOpen && <div className="fixed inset-0 z-40 bg-black/50 lg:hidden" onClick={() => setMenuOpen(false)} aria-hidden="true" />}
-      <aside className={`fixed inset-y-0 left-0 z-50 flex w-64 shrink-0 flex-col bg-[#111827] text-white transition-transform duration-200 lg:sticky lg:top-0 lg:h-screen lg:translate-x-0 ${menuOpen ? 'translate-x-0' : '-translate-x-full'}`}>
-        <div className="flex items-center justify-between gap-3 border-b border-white/10 px-5 py-5">
-          <div className="flex items-center gap-3">
-            <div className="flex flex-col items-center justify-center rounded-lg border border-[#FACC15] bg-black/40 px-3 py-1">
-              <span className="font-display text-[10px] font-extrabold uppercase leading-none tracking-wider text-[#FACC15]">Career Bridge</span>
-              <span className="mt-0.5 font-display text-[8px] font-bold uppercase leading-none tracking-widest text-white">.Studio</span>
+    <div className="min-h-screen bg-[#f6f3ec] font-sans text-slate-900 lg:flex">
+      {menuOpen && <div className="fixed inset-0 z-40 bg-[#0b1220]/60 backdrop-blur-sm lg:hidden" onClick={() => setMenuOpen(false)} aria-hidden="true" />}
+      <aside className={`fixed inset-y-0 left-0 z-50 flex w-[17.5rem] shrink-0 flex-col bg-[#0c1222] text-white shadow-2xl shadow-black/30 transition-transform duration-200 lg:sticky lg:top-0 lg:h-screen lg:translate-x-0 ${menuOpen ? 'translate-x-0' : '-translate-x-full'}`}>
+        <div className="border-b border-white/10 bg-gradient-to-br from-[#172033] to-[#0c1222] px-5 py-5">
+          <div className="flex items-start justify-between gap-3">
+            <div>
+              <div className="inline-flex flex-col rounded-2xl border border-[#FACC15]/70 bg-[#FACC15] px-3 py-1.5 shadow-lg shadow-[#FACC15]/20">
+                <span className="font-display text-[11px] font-black uppercase leading-none tracking-[0.14em] text-[#111827]">Career Bridge</span>
+                <span className="mt-0.5 font-display text-[9px] font-bold uppercase leading-none tracking-[0.22em] text-[#111827]/80">.Studio</span>
+              </div>
+              <p className="mt-3 font-display text-sm font-extrabold tracking-tight text-white">{variant === 'instructor' ? 'Instructor' : 'Super Admin'}</p>
+              <p className="text-[11px] font-medium text-slate-400">{variant === 'instructor' ? 'Your teaching tools' : 'Studio control room'}</p>
             </div>
-            <span className="text-[10px] font-bold uppercase tracking-widest text-slate-400">{variant === 'instructor' ? 'Instructor' : 'Admin'}</span>
+            <button type="button" onClick={() => setMenuOpen(false)} className="rounded-lg p-1.5 text-slate-400 hover:bg-white/10 hover:text-white lg:hidden" aria-label="Close menu">
+              <X className="h-5 w-5" />
+            </button>
           </div>
-          <button type="button" onClick={() => setMenuOpen(false)} className="rounded-lg p-1.5 text-slate-400 hover:bg-white/10 hover:text-white lg:hidden" aria-label="Close menu">
-            <X className="h-5 w-5" />
-          </button>
         </div>
 
         <nav className="flex-1 space-y-1 overflow-y-auto px-3 py-4">
           {visibleTabs.map((tab) => {
             const isActive = activeTab === tab.name;
             const Icon = tab.icon;
-            return <button key={tab.name} onClick={() => { setActiveTab(tab.name); setMenuOpen(false); }} aria-current={isActive ? 'page' : undefined} className={`flex min-h-10 w-full items-center gap-3 rounded-xl px-3 py-2.5 text-left text-sm font-semibold transition-colors ${isActive ? 'bg-[#FACC15] text-[#111827]' : 'text-slate-300 hover:bg-white/10 hover:text-white'}`}>
-              <Icon className="h-4 w-4 shrink-0" /><span className="min-w-0 flex-1">{tab.name}</span>
+            return <button key={tab.name} onClick={() => { setActiveTab(tab.name); setMenuOpen(false); }} aria-current={isActive ? 'page' : undefined} className={`flex min-h-11 w-full items-center gap-3 rounded-2xl px-3 py-2.5 text-left text-sm font-semibold transition ${isActive ? 'bg-white text-[#111827] shadow-lg shadow-black/20' : 'text-slate-300 hover:bg-white/10 hover:text-white'}`}>
+              <span className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-xl ${isActive ? 'bg-[#FACC15] text-[#111827]' : 'bg-white/10 text-slate-300'}`}><Icon className="h-4 w-4" /></span>
+              <span className="min-w-0 flex-1">{tab.name}</span>
               {tab.name === 'Requests' && serviceRequests.length > 0 && <span className={`inline-flex h-5 min-w-5 items-center justify-center rounded-full px-1 text-[10px] font-extrabold ${isActive ? 'bg-[#111827] text-[#FACC15]' : 'bg-[#FACC15] text-[#111827]'}`}>{serviceRequests.length}</span>}
             </button>;
           })}
         </nav>
 
         <div className="border-t border-white/10 p-3">
-          <button type="button" onClick={handleLogout} className="flex min-h-10 w-full items-center justify-center gap-2 rounded-xl px-3 text-sm font-semibold text-slate-300 transition hover:bg-red-500/15 hover:text-red-300">
+          <button type="button" onClick={handleLogout} className="flex min-h-11 w-full items-center justify-center gap-2 rounded-2xl px-3 text-sm font-semibold text-slate-300 transition hover:bg-red-500/15 hover:text-red-200">
             <LogOut className="h-4 w-4" /><span>Log out</span>
           </button>
         </div>
       </aside>
 
       <div className="min-w-0 flex-1">
-        {/* ── TOP BAR ── */}
-        <header className="sticky top-0 z-30 flex items-center gap-3 border-b border-slate-200 bg-white/95 px-4 py-3 backdrop-blur sm:px-6 lg:px-8">
+        <header className="sticky top-0 z-30 flex items-center gap-3 border-b border-[#111827]/10 bg-[#fffdf8]/90 px-4 py-3 shadow-sm shadow-slate-900/5 backdrop-blur sm:px-6 lg:px-8">
           <button type="button" onClick={() => setMenuOpen(true)} className="rounded-lg p-2 text-slate-600 hover:bg-slate-100 lg:hidden" aria-label="Open menu">
             <Menu className="h-5 w-5" />
           </button>
-          <h1 className="min-w-0 flex-1 truncate font-display text-lg font-extrabold text-slate-900">{activeTab}</h1>
+          <div className="min-w-0 flex-1">
+            <p className="text-[10px] font-bold uppercase tracking-[0.18em] text-amber-700">{variant === 'instructor' ? 'Instructor panel' : 'Super admin'}</p>
+            <h1 className="truncate font-display text-xl font-extrabold tracking-tight text-slate-900 sm:text-2xl">{activeTab}</h1>
+          </div>
           {activeTab === 'Courses' && (
             <div className="hidden w-full max-w-xs items-center gap-2 rounded-full border border-slate-200 bg-slate-50 px-4 py-2 text-xs md:flex">
               <Search className="h-4 w-4 text-slate-400" />

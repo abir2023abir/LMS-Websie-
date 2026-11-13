@@ -30,7 +30,18 @@ export default function ProgressRequests() {
   const [extraDays, setExtraDays] = useState<Record<string, number>>({});
 
   useEffect(() => {
-    fetch('/api/progress-requests', { cache: 'no-store' }).then((res) => res.json()).then((data) => setRequests(data.requests || [])).finally(() => setLoading(false));
+    let alive = true;
+    const load = () => {
+      if (document.hidden) return;
+      fetch(`/api/progress-requests?t=${Date.now()}`, { cache: 'no-store' })
+        .then((res) => res.json())
+        .then((data) => { if (alive) setRequests(data.requests || []); })
+        .finally(() => { if (alive) setLoading(false); });
+    };
+    load();
+    const timer = setInterval(load, 8000);
+    document.addEventListener('visibilitychange', load);
+    return () => { alive = false; clearInterval(timer); document.removeEventListener('visibilitychange', load); };
   }, []);
 
   const decide = async (id: string, status: 'approved' | 'rejected') => {

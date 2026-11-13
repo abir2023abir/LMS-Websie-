@@ -36,7 +36,13 @@ export default function RiskAlerts({ mentor = false }: { mentor?: boolean }) {
     if (res.ok) apply(await res.json());
     else if (res.status === 401 || res.status === 403) setBlocked(true);
   }, []);
-  useEffect(() => { void load(); }, [load]);
+  useEffect(() => {
+    void load();
+    const timer = setInterval(() => { if (!document.hidden) void load(); }, 8000);
+    const onVisible = () => { if (!document.hidden) void load(); };
+    document.addEventListener('visibilitychange', onVisible);
+    return () => { clearInterval(timer); document.removeEventListener('visibilitychange', onVisible); };
+  }, [load]);
 
   const send = async (payload: Record<string, unknown>, done: string) => {
     setBusy(true);

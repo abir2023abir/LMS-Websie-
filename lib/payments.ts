@@ -170,29 +170,86 @@ export async function readProof(id: string): Promise<{ type: string; bytes: Buff
    Enrollments (student id → course ids)
 ───────────────────────────────────────────── */
 const ENROLLMENTS_KEY = 'enrollments';
+/** One course can hold this many students. Rosters are stored in batches so the list does not have to be one giant file. */
+export const COURSE_ENROLLMENT_CAP = 100_000;
+const ROSTER_BATCH = 1000;
+
+async function legacyEnrollments() {
+  return kvGet<Record<string, string[]>>(ENROLLMENTS_KEY, {});
+}
+
+async function legacyCount(courseId: string) {
+  const all = await legacyEnrollments();
+  return Object.values(all).filter((courses) => courses.includes(courseId)).length;
+}
+
+export async function enrollmentCount(courseId: string) {
+  const saved = await kvGet<number | null>(`enroll-count:${courseId}`, null);
+  return typeof saved === 'number' ? saved : legacyCount(courseId);
+}
+
+export async function courseIsFull(courseId: string) {
+  return (await enrollmentCount(courseId)) >= COURSE_ENROLLMENT_CAP;
+}
 
 export async function getEnrollments(studentId: string): Promise<string[]> {
-  const all = await kvGet<Record<string, string[]>>(ENROLLMENTS_KEY, {});
-  return all[studentId] || [];
+  const own = await kvGet<string[] | null>(`enroll-student:${studentId}`, null);
+  if (own) return own;
+  return (await legacyEnrollments())[studentId] || [];
 }
 
 export async function grantEnrollment(studentId: string, courseId: string) {
-  const all = await kvGet<Record<string, string[]>>(ENROLLMENTS_KEY, {});
-  const current = all[studentId] || [];
+  const current = await getEnrollments(studentId);
   if (current.includes(courseId)) return;
-  await kvSet(ENROLLMENTS_KEY, { ...all, [studentId]: [...current, courseId] });
-  // The timeline starts from the real enrollment moment (server time).
-  const dates = await kvGet<Record<string, Record<string, string>>>('enrollment-dates', {});
-  if (!dates[studentId]?.[courseId]) {
-    await kvSet('enrollment-dates', { ...dates, [studentId]: { ...dates[studentId], [courseId]: new Date().toISOString() } });
+  const count = await enrollmentCount(courseId);
+  if (count >= COURSE_ENROLLMENT_CAP) {
+    throw new Error('This course is full. 100,000 students are already enrolled.');
   }
+  const batch = Math.floor(count / ROSTER_BATCH);
+  const rosterKey = `enroll-roster:${courseId}:${batch}`;
+  const roster = await kvGet<string[]>(rosterKey, []);
+  await kvSet(rosterKey, [...roster, studentId]);
+  await kvSet(`enroll-count:${courseId}`, count + 1);
+  await kvSet(`enroll-student:${studentId}`, [...current, courseId]);
+  const indexed = await kvGet<string[]>('enroll-course-ids', []);
+  if (!indexed.includes(courseId)) await kvSet('enroll-course-ids', [...indexed, courseId]);
+  await kvSet(`enroll-at:${studentId}:${courseId}`, new Date().toISOString());
 }
 
 export async function revokeEnrollment(studentId: string, courseId: string) {
-  const all = await kvGet<Record<string, string[]>>(ENROLLMENTS_KEY, {});
-  await kvSet(ENROLLMENTS_KEY, { ...all, [studentId]: (all[studentId] || []).filter((id) => id !== courseId) });
+  const current = await getEnrollments(studentId);
+  await kvSet(`enroll-student:${studentId}`, current.filter((id) => id !== courseId));
+  const legacy = await legacyEnrollments();
+  if (legacy[studentId]) {
+    legacy[studentId] = legacy[studentId].filter((id) => id !== courseId);
+    await kvSet(ENROLLMENTS_KEY, legacy);
+  }
+  const saved = await kvGet<number | null>(`enroll-count:${courseId}`, null);
+  if (typeof saved !== 'number') return;
+  const batches = Math.max(1, Math.ceil(saved / ROSTER_BATCH));
+  for (let index = 0; index < batches; index += 1) {
+    const key = `enroll-roster:${courseId}:${index}`;
+    const roster = await kvGet<string[]>(key, []);
+    if (!roster.includes(studentId)) continue;
+    await kvSet(key, roster.filter((id) => id !== studentId));
+    break;
+  }
+  if (current.includes(courseId)) await kvSet(`enroll-count:${courseId}`, Math.max(0, saved - 1));
 }
 
 export async function allEnrollments(): Promise<Record<string, string[]>> {
-  return kvGet<Record<string, string[]>>(ENROLLMENTS_KEY, {});
+  const map: Record<string, string[]> = { ...(await legacyEnrollments()) };
+  const courses = await kvGet<string[]>('enroll-course-ids', []);
+  for (const courseId of courses) {
+    const count = await kvGet<number>(`enroll-count:${courseId}`, 0);
+    const batches = Math.ceil(count / ROSTER_BATCH);
+    for (let index = 0; index < batches; index += 1) {
+      const roster = await kvGet<string[]>(`enroll-roster:${courseId}:${index}`, []);
+      for (const studentId of roster) {
+        const list = map[studentId] || [];
+        if (!list.includes(courseId)) map[studentId] = [...list, courseId];
+      }
+    }
+  }
+  return map;
 }

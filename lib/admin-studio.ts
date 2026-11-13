@@ -17,7 +17,16 @@ export type AdminStudent = {
   status: StudentStatus;
   joinedDate: string;
 };
-export type AdminCertificate = { id: string; studentName: string; course: string; date: string; createdAt: string };
+export type AdminCertificate = {
+  id: string;
+  studentName: string;
+  course: string;
+  date: string;
+  createdAt: string;
+  hours?: string;
+  instructorName?: string;
+  courseId?: string;
+};
 export type AdminAssignment = {
   id: string;
   title: string;
@@ -193,7 +202,7 @@ export function getCertificate(id: string) {
   return load().certificates.find((item) => item.id === id) || null;
 }
 
-export function saveCertificate(input: { id?: string; studentName: string; course: string; date: string }) {
+export function saveCertificate(input: { id?: string; studentName: string; course: string; date: string; hours?: string; instructorName?: string; courseId?: string }) {
   const studentName = input.studentName.trim();
   const course = input.course.trim();
   const date = input.date.trim();
@@ -201,10 +210,13 @@ export function saveCertificate(input: { id?: string; studentName: string; cours
   const db = load();
   const existing = db.certificates.find((item) => item.id === input.id);
   const record: AdminCertificate = {
-    id: existing?.id || uid('cert'),
+    id: existing?.id || uid('CBS'),
     studentName,
     course,
     date,
+    hours: String(input.hours || existing?.hours || '').trim().slice(0, 40),
+    instructorName: String(input.instructorName || existing?.instructorName || '').trim().slice(0, 80),
+    courseId: String(input.courseId || existing?.courseId || '').trim().slice(0, 80),
     createdAt: existing?.createdAt || new Date().toISOString(),
   };
   db.certificates = existing ? db.certificates.map((item) => (item.id === record.id ? record : item)) : [record, ...db.certificates];

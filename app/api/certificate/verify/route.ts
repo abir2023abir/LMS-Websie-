@@ -15,7 +15,7 @@ export async function GET(request: Request) {
 
     const certRecord = await getCertificateById(certificateId.trim());
 
-    if (!certRecord) {
+    if (!certRecord || certRecord.status === 'REVOKED') {
       return NextResponse.json(
         {
           success: false,
@@ -54,7 +54,7 @@ export async function POST(request: Request) {
 
     const certRecord = await getCertificateById(certificateId.trim());
 
-    if (!certRecord) {
+    if (!certRecord || certRecord.status === 'REVOKED') {
       return NextResponse.json(
         {
           success: false,

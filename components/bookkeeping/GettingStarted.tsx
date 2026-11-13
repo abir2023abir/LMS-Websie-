@@ -17,13 +17,14 @@ export default function GettingStarted() {
         {steps.map((step, index) => {
           const featured = index === 0;
           return (
-            <li key={step.title} className={`relative flex h-full flex-col rounded-3xl bg-white px-6 py-7 shadow-sm ${featured ? 'border-2 border-[#111827]' : 'border border-slate-200'}`}>
-              {featured && <span className="absolute -top-3 left-6 rounded-full bg-[#FACC15] px-4 py-1 text-[11px] font-extrabold uppercase tracking-wide text-[#111827]">Start here</span>}
+            <li key={step.title} className={`relative flex h-full flex-col items-center rounded-3xl bg-white px-6 py-8 text-center shadow-sm ${featured ? 'border-2 border-[#111827]' : 'border border-slate-200'}`}>
+              {featured && <span className="absolute -top-3 left-1/2 -translate-x-1/2 rounded-full bg-[#FACC15] px-4 py-1 text-[11px] font-extrabold uppercase tracking-wide text-[#111827]">Start here</span>}
               <p className="font-display text-sm font-extrabold text-slate-400">Step 0{index + 1}</p>
-              <h3 className="mt-1 font-display text-xl font-bold text-[#111827]">{step.title}</h3>
-              <p className="mt-1 text-sm leading-relaxed text-slate-600">{step.detail}</p>
+              <h3 className="mt-2 font-display text-xl font-extrabold text-[#111827]">{step.title}</h3>
+              <span className="mt-3 h-1 w-10 rounded-full bg-[#FACC15]" />
+              <p className="mt-3 text-sm leading-relaxed text-slate-600">{step.detail}</p>
               <p className="mt-6 text-sm font-bold text-[#111827]">Included</p>
-              <p className="mt-3 flex items-start gap-2 text-sm text-slate-600">
+              <p className="mt-3 flex items-start gap-2 text-left text-sm text-slate-600">
                 <Check className="mt-0.5 h-4 w-4 shrink-0 text-emerald-600" strokeWidth={2.5} />
                 <span>{step.included}</span>
               </p>

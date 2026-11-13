@@ -1,12 +1,14 @@
+import dynamic from 'next/dynamic';
 import Navbar from '@/components/landing/Navbar';
 import Hero from '@/components/landing/Hero';
 import About from '@/components/landing/About';
 import SuccessStories from '@/components/landing/SuccessStories';
-import CoursesSection from '@/components/landing/CoursesSection';
 import WhyChooseUs from '@/components/landing/WhyChooseUs';
-import Testimonials from '@/components/landing/Testimonials';
 import BlogAndContact from '@/components/landing/BlogAndContact';
-import Footer from '@/components/landing/Footer';
+
+const CoursesSection = dynamic(() => import('@/components/landing/CoursesSection'));
+const Testimonials = dynamic(() => import('@/components/landing/Testimonials'));
+const Footer = dynamic(() => import('@/components/landing/Footer'));
 
 export default function HomePage() {
   return (

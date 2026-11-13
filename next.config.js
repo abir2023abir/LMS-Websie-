@@ -4,6 +4,9 @@ const nextConfig = {
   poweredByHeader: false,
   compress: true,
   swcMinify: true,
+  compiler: {
+    removeConsole: process.env.NODE_ENV === 'production' ? { exclude: ['error'] } : false,
+  },
   experimental: {
     optimizePackageImports: ['lucide-react', 'framer-motion', 'recharts'],
   },

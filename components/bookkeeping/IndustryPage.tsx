@@ -23,11 +23,12 @@ export default function IndustryPage({ industry }: { industry: BookkeepingIndust
         <h2 className="mt-2 text-center font-display text-3xl font-extrabold">Services included for this business</h2>
         <div className="mx-auto mt-8 grid max-w-5xl gap-5 md:grid-cols-3">
           {industry.focuses.map((focus, index) => (
-            <article key={focus.title} className={`relative flex h-full flex-col rounded-3xl bg-white px-6 py-7 shadow-sm ${index === 0 ? 'border-2 border-[#111827]' : 'border border-slate-200'}`}>
+            <article key={focus.title} className={`relative flex h-full flex-col items-center rounded-3xl bg-white px-6 py-8 text-center shadow-sm ${index === 0 ? 'border-2 border-[#111827]' : 'border border-slate-200'}`}>
               {index === 0 && <span className="absolute -top-3 left-1/2 -translate-x-1/2 rounded-full bg-[#FACC15] px-4 py-1 text-[11px] font-extrabold uppercase tracking-wide text-[#111827]">Core service</span>}
-              <h3 className="font-display text-xl font-bold">{focus.title}</h3>
-              <p className="mt-6 text-sm font-bold">Included</p>
-              <ul className="mt-3 space-y-3">
+              <h3 className="font-display text-xl font-extrabold">{focus.title}</h3>
+              <span className="mt-3 h-1 w-10 rounded-full bg-[#FACC15]" />
+              <p className="mt-5 text-sm font-bold">Included</p>
+              <ul className="mt-3 w-full space-y-3 text-left">
                 {focus.points.map((point) => <li key={point} className="flex items-start gap-2 text-sm text-slate-600"><Check className="mt-0.5 h-4 w-4 shrink-0 text-emerald-600" strokeWidth={2.5} />{point}</li>)}
               </ul>
             </article>
@@ -40,9 +41,10 @@ export default function IndustryPage({ industry }: { industry: BookkeepingIndust
           <h2 className="mt-2 text-center font-display text-3xl font-extrabold">What stays with the service</h2>
           <div className="mt-8 grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
             {industry.values.map((value, index) => (
-              <article key={value.title} className={`relative flex h-full flex-col rounded-3xl bg-[#f5f7fa] px-6 py-7 ${index === 0 ? 'border-2 border-[#111827]' : 'border border-slate-200'}`}>
-                {index === 0 && <span className="absolute -top-3 left-6 rounded-full bg-[#FACC15] px-4 py-1 text-[11px] font-extrabold uppercase tracking-wide text-[#111827]">Included</span>}
-                <h3 className="font-display text-xl font-bold">{value.title}</h3>
+              <article key={value.title} className={`relative flex h-full flex-col items-center rounded-3xl bg-[#f5f7fa] px-6 py-8 text-center ${index === 0 ? 'border-2 border-[#111827]' : 'border border-slate-200'}`}>
+                {index === 0 && <span className="absolute -top-3 left-1/2 -translate-x-1/2 whitespace-nowrap rounded-full bg-[#FACC15] px-4 py-1 text-[11px] font-extrabold uppercase tracking-wide text-[#111827]">Included</span>}
+                <h3 className="font-display text-xl font-extrabold">{value.title}</h3>
+                <span className="mt-3 h-1 w-10 rounded-full bg-[#FACC15]" />
                 <p className="mt-3 flex items-start gap-2 text-sm leading-relaxed text-slate-600"><Check className="mt-0.5 h-4 w-4 shrink-0 text-emerald-600" strokeWidth={2.5} />{value.detail}</p>
               </article>
             ))}
