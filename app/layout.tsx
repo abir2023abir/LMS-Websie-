@@ -1,6 +1,7 @@
 import type { Metadata } from 'next';
-import { Inter, Space_Grotesk } from 'next/font/google';
+import { Inter, Noto_Sans_Bengali, Space_Grotesk } from 'next/font/google';
 import { AuthProvider } from '@/context/AuthContext';
+import { LanguageProvider } from '@/components/i18n/LanguageProvider';
 import './globals.css';
 
 const inter = Inter({
@@ -13,6 +14,13 @@ const spaceGrotesk = Space_Grotesk({
   subsets: ['latin'],
   display: 'swap',
   variable: '--font-space-grotesk',
+});
+
+const bangla = Noto_Sans_Bengali({
+  subsets: ['bengali'],
+  weight: ['400', '600', '700'],
+  display: 'swap',
+  variable: '--font-bn',
 });
 
 export const metadata: Metadata = {
@@ -40,9 +48,11 @@ export default function RootLayout({
   children: React.ReactNode;
 }) {
   return (
-    <html lang="en" className={`${inter.variable} ${spaceGrotesk.variable}`}>
+    <html lang="en" className={`${inter.variable} ${spaceGrotesk.variable} ${bangla.variable}`}>
       <body className="min-h-screen bg-white text-[#111827] antialiased">
-        <AuthProvider>{children}</AuthProvider>
+        <AuthProvider>
+          <LanguageProvider>{children}</LanguageProvider>
+        </AuthProvider>
       </body>
     </html>
   );

@@ -22,6 +22,10 @@ html {
   text-size-adjust: 100%;
 }
 
+html.bn body {
+  font-family: var(--font-bn), var(--font-inter), sans-serif;
+}
+
 body {
   min-width: 320px;
   overflow-x: hidden;
