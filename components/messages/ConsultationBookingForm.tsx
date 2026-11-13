@@ -28,7 +28,7 @@ function hasTimePassed(date: string, slot: string) {
   return hour * 60 + Number(match[2]) <= parts[0] * 60 + parts[1];
 }
 
-export default function ConsultationBookingForm({ initialService = '', initialBilling = '', content = defaultContactBookingContent }: { initialService?: string; initialBilling?: string; content?: ContactBookingContent }) {
+export default function ConsultationBookingForm({ initialService = '', initialBilling = '', content = defaultContactBookingContent, sectionId = 'contact' }: { initialService?: string; initialBilling?: string; content?: ContactBookingContent; sectionId?: string }) {
   const [todayYear, todayMonth, todayDay] = dhakaTodayKey().split('-').map(Number);
   const today = new Date(todayYear, todayMonth - 1, todayDay);
   const [month, setMonth] = useState(new Date(today.getFullYear(), today.getMonth(), 1));
@@ -91,9 +91,9 @@ export default function ConsultationBookingForm({ initialService = '', initialBi
     }
   };
 
-  if (sent) return <section id="contact" className="bg-[#111827] px-4 py-16 text-white sm:px-6 sm:py-20"><div className="mx-auto max-w-5xl rounded-3xl bg-white p-8 text-center text-slate-800 shadow-2xl sm:p-12"><CheckCircle2 className="mx-auto h-14 w-14 text-emerald-600" /><h2 className="mt-4 font-display text-2xl font-extrabold">{content.successTitle}</h2><p className="mx-auto mt-2 max-w-xl text-sm leading-6 text-slate-600">{content.successBody.replace('{date}', dateLabel).replace('{time}', selectedTime)}</p><p className="mt-3 text-xs text-slate-500">{content.noInvitationNote}</p></div></section>;
+  if (sent) return <section id={sectionId} className="scroll-mt-28 bg-[#111827] px-4 py-16 text-white sm:px-6 sm:py-20"><div className="mx-auto max-w-5xl rounded-3xl bg-white p-8 text-center text-slate-800 shadow-2xl sm:p-12"><CheckCircle2 className="mx-auto h-14 w-14 text-emerald-600" /><h2 className="mt-4 font-display text-2xl font-extrabold">{content.successTitle}</h2><p className="mx-auto mt-2 max-w-xl text-sm leading-6 text-slate-600">{content.successBody.replace('{date}', dateLabel).replace('{time}', selectedTime)}</p><p className="mt-3 text-xs text-slate-500">{content.noInvitationNote}</p></div></section>;
 
-  return <section id="contact" className="relative overflow-hidden bg-[#111827] px-4 py-14 text-white sm:px-6 sm:py-20">
+  return <section id={sectionId} className="relative scroll-mt-28 overflow-hidden bg-[#111827] px-4 py-14 text-white sm:px-6 sm:py-20">
     <div className="relative z-10 mx-auto max-w-6xl">
       <header className="mx-auto mb-8 max-w-3xl text-center sm:mb-10">
         <span className="inline-flex items-center gap-2 rounded-full border border-white/10 bg-white/10 px-4 py-2 text-xs font-bold uppercase tracking-wider text-[#FACC15]">{content.eyebrow}</span>

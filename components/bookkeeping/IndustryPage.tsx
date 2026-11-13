@@ -2,7 +2,8 @@ import Link from 'next/link';
 import { ArrowLeft, Check } from 'lucide-react';
 import FloatingNavbar from '@/components/english/FloatingNavbar';
 import EnglishFooter from '@/components/english/EnglishFooter';
-import ConsultationForm from '@/components/bookkeeping/ConsultationForm';
+import ConsultationBookingForm from '@/components/messages/ConsultationBookingForm';
+import { getContactBookingContent } from '@/lib/contact-booking-content';
 import type { BookkeepingIndustry } from '@/lib/bookkeeping-industries';
 
 export default function IndustryPage({ industry }: { industry: BookkeepingIndustry }) {
@@ -51,7 +52,7 @@ export default function IndustryPage({ industry }: { industry: BookkeepingIndust
           </div>
         </div>
       </section>
-      <ConsultationForm />
+      <ConsultationBookingForm sectionId="consultation" initialService="Bookkeeping" content={getContactBookingContent()} />
       <EnglishFooter />
     </div>
   );

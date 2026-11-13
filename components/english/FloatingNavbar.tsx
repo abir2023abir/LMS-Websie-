@@ -6,6 +6,7 @@ import { ArrowRight, Menu, X, LayoutDashboard } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useAuth } from '@/context/AuthContext';
 import { homeForRole } from '@/lib/roles';
+import BrandLogo from '@/components/brand/BrandLogo';
 
 export default function FloatingNavbar() {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
@@ -20,26 +21,17 @@ export default function FloatingNavbar() {
 
   return (
     <header className="fixed top-3 sm:top-4 left-0 right-0 z-50 mx-auto w-full max-w-6xl px-3 sm:px-4">
-      <div className="bg-[#111827]/95 backdrop-blur-md text-white rounded-full px-4 sm:px-6 py-2.5 shadow-2xl border border-white/10 flex items-center justify-between">
-        {/* ── Left: Logo ── */}
-        <Link href="/" className="flex items-center gap-2 group">
-          <div className="border border-[#FACC15] px-3 py-1 rounded-lg bg-black/40 flex flex-col items-center justify-center transition-transform group-hover:scale-105">
-            <span className="font-display font-extrabold text-[10px] tracking-wider text-[#FACC15] uppercase leading-none">
-              Career Bridge
-            </span>
-            <span className="font-display font-bold text-[8px] tracking-widest text-white uppercase leading-none mt-0.5">
-              .Studio
-            </span>
-          </div>
+      <div className="flex items-center justify-between rounded-full border-2 border-[#D4AF37] bg-white px-4 py-2 shadow-lg shadow-black/10 sm:px-6">
+        <Link href="/" className="flex items-center group" aria-label="Career Bridge Studio home">
+          <BrandLogo className="h-14 w-auto max-w-[13rem] transition-transform group-hover:scale-105" />
         </Link>
 
-        {/* ── Center: Nav Links ── */}
-        <nav className="hidden lg:flex items-center gap-3.5">
+        <nav className="hidden items-center gap-2 lg:flex">
           {navItems.map((item) => (
             <Link
               key={item.name}
               href={item.href}
-              className="relative text-xs font-semibold text-slate-300 hover:text-[#FACC15] transition-colors py-1"
+              className="rounded-full border border-[#D4AF37] bg-[#FACC15] px-3.5 py-1.5 text-xs font-bold text-[#111827] transition hover:bg-[#EAB308]"
             >
               {item.name}
             </Link>
@@ -52,21 +44,21 @@ export default function FloatingNavbar() {
           {user ? (
             <Link
               href={homeForRole(role)}
-              className="group flex items-center bg-[#FACC15] hover:bg-[#eab308] text-[#111827] rounded-full pl-4 pr-1 py-1 text-xs font-bold transition-all shadow-lg shadow-[#FACC15]/20"
+              className="group flex items-center rounded-full border-2 border-[#D4AF37] bg-[#FACC15] py-1 pl-4 pr-1 text-xs font-bold text-[#111827] transition hover:bg-[#EAB308]"
             >
               <span>Dashboard</span>
-              <div className="ml-2 w-6 h-6 rounded-full bg-[#111827] flex items-center justify-center transition-colors">
-                <LayoutDashboard className="w-3.5 h-3.5 text-[#FACC15]" />
+              <div className="ml-2 flex h-6 w-6 items-center justify-center rounded-full bg-[#111827]">
+                <LayoutDashboard className="h-3.5 w-3.5 text-[#FACC15]" />
               </div>
             </Link>
           ) : (
             <Link
               href="/login"
-              className="group flex items-center bg-[#FACC15] hover:bg-[#eab308] text-[#111827] rounded-full pl-4 pr-1 py-1 text-xs font-bold transition-all shadow-lg shadow-[#FACC15]/20"
+              className="group flex items-center rounded-full border-2 border-[#D4AF37] bg-[#FACC15] py-1 pl-4 pr-1 text-xs font-bold text-[#111827] transition hover:bg-[#EAB308]"
             >
               <span>Log In</span>
-              <div className="ml-2 w-6 h-6 rounded-full bg-[#111827] flex items-center justify-center transition-colors">
-                <ArrowRight className="w-3.5 h-3.5 text-[#FACC15]" />
+              <div className="ml-2 flex h-6 w-6 items-center justify-center rounded-full bg-[#111827]">
+                <ArrowRight className="h-3.5 w-3.5 text-[#FACC15]" />
               </div>
             </Link>
           )}
@@ -75,7 +67,7 @@ export default function FloatingNavbar() {
         {/* ── Mobile Hamburger Toggle ── */}
         <button
           onClick={() => setMobileMenuOpen((o) => !o)}
-          className="lg:hidden min-h-11 min-w-11 p-2 flex items-center justify-center text-slate-300 hover:text-white rounded-full hover:bg-white/10"
+          className="flex min-h-11 min-w-11 items-center justify-center rounded-full border border-[#D4AF37] bg-[#FACC15] p-2 text-[#111827] lg:hidden"
           aria-label="Toggle menu"
           aria-expanded={mobileMenuOpen}
         >
@@ -90,29 +82,22 @@ export default function FloatingNavbar() {
             initial={{ opacity: 0, y: -10 }}
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, y: -10 }}
-            className="lg:hidden mt-2 max-h-[calc(100dvh-5rem)] overflow-y-auto bg-[#111827]/98 backdrop-blur-xl rounded-3xl border border-white/10 p-5 space-y-3 shadow-2xl text-white"
+            className="mt-2 max-h-[calc(100dvh-5rem)] space-y-3 overflow-y-auto rounded-3xl border-2 border-[#D4AF37] bg-white p-5 text-[#111827] shadow-2xl lg:hidden"
           >
-            <div className="flex items-center gap-2 mb-4">
-              <div className="border border-[#FACC15] px-3 py-1 rounded-lg bg-black/40 flex flex-col items-center justify-center">
-                <span className="font-display font-extrabold text-[10px] tracking-wider text-[#FACC15] uppercase leading-none">
-                  Career Bridge
-                </span>
-                <span className="font-display font-bold text-[8px] tracking-widest text-white uppercase leading-none mt-0.5">
-                  .Studio
-                </span>
-              </div>
+            <div className="mb-4">
+              <BrandLogo className="h-14 w-auto" />
             </div>
             {navItems.map((item) => (
               <Link
                 key={item.name}
                 href={item.href}
                 onClick={() => setMobileMenuOpen(false)}
-                className="flex min-h-11 items-center text-sm font-semibold text-slate-300 hover:text-[#FACC15]"
+                className="flex min-h-11 items-center rounded-full border border-[#D4AF37] bg-[#FACC15] px-4 text-sm font-bold text-[#111827]"
               >
                 {item.name}
               </Link>
             ))}
-            <div className="pt-2 border-t border-white/10 flex flex-col gap-2">
+            <div className="flex flex-col gap-2 border-t border-[#D4AF37]/40 pt-2">
               <Link
                 href={user ? homeForRole(role) : '/login'}
                 onClick={() => setMobileMenuOpen(false)}

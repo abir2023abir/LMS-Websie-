@@ -3,6 +3,9 @@
 import { useState, useEffect } from 'react';
 import { toast } from 'sonner';
 import type { HeroContent } from '@/lib/cms-db';
+import { shrinkImage } from '@/lib/course-edits-client';
+
+const ORIGINAL_HERO = '/images/student.png';
 
 export default function HeroEditor() {
   const [loading, setLoading] = useState(true);
@@ -140,13 +143,40 @@ export default function HeroEditor() {
         </div>
 
         <div className="space-y-2">
-          <label className="block text-xs font-bold text-slate-500 uppercase">Image URL</label>
-          <input
-            type="text"
-            value={content.imageUrl}
-            onChange={(e) => setContent({ ...content, imageUrl: e.target.value })}
-            className="w-full px-4 py-2 border border-slate-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#FACC15]"
-          />
+          <label className="block text-xs font-bold text-slate-500 uppercase">Hero photo</label>
+          <p className="text-xs text-slate-500">This is the person on the right of the homepage hero. Upload a new picture, then press Save.</p>
+          <div className="flex flex-wrap items-end gap-4 rounded-2xl border border-slate-200 bg-slate-50 p-4">
+            <div className="relative h-40 w-32 overflow-hidden rounded-xl bg-[#FACC15]">
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img src={content.imageUrl || ORIGINAL_HERO} alt="Current hero photo" className="h-full w-full object-contain object-bottom" />
+            </div>
+            <div className="space-y-2">
+              <input
+                type="file"
+                accept="image/jpeg,image/png,image/webp"
+                onChange={async (event) => {
+                  const file = event.target.files?.[0];
+                  event.target.value = '';
+                  if (!file) return;
+                  try {
+                    const photo = await shrinkImage(file, 900);
+                    if (photo.length > 450000) {
+                      toast.error('That picture is still too large. Try a smaller one.');
+                      return;
+                    }
+                    setContent({ ...content, imageUrl: photo });
+                    toast.success('Photo ready. Press Save Changes to show it on the homepage.');
+                  } catch (error) {
+                    toast.error(error instanceof Error ? error.message : 'Could not read that picture.');
+                  }
+                }}
+                className="block text-sm"
+              />
+              <button type="button" onClick={() => setContent({ ...content, imageUrl: ORIGINAL_HERO })} className="text-xs font-bold text-slate-600 underline">
+                Use the original photo
+              </button>
+            </div>
+          </div>
         </div>
       </div>
 

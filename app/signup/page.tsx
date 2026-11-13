@@ -7,6 +7,7 @@ import { GraduationCap, Mail, Lock, User, Phone, ArrowRight, ArrowLeft, AlertCir
 import { useAuth } from '@/context/AuthContext';
 import { homeForRole } from '@/lib/roles';
 import GoogleSignInButton from '@/components/auth/GoogleSignInButton';
+import BrandLogo from '@/components/brand/BrandLogo';
 
 export default function SignUpPage() {
   const router = useRouter();
@@ -80,11 +81,8 @@ export default function SignUpPage() {
       <div className="absolute bottom-[-100px] right-[-100px] w-96 h-96 bg-amber-400/10 rounded-full blur-3xl pointer-events-none" />
 
       <div className="sm:mx-auto sm:w-full sm:max-w-md text-center z-10 px-4 space-y-3">
-        <Link href="/" className="inline-flex items-center gap-2 group">
-          <div className="border-2 border-[#111827] px-3.5 py-1.5 rounded-2xl bg-[#FACC15] shadow-md flex flex-col items-center justify-center">
-            <span className="font-display font-black text-xs tracking-wider text-[#111827] uppercase leading-none">Career Bridge</span>
-            <span className="font-display font-bold text-[9px] tracking-widest text-[#111827] uppercase leading-none mt-0.5">.Studio</span>
-          </div>
+        <Link href="/" className="inline-flex items-center justify-center" aria-label="Career Bridge Studio home">
+          <BrandLogo className="mx-auto h-16 w-auto" />
         </Link>
         <h2 className="font-display font-extrabold text-3xl sm:text-4xl text-[#111827] tracking-tight">
           Create Student Account

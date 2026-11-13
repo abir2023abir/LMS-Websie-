@@ -1,3 +1,5 @@
+import fs from 'fs';
+import path from 'path';
 import { PDFDocument, StandardFonts, rgb } from 'pdf-lib';
 
 function latin(value: unknown, fallback = '') {
@@ -35,8 +37,15 @@ export async function buildCertificatePdf(input: CertificatePdfInput) {
   page.drawRectangle({ x: 22, y: 22, width: width - 44, height: height - 44, borderColor: ink, borderWidth: 2.5 });
   page.drawRectangle({ x: 32, y: 32, width: width - 64, height: height - 64, borderColor: gold, borderWidth: 1.5 });
 
-  page.drawText('CAREER BRIDGE.STUDIO', { x: center(width, 'CAREER BRIDGE.STUDIO', 13, bold), y: height - 78, size: 13, font: bold, color: ink });
-  page.drawText('Practical learning for your next step', { x: center(width, 'Practical learning for your next step', 11, italic), y: height - 96, size: 11, font: italic, color: muted });
+  const logoPath = path.join(process.cwd(), 'public', 'images', 'Career Bridge Studio Logo.png');
+  if (fs.existsSync(logoPath)) {
+    const logo = await pdf.embedPng(fs.readFileSync(logoPath));
+    const logoWidth = 150;
+    const logoHeight = (logo.height / logo.width) * logoWidth;
+    page.drawImage(logo, { x: (width - logoWidth) / 2, y: height - 36 - logoHeight, width: logoWidth, height: logoHeight });
+  } else {
+    page.drawText('CAREER BRIDGE.STUDIO', { x: center(width, 'CAREER BRIDGE.STUDIO', 13, bold), y: height - 78, size: 13, font: bold, color: ink });
+  }
 
   const title = 'Certificate of Completion';
   page.drawText(title, { x: center(width, title, 32, bold), y: height - 150, size: 32, font: bold, color: ink });

@@ -15,6 +15,7 @@ import TopCoursesList from './TopCoursesList';
 import InboxButton from '@/components/inbox/InboxButton';
 import MyPhoto from '@/components/admin/MyPhoto';
 import { takaFromUsd } from '@/lib/utils';
+import BrandLogo from '@/components/brand/BrandLogo';
 
 // Each tab loads its code only when opened, so the admin panel starts fast.
 const TabLoading = () => <div className="h-64 animate-pulse rounded-3xl bg-white" />;
@@ -135,10 +136,7 @@ export default function AdminDashboard({
         <div className="border-b border-white/10 bg-gradient-to-br from-[#172033] to-[#0c1222] px-5 py-5">
           <div className="flex items-start justify-between gap-3">
             <div>
-              <div className="inline-flex flex-col rounded-2xl border border-[#FACC15]/70 bg-[#FACC15] px-3 py-1.5 shadow-lg shadow-[#FACC15]/20">
-                <span className="font-display text-[11px] font-black uppercase leading-none tracking-[0.14em] text-[#111827]">Career Bridge</span>
-                <span className="mt-0.5 font-display text-[9px] font-bold uppercase leading-none tracking-[0.22em] text-[#111827]/80">.Studio</span>
-              </div>
+              <BrandLogo className="h-12 w-auto" />
               <p className="mt-3 font-display text-sm font-extrabold tracking-tight text-white">{variant === 'instructor' ? 'Instructor' : 'Super Admin'}</p>
               <p className="text-[11px] font-medium text-slate-400">{variant === 'instructor' ? 'Your teaching tools' : 'Studio control room'}</p>
             </div>

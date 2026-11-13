@@ -34,14 +34,24 @@ export default async function Hero() {
           <div className="min-w-0 lg:col-span-6 relative min-h-0 h-full self-end sm:self-auto flex justify-center lg:justify-end items-end">
             {/* Infinite Subtle Floating Image Container */}
             <div className="relative w-full max-w-lg lg:max-w-xl h-[clamp(15rem,74vw,22rem)] min-h-0 sm:h-[580px] lg:h-[660px] z-20 animate-float">
-              <Image
-                src={heroData.imageUrl}
-                alt="Learner at the start of a career development journey"
-                fill
-                priority
-                className="object-contain object-bottom drop-shadow-2xl scale-100 sm:scale-110 origin-bottom"
-                sizes="(max-width: 640px) 60vw, 50vw"
-              />
+              {heroData.imageUrl.startsWith('/') ? (
+                <Image
+                  src={heroData.imageUrl}
+                  alt="Learner at the start of a career development journey"
+                  fill
+                  priority
+                  className="object-contain object-bottom drop-shadow-2xl scale-100 sm:scale-110 origin-bottom"
+                  sizes="(max-width: 640px) 60vw, 50vw"
+                />
+              ) : (
+                // Uploaded CMS photos are stored with the page content, not as a site file.
+                // eslint-disable-next-line @next/next/no-img-element
+                <img
+                  src={heroData.imageUrl}
+                  alt="Learner at the start of a career development journey"
+                  className="absolute inset-0 h-full w-full object-contain object-bottom drop-shadow-2xl scale-100 sm:scale-110 origin-bottom"
+                />
+              )}
             </div>
 
             {/* Floating Star / Spark SVG icons */}

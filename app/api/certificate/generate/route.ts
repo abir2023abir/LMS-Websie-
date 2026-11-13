@@ -42,7 +42,7 @@ export async function POST(request: Request) {
 
     const course = await getCourseById(courseId).catch(() => null);
     const certificateId = generateUniqueCertificateId();
-    const host = request.headers.get('host') || 'localhost:3000';
+    const host = request.headers.get('host') || 'localhost:3005';
     const protocol = request.headers.get('x-forwarded-proto') || 'http';
     const baseUrl = process.env.NEXT_PUBLIC_SITE_URL || `${protocol}://${host}`;
     const verificationUrl = `${baseUrl}/verify-certificate?id=${certificateId}`;

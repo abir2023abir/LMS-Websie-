@@ -68,7 +68,11 @@ export async function getHeroContent(): Promise<HeroContent | null> {
 }
 
 export async function saveHeroContent(data: Omit<HeroContent, 'id' | 'updatedAt'>): Promise<string> {
-  await kvSet('cms-hero', { ...data, updatedAt: new Date().toISOString() });
+  const imageUrl = String(data.imageUrl || '').trim();
+  const picture = imageUrl.startsWith('data:image/')
+    ? (imageUrl.length <= 450000 ? imageUrl : '/images/student.png')
+    : (imageUrl.startsWith('/') || imageUrl.startsWith('https://') ? imageUrl : '/images/student.png');
+  await kvSet('cms-hero', { ...data, imageUrl: picture, cta2Link: '/bookkeeping', updatedAt: new Date().toISOString() });
   return 'local-hero';
 }
 

@@ -205,9 +205,7 @@ export default function CertificateModal({ isOpen, onClose, courseId }: Certific
             <div className="border-2 border-[#d4af37] p-6 sm:p-8 rounded-xl relative space-y-6 text-center">
               {/* Top Crest / Academy Header */}
               <div className="space-y-1">
-                <div className="text-[11px] sm:text-xs font-bold tracking-widest text-[#0f172a] uppercase">
-                  Career Bridge.Studio
-                </div>
+                <img src="/images/Career%20Bridge%20Studio%20Logo.png" alt="Career Bridge Studio" className="mx-auto h-14 w-auto object-contain" />
                 <div className="text-[9px] sm:text-[10px] text-slate-500 uppercase tracking-wider font-semibold">
                   Practical Learning for Your Next Step
                 </div>

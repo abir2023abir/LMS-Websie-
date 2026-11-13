@@ -43,7 +43,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
     };
   }
 
-  const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || 'http://localhost:3000';
+  const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || 'http://localhost:3005';
   const postUrl = `${siteUrl}/blog/${post.slug}`;
 
   return {
@@ -118,7 +118,7 @@ export default function BlogPostPage({ params }: Props) {
     },
     mainEntityOfPage: {
       '@type': 'WebPage',
-      '@id': `http://localhost:3000/blog/${post.slug}`,
+      '@id': `http://localhost:3005/blog/${post.slug}`,
     },
     keywords: post.keywords.join(', '),
   };

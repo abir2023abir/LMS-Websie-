@@ -2,7 +2,8 @@
 
 import { useState, type FormEvent } from 'react';
 import { useRouter } from 'next/navigation';
-import { Eye, EyeOff, Lock, User, Shield, Sparkles } from 'lucide-react';
+import { Eye, EyeOff, Lock, User, Sparkles } from 'lucide-react';
+import BrandLogo from '@/components/brand/BrandLogo';
 
 export default function AdminLoginForm() {
   const router = useRouter();
@@ -55,9 +56,7 @@ export default function AdminLoginForm() {
       <div className="relative z-10 w-full max-w-md">
         {/* Logo & Title */}
         <div className="text-center mb-8 space-y-4">
-          <div className="inline-flex items-center justify-center w-16 h-16 rounded-2xl bg-gradient-to-br from-yellow-400 to-yellow-500 shadow-2xl shadow-yellow-400/30 mx-auto">
-            <Shield className="w-8 h-8 text-[#1A0B2E]" />
-          </div>
+          <BrandLogo className="mx-auto h-16 w-auto" />
           <div>
             <h1 className="font-display font-extrabold text-2xl text-white tracking-tight">
               Admin Panel

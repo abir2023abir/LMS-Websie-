@@ -35,7 +35,7 @@ cp .env.local.example .env.local
 Fill in your configuration variables in `.env.local`:
 ```env
 # Site URL
-NEXT_PUBLIC_SITE_URL=http://localhost:3000
+NEXT_PUBLIC_SITE_URL=http://localhost:3005
 
 # Admin Authentication
 ADMIN_USERNAME=your_admin_username
@@ -54,7 +54,7 @@ SSLCOMMERZ_IS_LIVE=false
 ```bash
 npm run dev
 ```
-Open [http://localhost:3000](http://localhost:3000) in your browser.
+Open [http://localhost:3005](http://localhost:3005) in your browser.
 
 ---
 

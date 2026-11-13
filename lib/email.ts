@@ -15,7 +15,7 @@ export interface WelcomeEmailPayload {
  */
 export function generateWelcomeEmailHTML(payload: WelcomeEmailPayload): string {
   const { studentName, courseTitle, courseId, transactionId, amountPaid } = payload;
-  const baseUrl = process.env.NEXT_PUBLIC_SITE_URL || 'http://localhost:3000';
+  const baseUrl = process.env.NEXT_PUBLIC_SITE_URL || 'http://localhost:3005';
   const classroomUrl = `${baseUrl}/student/learn/${courseId}`;
   const dashboardUrl = `${baseUrl}/student`;
 

@@ -27,6 +27,6 @@ export const hasContactDetails = Boolean(
 );
 
 // Public certificate verification address, e.g. "careerbridge.studio/verify-certificate".
-export const certificateVerifyLabel = `${(process.env.NEXT_PUBLIC_SITE_URL || 'http://localhost:3000')
+export const certificateVerifyLabel = `${(process.env.NEXT_PUBLIC_SITE_URL || 'http://localhost:3005')
   .replace(/^https?:\/\//, '')
   .replace(/\/$/, '')}/verify-certificate`;
