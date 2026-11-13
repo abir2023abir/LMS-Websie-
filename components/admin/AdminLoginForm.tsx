@@ -2,7 +2,7 @@
 
 import { useState, type FormEvent } from 'react';
 import { useRouter } from 'next/navigation';
-import { Eye, EyeOff, Lock, User, Sparkles } from 'lucide-react';
+import { Eye, EyeOff, Lock, Shield, Sparkles, User } from 'lucide-react';
 import BrandLogo from '@/components/brand/BrandLogo';
 
 export default function AdminLoginForm() {
