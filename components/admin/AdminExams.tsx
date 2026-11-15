@@ -4,6 +4,7 @@ import { useEffect, useMemo, useState } from 'react';
 import { BarChart3, BookOpen, CheckCircle2, Clock, Download, GraduationCap, Pencil, Plus, Trash2, X } from 'lucide-react';
 import { toast } from 'sonner';
 import AdminModal, { fieldClass } from './AdminModal';
+import type { ToolManagerProps } from './LessonTools';
 import CoursePlacePicker, { useCourseOutline, type Place } from './CoursePlacePicker';
 
 type Question = { id?: string; prompt: string; choices: string[]; correctIndex: number; points: number; explanation: string };
@@ -41,11 +42,9 @@ function windowOf(exam: Exam) {
   return { label: 'Open now', tone: 'bg-emerald-50 text-emerald-700' };
 }
 
-export default function AdminExams({ courseId }: {
-  /** When set, the list and every new item belong to this one course (course workspace). */
-  courseId?: string;
-}) {
-  const outline = useCourseOutline();
+export default function AdminExams({ courseId, headless = false, command, onItems }: ToolManagerProps) {
+  // Loaded again each time the lesson builder opens the editor, so a lesson added a moment ago is listed.
+  const outline = useCourseOutline(command?.nonce);
   const [exams, setExams] = useState<Exam[]>([]);
   const [attempts, setAttempts] = useState<Attempt[]>([]);
   const [loading, setLoading] = useState(true);
@@ -110,8 +109,22 @@ export default function AdminExams({ courseId }: {
     URL.revokeObjectURL(link.href);
   };
 
+  // Lesson builder: report this course's items, and open the editor when it asks.
+  useEffect(() => {
+    onItems?.(exams.filter((item) => !courseId || item.courseId === courseId).map((item) => ({ id: String(item.id || ''), title: item.title, moduleId: item.moduleId, lessonId: item.lessonId, published: Boolean(item.published) })));
+  }, [exams]); // eslint-disable-line react-hooks/exhaustive-deps
+  useEffect(() => {
+    if (!command) return;
+    setNote('');
+    if (command.action === 'new') setDraft({ ...blankExam(), ...command.place, title: command.title || '' });
+    else {
+      const found = exams.find((item) => String(item.id) === command.id);
+      if (found) setDraft(JSON.parse(JSON.stringify(found)));
+    }
+  }, [command?.nonce]); // eslint-disable-line react-hooks/exhaustive-deps
+
   return (
-    <section className="space-y-5 rounded-3xl border border-slate-200 bg-white p-5 shadow-sm sm:p-6">
+    <section className={headless ? 'contents [&>*:not(.fixed)]:hidden' : 'space-y-5 rounded-3xl border border-slate-200 bg-white p-5 shadow-sm sm:p-6'}>
       <div className="flex flex-wrap items-start justify-between gap-3">
         <div className="min-w-0">
           <h2 className="font-display text-xl font-extrabold">Exams</h2>

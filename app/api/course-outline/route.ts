@@ -14,7 +14,9 @@ export async function GET() {
   const [courses, edits, allowed] = await Promise.all([getAllCourses().catch(() => []), listCourseEdits().catch(() => ({} as Record<string, { title?: string }>)), staffCourses(staff)]);
   const outline = courses.map((course) => {
     const id = String(course.id || '');
-    const modules = course.modules?.length ? course.modules : getFallbackCourseData(id)?.modules || [];
+    // Lessons edited in the panel win over the course's original list.
+    const edited = (edits[id] as { modules?: typeof course.modules } | undefined)?.modules;
+    const modules = edited?.length ? edited : course.modules?.length ? course.modules : getFallbackCourseData(id)?.modules || [];
     return {
       id,
       title: edits[id]?.title || course.title,

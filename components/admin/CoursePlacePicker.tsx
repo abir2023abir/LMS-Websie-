@@ -8,15 +8,15 @@ export type Place = { courseId: string; courseTitle: string; moduleId: string; m
 
 const labelClass = 'mb-1 block text-xs font-bold uppercase tracking-wide text-slate-500';
 
-/** Loads the course → module → lesson tree once for admin pickers. */
-export function useCourseOutline() {
+/** Loads the course → module → lesson tree for admin pickers; it is loaded again whenever `refresh` changes. */
+export function useCourseOutline(refresh: unknown = 0) {
   const [outline, setOutline] = useState<Outline>([]);
   useEffect(() => {
     fetch('/api/course-outline', { cache: 'no-store' })
       .then((res) => res.json())
       .then((data) => setOutline(data.courses || []))
       .catch(() => setOutline([]));
-  }, []);
+  }, [refresh]);
   return outline;
 }
 

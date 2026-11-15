@@ -1,10 +1,11 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { toast } from 'sonner';
 import AdminModal, { fieldClass } from './AdminModal';
 import LessonVideoField from './LessonVideoField';
 import CourseLengthField from './CourseLengthField';
+import LessonToolsBar, { type ToolCommand, type ToolItems, type ToolKind } from './LessonTools';
 import { getFallbackCourseData } from '@/lib/progress';
 import { loadCourseEdits, shrinkImage } from '@/lib/course-edits-client';
 import { usdToBdt, USD_TO_BDT } from '@/lib/utils';
@@ -16,6 +17,7 @@ export default function AdminCourseEditor({
   onSaved,
   bare = false,
   view = 'details',
+  lessonTools,
 }: {
   courseId: string;
   onClose: () => void;
@@ -23,6 +25,8 @@ export default function AdminCourseEditor({
   /** Inside the course workspace: no modal frame, and only the part named by `view` is shown. */
   bare?: boolean;
   view?: 'details' | 'timeline' | 'curriculum';
+  /** Lets each lesson show and add its quiz, assignment, exam and live class (course workspace). */
+  lessonTools?: { kinds: ToolKind[]; items: ToolItems; open: (kind: ToolKind, command: Omit<ToolCommand, 'nonce'>) => void };
 }) {
   const course = getFallbackCourseData(courseId);
   const lessons = course?.modules?.flatMap((mod) => mod.lessons || []) || [];
@@ -87,7 +91,8 @@ export default function AdminCourseEditor({
       .catch(() => null)
       .then(async (data) => {
         const stored = data?.course;
-        if (stored && !course) {
+        // getFallbackCourseData() invents a placeholder course for ids it does not know, so the stored course wins.
+        if (stored) {
           setForm((prev) => ({
             ...prev,
             title: stored.title || prev.title,
@@ -139,7 +144,13 @@ export default function AdminCourseEditor({
     }
   };
 
-  const save = async () => {
+  // What was last sent to the server, so adding a quiz to a lesson only saves the lessons when they changed.
+  const savedSnapshot = useRef('');
+  const snapshot = () => JSON.stringify({ form, videos, modules });
+
+  const save = async (quiet = false): Promise<boolean> => {
+    const sending = snapshot();
+    if (quiet && sending === savedSnapshot.current) return true;
     setBusy(true);
     const toUsd = (bdt: string) => (bdt === '' ? undefined : Math.round(Number(bdt) / USD_TO_BDT));
     const res = await fetch('/api/courses/edits', {
@@ -161,12 +172,23 @@ export default function AdminCourseEditor({
     setBusy(false);
     if (!res.ok || !data.success) {
       toast.error(data.message || 'Could not save course details');
-      return;
+      return false;
     }
+    savedSnapshot.current = sending;
     await loadCourseEdits(true);
     onSaved?.();
-    toast.success('Course saved successfully! The course page now shows the new details.');
+    if (!quiet) toast.success('Course saved successfully! The course page now shows the new details.');
+    return true;
   };
+
+  // Lesson builder: the lesson must exist on the server before something is attached to it.
+  const openTool = async (kind: ToolKind, command: Omit<ToolCommand, 'nonce'>) => {
+    if (!lessonTools) return;
+    if (command.action === 'new' && !(await save(true))) return;
+    lessonTools.open(kind, command);
+  };
+  const toolsAt = (moduleId: string, lessonId: string) => Object.fromEntries((lessonTools?.kinds || []).map((kind) => [kind, (lessonTools?.items[kind] || []).filter((item) => (item.moduleId || '') === moduleId && (item.lessonId || '') === lessonId)])) as Partial<ToolItems>;
+  const addLabel: Record<ToolKind, string> = { quiz: 'Quiz', assignment: 'Assignment', exam: 'Exam', live: 'Live class' };
 
   const detailsPart = (
     <>
@@ -291,6 +313,18 @@ export default function AdminCourseEditor({
                     value={videos[lesson.id] || lesson.videoUrl || ''}
                     onChange={(value) => setVideos((prev) => ({ ...prev, [lesson.id]: value }))}
                   />
+                  {lessonTools && (
+                    <div className="space-y-1.5 border-t border-slate-100 pt-3">
+                      <p className="text-[11px] font-bold uppercase tracking-wide text-slate-500">In this lesson</p>
+                      <LessonToolsBar
+                        kinds={lessonTools.kinds}
+                        items={toolsAt(mod.id, lesson.id)}
+                        busy={busy}
+                        onEdit={(kind, id) => openTool(kind, { action: 'edit', id })}
+                        onAdd={(kind) => openTool(kind, { action: 'new', title: `${lesson.title} — ${addLabel[kind]}`, place: { courseId, courseTitle: form.title, moduleId: mod.id, moduleTitle: mod.title, lessonId: lesson.id, lessonTitle: lesson.title } })}
+                      />
+                    </div>
+                  )}
                 </div>
               ))}
               <button
@@ -300,8 +334,33 @@ export default function AdminCourseEditor({
               >
                 Add lesson to module {modIndex + 1}
               </button>
+              {lessonTools?.kinds.includes('exam') && (
+                <div className="flex flex-wrap items-center gap-2 border-t border-slate-200 pt-2">
+                  <p className="text-[11px] font-bold uppercase tracking-wide text-slate-500">Module exam</p>
+                  <LessonToolsBar
+                    kinds={['exam']}
+                    items={toolsAt(mod.id, '')}
+                    busy={busy}
+                    onEdit={(kind, id) => openTool(kind, { action: 'edit', id })}
+                    onAdd={(kind) => openTool(kind, { action: 'new', title: `${mod.title} — Exam`, place: { courseId, courseTitle: form.title, moduleId: mod.id, moduleTitle: mod.title, lessonId: '', lessonTitle: '' } })}
+                  />
+                </div>
+              )}
             </div>
           ))}
+          {lessonTools?.kinds.includes('exam') && (
+            <div className="flex flex-wrap items-center gap-2 rounded-2xl border border-slate-200 bg-slate-50 p-3">
+              <p className="text-[11px] font-bold uppercase tracking-wide text-slate-500">Course final exam</p>
+              <LessonToolsBar
+                kinds={['exam']}
+                items={toolsAt('', '')}
+                busy={busy}
+                onEdit={(kind, id) => openTool(kind, { action: 'edit', id })}
+                onAdd={(kind) => openTool(kind, { action: 'new', title: `${form.title} — Final exam`, place: { courseId, courseTitle: form.title, moduleId: '', moduleTitle: '', lessonId: '', lessonTitle: '' } })}
+              />
+              <p className="basis-full text-[11px] text-slate-500">Opens for a student only after every lesson of the course is finished.</p>
+            </div>
+          )}
           <p className="text-[11px] text-slate-500">Each lesson has an overview, video, quiz, notes, assignment and exam. A part left empty is skipped. The time per lesson comes from the course timeline dates.</p>
         </div>
     </>
@@ -313,7 +372,7 @@ export default function AdminCourseEditor({
           <button
             type="button"
             disabled={busy}
-            onClick={save}
+            onClick={() => save()}
             className="bg-[#111827] text-white text-xs font-bold px-5 py-2.5 rounded-full disabled:opacity-60"
           >
             {busy ? 'Saving…' : 'Save'}

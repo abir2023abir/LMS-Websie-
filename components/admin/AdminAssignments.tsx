@@ -4,6 +4,7 @@ import { useEffect, useMemo, useState } from 'react';
 import { BookOpen, CalendarDays, ChevronRight, ClipboardList, Download, FileText, Pencil, Plus, Trash2 } from 'lucide-react';
 import { toast } from 'sonner';
 import AdminModal, { fieldClass } from './AdminModal';
+import type { ToolManagerProps } from './LessonTools';
 import CoursePlacePicker, { useCourseOutline, type Place } from './CoursePlacePicker';
 
 type Assignment = Place & {
@@ -20,11 +21,9 @@ const statusStyle: Record<Submission['status'], string> = { submitted: 'bg-amber
 const statusLabel: Record<Submission['status'], string> = { submitted: 'To review', 'needs-changes': 'Needs changes', graded: 'Graded' };
 const day = (value: string) => (value ? new Date(`${value.slice(0, 10)}T12:00:00`).toLocaleDateString('en-BD', { day: 'numeric', month: 'short', year: 'numeric' }) : '');
 
-export default function AdminAssignments({ courseId }: {
-  /** When set, the list and every new item belong to this one course (course workspace). */
-  courseId?: string;
-}) {
-  const outline = useCourseOutline();
+export default function AdminAssignments({ courseId, headless = false, command, onItems }: ToolManagerProps) {
+  // Loaded again each time the lesson builder opens the editor, so a lesson added a moment ago is listed.
+  const outline = useCourseOutline(command?.nonce);
   const [assignments, setAssignments] = useState<Assignment[]>([]);
   const [submissions, setSubmissions] = useState<Submission[]>([]);
   const [loading, setLoading] = useState(true);
@@ -74,8 +73,22 @@ export default function AdminAssignments({ courseId }: {
   const visibleSubmissions = submissions.filter((item) => (statusFilter === 'all' || item.status === statusFilter)
     && (courseFilter === 'all' || assignmentOf(item.assignmentId)?.courseId === courseFilter));
 
+  // Lesson builder: report this course's items, and open the editor when it asks.
+  useEffect(() => {
+    onItems?.(assignments.filter((item) => !courseId || item.courseId === courseId).map((item) => ({ id: String(item.id || ''), title: item.title, moduleId: item.moduleId, lessonId: item.lessonId, published: Boolean(item.published) })));
+  }, [assignments]); // eslint-disable-line react-hooks/exhaustive-deps
+  useEffect(() => {
+    if (!command) return;
+    setNote('');
+    if (command.action === 'new') setDraft({ ...blank(), ...command.place, title: command.title || '' });
+    else {
+      const found = assignments.find((item) => String(item.id) === command.id);
+      if (found) setDraft(JSON.parse(JSON.stringify(found)));
+    }
+  }, [command?.nonce]); // eslint-disable-line react-hooks/exhaustive-deps
+
   return (
-    <section className="space-y-5 rounded-3xl border border-slate-200 bg-white p-5 shadow-sm sm:p-6">
+    <section className={headless ? 'contents [&>*:not(.fixed)]:hidden' : 'space-y-5 rounded-3xl border border-slate-200 bg-white p-5 shadow-sm sm:p-6'}>
       <div className="flex flex-wrap items-start justify-between gap-3">
         <div className="min-w-0">
           <h2 className="font-display text-xl font-extrabold">Assignments</h2>

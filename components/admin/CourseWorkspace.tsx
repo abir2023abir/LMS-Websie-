@@ -7,8 +7,9 @@ import Link from 'next/link';
 import { CalendarClock, ClipboardList, UserRound, ExternalLink, FileText, GraduationCap, HelpCircle, Layers, Settings2, Video, X, type LucideIcon } from 'lucide-react';
 import AdminCourseEditor from './AdminCourseEditor';
 import CourseMentorCard from './CourseMentorField';
+import { emptyToolItems, type ToolCommand, type ToolItem, type ToolItems, type ToolKind } from './LessonTools';
 
-const Loading = () => <div className="rounded-3xl border border-slate-200 bg-white p-10 text-center text-sm text-slate-500">Loading…</div>;
+const Loading = () => null;
 const AdminQuizzes = dynamic(() => import('./AdminQuizzes'), { loading: Loading });
 const AdminAssignments = dynamic(() => import('./AdminAssignments'), { loading: Loading });
 const AdminExams = dynamic(() => import('./AdminExams'), { loading: Loading });
@@ -19,7 +20,7 @@ type Counts = Partial<Record<TabId, number>>;
 
 const TABS: { id: TabId; label: string; hint: string; icon: LucideIcon; group: 'Course' | 'Assessments' | 'Classes'; panelTab?: string; adminOnly?: boolean }[] = [
   { id: 'details', label: 'Details', hint: 'Name, price, category, picture and description.', icon: Settings2, group: 'Course' },
-  { id: 'curriculum', label: 'Curriculum', hint: 'Modules, lessons, overviews, notes and videos.', icon: Layers, group: 'Course' },
+  { id: 'curriculum', label: 'Curriculum', hint: 'Build the course here: modules and lessons, and under each lesson its quiz, assignment, exam and live class.', icon: Layers, group: 'Course' },
   { id: 'timeline', label: 'Timeline', hint: 'The four course dates and the minimum lesson time.', icon: CalendarClock, group: 'Course', adminOnly: true },
   { id: 'mentor', label: 'Mentor', hint: 'The mentor who runs this course.', icon: UserRound, group: 'Course', adminOnly: true },
   { id: 'quizzes', label: 'Quizzes', hint: 'Lesson quizzes for this course.', icon: HelpCircle, group: 'Assessments', panelTab: 'Quizzes' },
@@ -57,28 +58,20 @@ export default function CourseWorkspace({
 }) {
   const tabs = TABS.filter((tab) => (isAdmin || !tab.adminOnly) && (isAdmin || !tab.panelTab || !allowedTabs || allowedTabs.includes(tab.panelTab)));
   const [active, setActive] = useState<TabId>(isNew ? 'curriculum' : 'details');
-  const [counts, setCounts] = useState<Counts>({});
 
-  const loadCounts = useCallback(() => {
-    const sources: [TabId, string, string][] = [
-      ['quizzes', '/api/admin/quizzes', 'quizzes'],
-      ['assignments', '/api/admin/assignments', 'assignments'],
-      ['exams', '/api/admin/exams', 'exams'],
-      ['live', '/api/admin/live-classes', 'classes'],
-    ];
-    sources.filter(([id]) => tabs.some((tab) => tab.id === id)).forEach(([id, url, key]) => {
-      fetch(url, { cache: 'no-store' })
-        .then((res) => (res.ok ? res.json() : null))
-        .then((data) => {
-          const list = Array.isArray(data?.[key]) ? data[key] : [];
-          setCounts((prev) => ({ ...prev, [id]: list.filter((item: { courseId?: string }) => item.courseId === courseId).length }));
-        })
-        .catch(() => undefined);
-    });
-  }, [courseId]); // eslint-disable-line react-hooks/exhaustive-deps
-
-  // Counts are refreshed whenever the person moves to another part, so they follow what was just added.
-  useEffect(() => { loadCounts(); }, [loadCounts, active]);
+  // The four managers stay mounted: they show their list on their own part, and otherwise only
+  // lend their editor windows to the lesson builder.
+  const [items, setItems] = useState<ToolItems>(emptyToolItems);
+  const [commands, setCommands] = useState<Partial<Record<ToolKind, ToolCommand>>>({});
+  const TOOL_TAB: Record<ToolKind, TabId> = { quiz: 'quizzes', assignment: 'assignments', exam: 'exams', live: 'live' };
+  const toolKinds = (Object.keys(TOOL_TAB) as ToolKind[]).filter((kind) => tabs.some((tab) => tab.id === TOOL_TAB[kind]));
+  const itemsSetter = useCallback((kind: ToolKind) => (list: ToolItem[]) => setItems((prev) => ({ ...prev, [kind]: list })), []);
+  const setQuizItems = useCallback(itemsSetter('quiz'), [itemsSetter]); // eslint-disable-line react-hooks/exhaustive-deps
+  const setAssignmentItems = useCallback(itemsSetter('assignment'), [itemsSetter]); // eslint-disable-line react-hooks/exhaustive-deps
+  const setExamItems = useCallback(itemsSetter('exam'), [itemsSetter]); // eslint-disable-line react-hooks/exhaustive-deps
+  const setLiveItems = useCallback(itemsSetter('live'), [itemsSetter]); // eslint-disable-line react-hooks/exhaustive-deps
+  const openTool = useCallback((kind: ToolKind, command: Omit<ToolCommand, 'nonce'>) => setCommands((prev) => ({ ...prev, [kind]: { ...command, nonce: Date.now() } })), []);
+  const counts: Counts = Object.fromEntries(toolKinds.map((kind) => [TOOL_TAB[kind], items[kind].length]));
 
   useEffect(() => {
     const onKey = (event: KeyboardEvent) => { if (event.key === 'Escape' && !document.querySelector('[role="dialog"][aria-modal="true"]:not([data-course-workspace])')) onClose(); };
@@ -162,20 +155,20 @@ export default function CourseWorkspace({
 
           {isNew && active === 'curriculum' && (
             <p className="rounded-2xl border border-[#FACC15] bg-[#FEFCE8] px-4 py-3 text-sm font-medium text-slate-700">
-              The course is created. Check its lessons here, then set its mentor and timeline and add its quizzes, assignments, exams and live classes from the menu.
+              The course is created. Add your lessons here. Under each lesson, press Add quiz, Add assignment, Add exam or Add live class. Mentor and timeline are in the menu.
             </p>
           )}
 
           {/* The editor stays mounted so unsaved typing survives a move between its three parts. */}
           <div hidden={!editorView} className="rounded-3xl border border-slate-200 bg-white p-5 shadow-sm sm:p-6">
-            <AdminCourseEditor bare view={editorView || 'details'} courseId={courseId} onClose={onClose} onSaved={onSaved} />
+            <AdminCourseEditor bare view={editorView || 'details'} courseId={courseId} onClose={onClose} onSaved={onSaved} lessonTools={{ kinds: toolKinds, items, open: openTool }} />
           </div>
 
           {active === 'mentor' && <CourseMentorCard courseId={courseId} />}
-          {active === 'quizzes' && <AdminQuizzes courseId={courseId} />}
-          {active === 'assignments' && <AdminAssignments courseId={courseId} />}
-          {active === 'exams' && <AdminExams courseId={courseId} />}
-          {active === 'live' && <AdminLiveClasses courseId={courseId} />}
+          {toolKinds.includes('quiz') && <AdminQuizzes courseId={courseId} headless={active !== 'quizzes'} command={commands.quiz} onItems={setQuizItems} />}
+          {toolKinds.includes('assignment') && <AdminAssignments courseId={courseId} headless={active !== 'assignments'} command={commands.assignment} onItems={setAssignmentItems} />}
+          {toolKinds.includes('exam') && <AdminExams courseId={courseId} headless={active !== 'exams'} command={commands.exam} onItems={setExamItems} />}
+          {toolKinds.includes('live') && <AdminLiveClasses courseId={courseId} headless={active !== 'live'} command={commands.live} onItems={setLiveItems} />}
         </main>
       </div>
     </div>,

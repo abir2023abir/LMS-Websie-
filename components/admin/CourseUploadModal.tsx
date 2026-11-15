@@ -14,9 +14,9 @@ const freshId = () => `c${Date.now().toString(36)}${Math.random().toString(36).s
 
 const starterModules = (): ModuleSchema[] => [
   {
-    id: 'mod-1',
-    title: 'Module 1: Getting Started',
-    lessons: [{ id: 'les-1', title: 'Welcome to Career Bridge.Studio', videoUrl: '', duration: '05:30' }],
+    id: `mod-${Date.now()}`,
+    title: 'Module 1',
+    lessons: [{ id: `les-${Date.now()}`, title: 'Lesson 1', videoUrl: '' }],
   },
 ];
 
@@ -98,7 +98,7 @@ export default function CourseUploadModal({
       if (asAdmin && mentorEmail) {
         await saveCourseMentor(draftCourseId, mentorEmail).catch((error) => { throw new Error(`The course was created, but the mentor was not saved: ${error instanceof Error ? error.message : 'choose the mentor in the course workspace.'}`); });
       }
-      setFormSuccess('Course uploaded successfully!');
+      setFormSuccess('Course created. Opening the course builder…');
       onCreated(draftCourseId);
       setTimeout(onClose, 700);
     } catch (err) {
@@ -114,8 +114,8 @@ export default function CourseUploadModal({
       <div className="my-4 w-full max-w-3xl rounded-3xl bg-white p-5 shadow-2xl sm:p-8">
         <div className="mb-6 flex items-start justify-between gap-4">
           <div>
-            <h2 className="font-display text-2xl font-bold text-[#111827]">Upload New Course</h2>
-            <p className="text-xs text-slate-500">Add the course here. You stay in this panel.</p>
+            <h2 className="font-display text-2xl font-bold text-[#111827]">New course</h2>
+            <p className="text-xs text-slate-500">Step 1 of 2: the course basics. Step 2 is the course builder.</p>
           </div>
           <button type="button" onClick={onClose} className="rounded-full p-2 text-slate-500 hover:bg-slate-100" aria-label="Close">
             <X className="h-5 w-5" />
@@ -185,40 +185,19 @@ export default function CourseUploadModal({
             </div>
           )}
 
-          <div className="border-t border-slate-200 pt-6">
-            <div className="mb-4 flex items-center justify-between">
-              <h3 className="flex items-center gap-2 font-display text-base font-semibold"><Layers className="h-4 w-4 text-amber-600" /> Modules and lessons</h3>
-              <button type="button" onClick={addModule} className="flex items-center gap-1.5 rounded-xl bg-slate-100 px-4 py-2 text-xs font-bold"><Plus className="h-3.5 w-3.5" /> Add Module</button>
-            </div>
-            <div className="max-h-80 space-y-4 overflow-y-auto pr-1">
-              {modules.map((mod, modIdx) => (
-                <div key={mod.id} className="space-y-3 rounded-2xl border border-slate-200 bg-slate-50 p-4">
-                  <div className="flex items-center gap-3">
-                    <input value={mod.title} onChange={(e) => setModules((current) => current.map((item) => item.id === mod.id ? { ...item, title: e.target.value } : item))} placeholder={`Module ${modIdx + 1} Title`} className="flex-1 rounded-lg border border-slate-200 bg-white px-3 py-1.5 text-sm font-bold focus:border-[#111827] focus:outline-none" />
-                    <button type="button" onClick={() => setModules((current) => current.filter((item) => item.id !== mod.id))} className="text-slate-400 hover:text-rose-500" aria-label="Delete module"><Trash2 className="h-4 w-4" /></button>
-                  </div>
-                  <div className="space-y-2 border-l-2 border-[#FACC15] pl-4">
-                    {mod.lessons.map((lesson, lesIdx) => {
-                      return (
-                        <div key={lesson.id} className="flex flex-wrap items-center gap-2 rounded-xl border border-slate-200 bg-white p-3 text-xs">
-                          <Film className="hidden h-4 w-4 text-slate-400 sm:block" />
-                          <input value={lesson.title} onChange={(e) => updateLesson(mod.id, lesson.id, 'title', e.target.value)} placeholder={`Lesson ${lesIdx + 1} Title`} className="min-w-[10rem] flex-1 rounded-lg border border-slate-200 bg-slate-50 px-2.5 py-1.5 focus:border-[#111827] focus:outline-none" />
-                          <button type="button" onClick={() => setModules((current) => current.map((item) => item.id === mod.id ? { ...item, lessons: item.lessons.filter((row) => row.id !== lesson.id) } : item))} className="text-slate-400 hover:text-rose-500" aria-label="Remove lesson"><X className="h-3.5 w-3.5" /></button>
-                          <LessonVideoField className="basis-full" courseId={draftCourseId} lessonId={lesson.id} value={lesson.videoUrl} onChange={(value) => updateLesson(mod.id, lesson.id, 'videoUrl', value)} />
-                        </div>
-                      );
-                    })}
-                    <button type="button" onClick={() => setModules((current) => current.map((item) => item.id === mod.id ? { ...item, lessons: [...item.lessons, { id: `les-${Date.now()}`, title: `Lesson ${item.lessons.length + 1}: Video Lecture`, videoUrl: '', duration: '10:00' }] } : item))} className="flex items-center gap-1 pt-1 text-xs font-bold text-amber-600"><Plus className="h-3.5 w-3.5" /> Add Video Lesson</button>
-                  </div>
-                </div>
-              ))}
+          {/* Lessons are built on the next screen, where each lesson also gets its quiz, assignment and exam. */}
+          <div className="flex items-start gap-3 rounded-2xl border border-[#FACC15] bg-[#FEFCE8] p-4">
+            <Layers className="mt-0.5 h-5 w-5 shrink-0 text-[#A16207]" />
+            <div className="text-sm text-slate-700">
+              <p className="font-bold text-[#111827]">Next: lessons, quizzes, assignments and exams</p>
+              <p className="mt-1 text-xs leading-relaxed">After you press the button below, the course builder opens. There you add modules and lessons, and under each lesson you add its video, quiz, assignment, exam and live class — all on one screen.</p>
             </div>
           </div>
           <div className="flex justify-end gap-3 border-t border-slate-200 pt-6">
             <button type="button" onClick={onClose} className="rounded-xl bg-slate-100 px-5 py-2.5 text-sm font-bold">Cancel</button>
             <button type="submit" disabled={submitting} className="flex items-center gap-2 rounded-xl bg-[#FACC15] px-6 py-2.5 text-sm font-extrabold text-[#111827] disabled:opacity-50">
               {submitting ? <span className="h-4 w-4 animate-spin rounded-full border-2 border-[#111827] border-t-transparent" /> : <Upload className="h-4 w-4" />}
-              Publish Course
+              Create course and add lessons
             </button>
           </div>
         </form>

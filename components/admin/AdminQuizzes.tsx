@@ -4,6 +4,7 @@ import { useEffect, useMemo, useState } from 'react';
 import { BookOpen, CheckCircle2, ChevronRight, HelpCircle, Pencil, Plus, Trash2, X } from 'lucide-react';
 import { toast } from 'sonner';
 import AdminModal, { fieldClass } from './AdminModal';
+import type { ToolManagerProps } from './LessonTools';
 
 type Question = { id?: string; prompt: string; choices: string[]; correctIndex: number; explanation: string };
 type Quiz = {
@@ -21,10 +22,7 @@ const blankQuestion = (): Question => ({ prompt: '', choices: ['', '', '', ''], 
 const blankQuiz = (): Quiz => ({ courseId: '', courseTitle: '', moduleId: '', moduleTitle: '', lessonId: '', lessonTitle: '', title: '', passMark: 70, maxAttempts: 0, published: true, questions: [blankQuestion()] });
 const labelClass = 'mb-1 block text-xs font-bold uppercase tracking-wide text-slate-500';
 
-export default function AdminQuizzes({ courseId }: {
-  /** When set, the list and every new item belong to this one course (course workspace). */
-  courseId?: string;
-}) {
+export default function AdminQuizzes({ courseId, headless = false, command, onItems }: ToolManagerProps) {
   const [quizzes, setQuizzes] = useState<Quiz[]>([]);
   const [stats, setStats] = useState<Stats>({});
   const [outline, setOutline] = useState<Outline>([]);
@@ -95,8 +93,24 @@ export default function AdminQuizzes({ courseId }: {
     draft && setDraft({ ...draft, lessonId: id, lessonTitle: picked?.title || '', title: draft.title || (picked ? `${picked.title} — Quiz` : '') });
   };
 
+  // Lesson builder: report this course's items, and open the editor when it asks.
+  useEffect(() => {
+    onItems?.(quizzes.filter((item) => !courseId || item.courseId === courseId).map((item) => ({ id: String(item.id || ''), title: item.title, moduleId: item.moduleId, lessonId: item.lessonId, published: Boolean(item.published) })));
+  }, [quizzes]); // eslint-disable-line react-hooks/exhaustive-deps
+  useEffect(() => {
+    if (!command) return;
+    // A lesson added a moment ago in the lesson builder must be in the dropdowns.
+    fetch('/api/course-outline', { cache: 'no-store' }).then((res) => res.json()).then((data) => setOutline(data.courses || [])).catch(() => undefined);
+    setNote('');
+    if (command.action === 'new') setDraft({ ...blankQuiz(), ...command.place, title: command.title || '' });
+    else {
+      const found = quizzes.find((item) => String(item.id) === command.id);
+      if (found) setDraft(JSON.parse(JSON.stringify(found)));
+    }
+  }, [command?.nonce]); // eslint-disable-line react-hooks/exhaustive-deps
+
   return (
-    <section className="space-y-5 rounded-3xl border border-slate-200 bg-white p-5 shadow-sm sm:p-6">
+    <section className={headless ? 'contents [&>*:not(.fixed)]:hidden' : 'space-y-5 rounded-3xl border border-slate-200 bg-white p-5 shadow-sm sm:p-6'}>
       <div className="flex flex-wrap items-start justify-between gap-3">
         <div>
           <h2 className="font-display text-xl font-extrabold">Lesson quizzes</h2>

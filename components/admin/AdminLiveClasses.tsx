@@ -4,6 +4,7 @@ import { useEffect, useMemo, useState } from 'react';
 import { BookOpen, CalendarClock, CheckSquare, ExternalLink, Pencil, Plus, Trash2, Video } from 'lucide-react';
 import { toast } from 'sonner';
 import AdminModal, { fieldClass } from './AdminModal';
+import type { ToolManagerProps } from './LessonTools';
 import CoursePlacePicker, { useCourseOutline, type Place } from './CoursePlacePicker';
 
 type LiveClass = Place & {
@@ -21,11 +22,9 @@ const toLocalInput = (iso: string) => {
 };
 const when = (iso: string) => new Date(iso).toLocaleString('en-BD', { weekday: 'short', day: 'numeric', month: 'short', hour: 'numeric', minute: '2-digit' });
 
-export default function AdminLiveClasses({ courseId }: {
-  /** When set, the list and every new item belong to this one course (course workspace). */
-  courseId?: string;
-}) {
-  const outline = useCourseOutline();
+export default function AdminLiveClasses({ courseId, headless = false, command, onItems }: ToolManagerProps) {
+  // Loaded again each time the lesson builder opens the editor, so a lesson added a moment ago is listed.
+  const outline = useCourseOutline(command?.nonce);
   const [classes, setClasses] = useState<LiveClass[]>([]);
   const [roster, setRoster] = useState<Roster>({});
   const [loading, setLoading] = useState(true);
@@ -66,8 +65,22 @@ export default function AdminLiveClasses({ courseId }: {
   }, [classes, view]); // eslint-disable-line react-hooks/exhaustive-deps
   const needsAttendance = classes.filter((live) => ended(live) && live.attendees.length === 0 && (roster[live.courseId]?.length || 0) > 0).length;
 
+  // Lesson builder: report this course's items, and open the editor when it asks.
+  useEffect(() => {
+    onItems?.(classes.filter((item) => !courseId || item.courseId === courseId).map((item) => ({ id: String(item.id || ''), title: item.title, moduleId: item.moduleId, lessonId: item.lessonId, published: Boolean(item.published) })));
+  }, [classes]); // eslint-disable-line react-hooks/exhaustive-deps
+  useEffect(() => {
+    if (!command) return;
+    setNote('');
+    if (command.action === 'new') setDraft({ ...blank(), ...command.place, title: command.title || '' });
+    else {
+      const found = classes.find((item) => String(item.id) === command.id);
+      if (found) setDraft(JSON.parse(JSON.stringify(found)));
+    }
+  }, [command?.nonce]); // eslint-disable-line react-hooks/exhaustive-deps
+
   return (
-    <section className="space-y-5 rounded-3xl border border-slate-200 bg-white p-5 shadow-sm sm:p-6">
+    <section className={headless ? 'contents [&>*:not(.fixed)]:hidden' : 'space-y-5 rounded-3xl border border-slate-200 bg-white p-5 shadow-sm sm:p-6'}>
       <div className="flex flex-wrap items-start justify-between gap-3">
         <div className="min-w-0">
           <h2 className="font-display text-xl font-extrabold">Live classes</h2>
