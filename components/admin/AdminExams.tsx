@@ -41,12 +41,15 @@ function windowOf(exam: Exam) {
   return { label: 'Open now', tone: 'bg-emerald-50 text-emerald-700' };
 }
 
-export default function AdminExams() {
+export default function AdminExams({ courseId }: {
+  /** When set, the list and every new item belong to this one course (course workspace). */
+  courseId?: string;
+}) {
   const outline = useCourseOutline();
   const [exams, setExams] = useState<Exam[]>([]);
   const [attempts, setAttempts] = useState<Attempt[]>([]);
   const [loading, setLoading] = useState(true);
-  const [courseFilter, setCourseFilter] = useState('all');
+  const [courseFilter, setCourseFilter] = useState(courseId || 'all');
   const [draft, setDraft] = useState<Exam | null>(null);
   const [results, setResults] = useState<Exam | null>(null);
   const [saving, setSaving] = useState(false);
@@ -114,10 +117,10 @@ export default function AdminExams() {
           <h2 className="font-display text-xl font-extrabold">Exams</h2>
           <p className="text-sm text-slate-500">Timed exams for a whole course, a module or a lesson. Set when it opens and closes, the time limit and attempts — marking is automatic.</p>
         </div>
-        <button type="button" onClick={() => { setNote(''); setDraft(blankExam()); }} className="inline-flex shrink-0 items-center gap-1.5 rounded-xl bg-[#111827] px-4 py-2 text-sm font-bold text-white hover:bg-slate-800"><Plus className="h-4 w-4" />New exam</button>
+        <button type="button" onClick={() => { setNote(''); setDraft({ ...blankExam(), courseId: courseId || '', courseTitle: outline.find((item) => item.id === courseId)?.title || '' }); }} className="inline-flex shrink-0 items-center gap-1.5 rounded-xl bg-[#111827] px-4 py-2 text-sm font-bold text-white hover:bg-slate-800"><Plus className="h-4 w-4" />New exam</button>
       </div>
 
-      {outline.length > 0 && (
+      {outline.length > 0 && !courseId && (
         <div className="flex gap-2 overflow-x-auto pb-1 text-xs font-bold">
           <button type="button" onClick={() => setCourseFilter('all')} className={`shrink-0 rounded-full px-3 py-1.5 ${courseFilter === 'all' ? 'bg-[#111827] text-white' : 'bg-slate-100 text-slate-600'}`}>All courses ({exams.length})</button>
           {outline.map((course) => (

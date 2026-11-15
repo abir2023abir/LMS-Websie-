@@ -21,12 +21,15 @@ const blankQuestion = (): Question => ({ prompt: '', choices: ['', '', '', ''], 
 const blankQuiz = (): Quiz => ({ courseId: '', courseTitle: '', moduleId: '', moduleTitle: '', lessonId: '', lessonTitle: '', title: '', passMark: 70, maxAttempts: 0, published: true, questions: [blankQuestion()] });
 const labelClass = 'mb-1 block text-xs font-bold uppercase tracking-wide text-slate-500';
 
-export default function AdminQuizzes() {
+export default function AdminQuizzes({ courseId }: {
+  /** When set, the list and every new item belong to this one course (course workspace). */
+  courseId?: string;
+}) {
   const [quizzes, setQuizzes] = useState<Quiz[]>([]);
   const [stats, setStats] = useState<Stats>({});
   const [outline, setOutline] = useState<Outline>([]);
   const [loading, setLoading] = useState(true);
-  const [courseFilter, setCourseFilter] = useState('all');
+  const [courseFilter, setCourseFilter] = useState(courseId || 'all');
   const [draft, setDraft] = useState<Quiz | null>(null);
   const [saving, setSaving] = useState(false);
   const [note, setNote] = useState('');
@@ -99,10 +102,10 @@ export default function AdminQuizzes() {
           <h2 className="font-display text-xl font-extrabold">Lesson quizzes</h2>
           <p className="text-sm text-slate-500">Each quiz sits inside a course → module → lesson. Students take it from that lesson and see their score straight away.</p>
         </div>
-        <button type="button" onClick={() => { setNote(''); setDraft(blankQuiz()); }} className="inline-flex items-center gap-1.5 rounded-xl bg-[#111827] px-4 py-2 text-sm font-bold text-white hover:bg-slate-800"><Plus className="h-4 w-4" />New quiz</button>
+        <button type="button" onClick={() => { setNote(''); setDraft({ ...blankQuiz(), courseId: courseId || '', courseTitle: outline.find((item) => item.id === courseId)?.title || '' }); }} className="inline-flex items-center gap-1.5 rounded-xl bg-[#111827] px-4 py-2 text-sm font-bold text-white hover:bg-slate-800"><Plus className="h-4 w-4" />New quiz</button>
       </div>
 
-      {outline.length > 0 && (
+      {outline.length > 0 && !courseId && (
         <div className="flex gap-2 overflow-x-auto pb-1 text-xs font-bold">
           <button type="button" onClick={() => setCourseFilter('all')} className={`shrink-0 rounded-full px-3 py-1.5 ${courseFilter === 'all' ? 'bg-[#111827] text-white' : 'bg-slate-100 text-slate-600'}`}>All courses ({quizzes.length})</button>
           {outline.map((item) => {

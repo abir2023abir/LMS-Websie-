@@ -47,7 +47,6 @@ export default function TeacherPanelPage() {
   const [description, setDescription] = useState('');
   const [price, setPrice] = useState(String(usdToBdt(49)));
   const [category, setCategory] = useState('Accounting');
-  const [level, setLevel] = useState<'Beginner' | 'Intermediate' | 'Advanced'>('Beginner');
   const [thumbnailUrl, setThumbnailUrl] = useState('');
   const [thumbnailPreview, setThumbnailPreview] = useState<string | null>(null);
 
@@ -230,7 +229,6 @@ export default function TeacherPanelPage() {
         price: Math.round(Number(price) / USD_TO_BDT) || 0,
         thumbnail: finalThumbnail,
         category,
-        level,
         modules,
       };
 
@@ -568,20 +566,6 @@ export default function TeacherPanelPage() {
                     />
                   </div>
 
-                  <div>
-                    <label className="block text-xs font-bold text-slate-700 mb-1.5 uppercase tracking-wider">
-                      Skill Level
-                    </label>
-                    <select
-                      value={level}
-                      onChange={(e) => setLevel(e.target.value as any)}
-                      className="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-3 text-sm text-[#111827] focus:outline-none focus:border-[#111827] transition-colors"
-                    >
-                      <option value="Beginner">Beginner</option>
-                      <option value="Intermediate">Intermediate</option>
-                      <option value="Advanced">Advanced</option>
-                    </select>
-                  </div>
 
                   <div>
                     <label className="block text-xs font-bold text-slate-700 mb-1.5 uppercase tracking-wider">

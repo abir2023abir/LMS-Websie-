@@ -163,9 +163,6 @@ export default function CourseDetailsPage() {
             <span className="bg-[#111827] text-white text-xs font-extrabold px-3 py-1 rounded-full uppercase tracking-wider">
               {course.category || 'Course'}
             </span>
-            <span className="bg-white/80 text-[#111827] text-xs font-bold px-3 py-1 rounded-full border border-black/10">
-              {course.level || 'Intermediate'}
-            </span>
             <span className="bg-black/10 text-[#111827] text-xs font-extrabold px-3 py-1 rounded-full flex items-center gap-1">
               <CheckCircle className="w-3.5 h-3.5" /> Certificate of Completion
             </span>
@@ -402,13 +399,6 @@ export default function CourseDetailsPage() {
                   <PlayCircle className="w-5 h-5 fill-current" />
                   <span>Enroll Now</span>
                 </button>
-
-                <Link
-                  href={`/student/learn/${course.id}`}
-                  className="w-full bg-slate-100 hover:bg-slate-200 text-[#111827] font-bold text-xs py-3 px-4 rounded-xl flex items-center justify-center gap-2 border border-slate-200 transition-colors"
-                >
-                  <span>Preview Classroom Environment</span>
-                </Link>
               </div>
 
               {/* Perks Checklist */}

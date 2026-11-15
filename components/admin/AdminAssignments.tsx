@@ -20,13 +20,16 @@ const statusStyle: Record<Submission['status'], string> = { submitted: 'bg-amber
 const statusLabel: Record<Submission['status'], string> = { submitted: 'To review', 'needs-changes': 'Needs changes', graded: 'Graded' };
 const day = (value: string) => (value ? new Date(`${value.slice(0, 10)}T12:00:00`).toLocaleDateString('en-BD', { day: 'numeric', month: 'short', year: 'numeric' }) : '');
 
-export default function AdminAssignments() {
+export default function AdminAssignments({ courseId }: {
+  /** When set, the list and every new item belong to this one course (course workspace). */
+  courseId?: string;
+}) {
   const outline = useCourseOutline();
   const [assignments, setAssignments] = useState<Assignment[]>([]);
   const [submissions, setSubmissions] = useState<Submission[]>([]);
   const [loading, setLoading] = useState(true);
   const [tab, setTab] = useState<'assignments' | 'submissions'>('assignments');
-  const [courseFilter, setCourseFilter] = useState('all');
+  const [courseFilter, setCourseFilter] = useState(courseId || 'all');
   const [statusFilter, setStatusFilter] = useState<'all' | Submission['status']>('submitted');
   const [draft, setDraft] = useState<Assignment | null>(null);
   const [reviewing, setReviewing] = useState<Submission | null>(null);
@@ -78,7 +81,7 @@ export default function AdminAssignments() {
           <h2 className="font-display text-xl font-extrabold">Assignments</h2>
           <p className="text-sm text-slate-500">Each assignment sits inside a course → module → lesson. Students answer from that lesson with text or a file; you review, score and give feedback.</p>
         </div>
-        <button type="button" onClick={() => { setNote(''); setDraft(blank()); }} className="inline-flex shrink-0 items-center gap-1.5 rounded-xl bg-[#111827] px-4 py-2 text-sm font-bold text-white hover:bg-slate-800"><Plus className="h-4 w-4" />New assignment</button>
+        <button type="button" onClick={() => { setNote(''); setDraft({ ...blank(), courseId: courseId || '', courseTitle: outline.find((item) => item.id === courseId)?.title || '' }); }} className="inline-flex shrink-0 items-center gap-1.5 rounded-xl bg-[#111827] px-4 py-2 text-sm font-bold text-white hover:bg-slate-800"><Plus className="h-4 w-4" />New assignment</button>
       </div>
 
       <div className="flex flex-wrap items-center gap-2">
@@ -88,7 +91,7 @@ export default function AdminAssignments() {
             Submissions{toReview > 0 && <span className="rounded-full bg-[#FACC15] px-1.5 text-[11px] text-[#111827]">{toReview}</span>}
           </button>
         </div>
-        <select aria-label="Filter by course" value={courseFilter} onChange={(e) => setCourseFilter(e.target.value)} className="rounded-xl border border-slate-200 px-3 py-2 text-sm">
+        <select aria-label="Filter by course" hidden={Boolean(courseId)} value={courseFilter} onChange={(e) => setCourseFilter(e.target.value)} className="rounded-xl border border-slate-200 px-3 py-2 text-sm">
           <option value="all">All courses</option>
           {outline.map((item) => <option key={item.id} value={item.id}>{item.title}</option>)}
         </select>

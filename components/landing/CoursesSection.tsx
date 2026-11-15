@@ -252,9 +252,6 @@ export default function CoursesSection() {
                       <span className="flex items-center gap-1">
                         <Clock className="w-3.5 h-3.5 text-[#FACC15]" /> {course.duration}
                       </span>
-                      <span className="bg-[#FACC15]/20 text-[#FACC15] px-2 py-0.5 rounded-full text-[10px] font-bold">
-                        {course.level}
-                      </span>
                     </div>
 
                     <Link href={`/courses/${course.id}`}>

@@ -4,6 +4,7 @@ import { useEffect, useState } from 'react';
 import { toast } from 'sonner';
 import AdminModal, { fieldClass } from './AdminModal';
 import LessonVideoField from './LessonVideoField';
+import CourseLengthField from './CourseLengthField';
 import { getFallbackCourseData } from '@/lib/progress';
 import { loadCourseEdits, shrinkImage } from '@/lib/course-edits-client';
 import { usdToBdt, USD_TO_BDT } from '@/lib/utils';
@@ -13,10 +14,15 @@ export default function AdminCourseEditor({
   courseId,
   onClose,
   onSaved,
+  bare = false,
+  view = 'details',
 }: {
   courseId: string;
   onClose: () => void;
   onSaved?: () => void;
+  /** Inside the course workspace: no modal frame, and only the part named by `view` is shown. */
+  bare?: boolean;
+  view?: 'details' | 'timeline' | 'curriculum';
 }) {
   const course = getFallbackCourseData(courseId);
   const lessons = course?.modules?.flatMap((mod) => mod.lessons || []) || [];
@@ -25,7 +31,6 @@ export default function AdminCourseEditor({
     price: String(usdToBdt(course?.price ?? 0)),
     originalPrice: course?.originalPrice ? String(usdToBdt(course.originalPrice)) : '',
     category: course?.category || '',
-    level: course?.level || '',
     description: course?.description || '',
     thumbnail: course?.thumbnail || '',
   });
@@ -77,7 +82,28 @@ export default function AdminCourseEditor({
   };
 
   useEffect(() => {
-    loadCourseEdits(true).then((all) => {
+    fetch(`/api/courses/${encodeURIComponent(courseId)}`, { cache: 'no-store' })
+      .then((res) => (res.ok ? res.json() : null))
+      .catch(() => null)
+      .then(async (data) => {
+        const stored = data?.course;
+        if (stored && !course) {
+          setForm((prev) => ({
+            ...prev,
+            title: stored.title || prev.title,
+            price: typeof stored.price === 'number' ? String(usdToBdt(stored.price)) : prev.price,
+            category: stored.category || prev.category,
+            description: stored.description || prev.description,
+            thumbnail: stored.thumbnail || prev.thumbnail,
+          }));
+        }
+        if (stored && Array.isArray(stored.modules) && stored.modules.length) {
+          setModules(stored.modules.map((mod: ModuleSchema) => ({ ...mod, lessons: (mod.lessons || []).map((lesson) => ({ ...lesson })) })));
+          setVideos(Object.fromEntries(stored.modules.flatMap((mod: ModuleSchema) => (mod.lessons || []).map((lesson) => [lesson.id, lesson.videoUrl || '']))));
+        }
+        return loadCourseEdits(true);
+      })
+      .then((all) => {
       const edit = all[courseId];
       if (!edit) return;
       setForm((prev) => ({
@@ -85,7 +111,6 @@ export default function AdminCourseEditor({
         price: typeof edit.price === 'number' ? String(usdToBdt(edit.price)) : prev.price,
         originalPrice: typeof edit.originalPrice === 'number' ? String(usdToBdt(edit.originalPrice)) : prev.originalPrice,
         category: edit.category || prev.category,
-        level: edit.level || prev.level,
         description: edit.description || prev.description,
         thumbnail: edit.thumbnail || prev.thumbnail,
       }));
@@ -97,7 +122,7 @@ export default function AdminCourseEditor({
         })));
       }
     });
-  }, [courseId]);
+  }, [courseId]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const set = (key: keyof typeof form) => (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) =>
     setForm((prev) => ({ ...prev, [key]: e.target.value }));
@@ -143,9 +168,8 @@ export default function AdminCourseEditor({
     toast.success('Course saved successfully! The course page now shows the new details.');
   };
 
-  return (
-    <AdminModal title={`Edit course: ${form.title || courseId}`} onClose={onClose}>
-      <div className="space-y-4">
+  const detailsPart = (
+    <>
         <div className="flex items-center gap-4">
           <div className="w-32 h-20 rounded-xl overflow-hidden bg-slate-100 border border-slate-200 shrink-0">
             {form.thumbnail && <img src={form.thumbnail} alt="" className="w-full h-full object-cover" />}
@@ -173,18 +197,19 @@ export default function AdminCourseEditor({
             Category
             <input value={form.category} onChange={set('category')} className={fieldClass} />
           </label>
-          <label className="block space-y-1 text-xs font-bold text-slate-500">
-            Level
-            <input value={form.level} onChange={set('level')} className={fieldClass} />
-          </label>
         </div>
         <label className="block space-y-1 text-xs font-bold text-slate-500">
           Description
           <textarea value={form.description} onChange={set('description')} rows={4} className={fieldClass} />
         </label>
+    </>
+  );
 
+  const timelinePart = (
+    <>
         <div className="space-y-3 rounded-2xl border border-slate-200 bg-slate-50 p-3">
           <p className="text-xs font-bold text-slate-500">Course timeline</p>
+          <CourseLengthField dates={dates} onChange={setDates} inputClass={fieldClass} />
           <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
             <label className="block space-y-1 text-[11px] font-bold text-slate-500">First enrolled date
               <input type="datetime-local" value={dates.firstEnrolled} onChange={(e) => setDates({ ...dates, firstEnrolled: e.target.value })} className={fieldClass} />
@@ -210,7 +235,11 @@ export default function AdminCourseEditor({
           </p>
           <button type="button" disabled={savingDates} onClick={saveDates} className="rounded-full bg-[#111827] px-4 py-2 text-[11px] font-bold text-white disabled:opacity-60">{savingDates ? 'Saving…' : 'Save dates'}</button>
         </div>
+    </>
+  );
 
+  const curriculumPart = (
+    <>
         <div className="space-y-3">
           <div className="flex items-center justify-between gap-3">
             <p className="text-xs font-bold text-slate-500">Modules and lessons</p>
@@ -273,9 +302,13 @@ export default function AdminCourseEditor({
               </button>
             </div>
           ))}
-          <p className="text-[11px] text-slate-500">Each lesson has an overview, video, quiz, notes, assignment and exam. A part left empty is skipped. The time per lesson comes from the course timeline dates above.</p>
+          <p className="text-[11px] text-slate-500">Each lesson has an overview, video, quiz, notes, assignment and exam. A part left empty is skipped. The time per lesson comes from the course timeline dates.</p>
         </div>
+    </>
+  );
 
+  const saveBar = (
+    <>
         <div className="flex items-center gap-3 pt-2">
           <button
             type="button"
@@ -286,6 +319,26 @@ export default function AdminCourseEditor({
             {busy ? 'Saving…' : 'Save'}
           </button>
         </div>
+    </>
+  );
+
+  if (bare) {
+    return (
+      <div className="space-y-4">
+        {view === 'details' && <>{detailsPart}{saveBar}</>}
+        {view === 'timeline' && timelinePart}
+        {view === 'curriculum' && <>{curriculumPart}{saveBar}</>}
+      </div>
+    );
+  }
+
+  return (
+    <AdminModal title={`Edit course: ${form.title || courseId}`} onClose={onClose}>
+      <div className="space-y-4">
+        {detailsPart}
+        {timelinePart}
+        {curriculumPart}
+        {saveBar}
       </div>
     </AdminModal>
   );

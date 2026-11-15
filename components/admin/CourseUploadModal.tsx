@@ -5,6 +5,8 @@ import Image from 'next/image';
 import { AlertCircle, CheckCircle, Film, Image as ImageIcon, Layers, Plus, Trash2, Upload, X } from 'lucide-react';
 import { useAuth } from '@/context/AuthContext';
 import LessonVideoField from '@/components/admin/LessonVideoField';
+import CourseLengthField from './CourseLengthField';
+import { CourseMentorSelect, saveCourseMentor } from './CourseMentorField';
 import { USD_TO_BDT, usdToBdt } from '@/lib/utils';
 import type { LessonSchema, ModuleSchema } from '@/types/course';
 
@@ -25,14 +27,14 @@ export default function CourseUploadModal({
 }: {
   asAdmin: boolean;
   onClose: () => void;
-  onCreated: () => void;
+  /** Receives the new course's id, so the caller can open its workspace. */
+  onCreated: (courseId: string) => void;
 }) {
   const { userProfile, user } = useAuth();
   const [title, setTitle] = useState('');
   const [description, setDescription] = useState('');
   const [price, setPrice] = useState(String(usdToBdt(49)));
   const [category, setCategory] = useState('Accounting');
-  const [level, setLevel] = useState<'Beginner' | 'Intermediate' | 'Advanced'>('Beginner');
   const [thumbnailUrl, setThumbnailUrl] = useState('');
   const [thumbnailPreview, setThumbnailPreview] = useState<string | null>(null);
   const [modules, setModules] = useState<ModuleSchema[]>(starterModules);
@@ -41,6 +43,7 @@ export default function CourseUploadModal({
   const [formError, setFormError] = useState('');
   const [formSuccess, setFormSuccess] = useState('');
   const [dates, setDates] = useState({ firstEnrolled: '', lastEnrolled: '', lastCounting: '', courseEnding: '' });
+  const [mentorEmail, setMentorEmail] = useState('');
 
   const handleThumbnailChange = (e: ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -82,7 +85,6 @@ export default function CourseUploadModal({
           price: Math.round(Number(price) / USD_TO_BDT) || 0,
           thumbnail: thumbnailUrl.trim() || 'https://images.unsplash.com/photo-1522202176988-66273c2fd55f?w=600&h=340&fit=crop',
           category,
-          level,
           modules,
         }),
       });
@@ -93,8 +95,11 @@ export default function CourseUploadModal({
         const result = await saved.json().catch(() => ({}));
         if (!saved.ok || !result.success) throw new Error(`The course was created, but the dates were not saved: ${result.message || 'please set them in the course editor.'}`);
       }
+      if (asAdmin && mentorEmail) {
+        await saveCourseMentor(draftCourseId, mentorEmail).catch((error) => { throw new Error(`The course was created, but the mentor was not saved: ${error instanceof Error ? error.message : 'choose the mentor in the course workspace.'}`); });
+      }
       setFormSuccess('Course uploaded successfully!');
-      onCreated();
+      onCreated(draftCourseId);
       setTimeout(onClose, 700);
     } catch (err) {
       setFormError(err instanceof Error ? err.message : 'Something went wrong while creating the course.');
@@ -135,12 +140,6 @@ export default function CourseUploadModal({
               <input required type="number" min="0" value={price} onChange={(e) => setPrice(e.target.value)} className="w-full rounded-xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm focus:border-[#111827] focus:outline-none" />
             </div>
             <div>
-              <label className="mb-1.5 block text-xs font-bold uppercase tracking-wider text-slate-700">Skill Level</label>
-              <select value={level} onChange={(e) => setLevel(e.target.value as 'Beginner' | 'Intermediate' | 'Advanced')} className="w-full rounded-xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm focus:border-[#111827] focus:outline-none">
-                <option>Beginner</option><option>Intermediate</option><option>Advanced</option>
-              </select>
-            </div>
-            <div>
               <label className="mb-1.5 block text-xs font-bold uppercase tracking-wider text-slate-700">Thumbnail Image</label>
               <div className="flex items-center gap-3">
                 <label className="flex cursor-pointer items-center gap-2 rounded-xl border border-slate-200 bg-slate-50 px-4 py-2.5 text-xs font-bold text-slate-600">
@@ -161,12 +160,15 @@ export default function CourseUploadModal({
             </div>
           </div>
 
+          {asAdmin && <CourseMentorSelect value={mentorEmail} onChange={setMentorEmail} />}
+
           {asAdmin && (
             <div className="space-y-3 rounded-2xl border border-slate-200 bg-slate-50 p-4">
               <div>
                 <h3 className="text-sm font-bold text-[#111827]">Course timeline</h3>
-                <p className="text-[11px] text-slate-500">Four dates that drive enrollment and the time each lesson gets. You can also set them later in the course editor.</p>
+                <p className="text-[11px] text-slate-500">Four dates that drive enrollment and the time each lesson gets. You can also set them later in the course workspace.</p>
               </div>
+              <CourseLengthField dates={dates} onChange={setDates} inputClass="w-full rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm focus:border-[#111827] focus:outline-none disabled:bg-slate-100" />
               <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
                 {([
                   ['firstEnrolled', 'First enrolled date', 'Enrollment opens'],

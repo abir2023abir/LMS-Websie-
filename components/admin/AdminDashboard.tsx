@@ -21,7 +21,7 @@ import BrandLogo from '@/components/brand/BrandLogo';
 const TabLoading = () => <div className="h-64 animate-pulse rounded-3xl bg-white" />;
 const StatsCards = dynamic(() => import('./StatsCards'), { ssr: false, loading: () => <div className="h-32 animate-pulse rounded-3xl bg-white" /> });
 const RevenueAreaChart = dynamic(() => import('./RevenueAreaChart'), { ssr: false, loading: () => <div className="h-[360px] animate-pulse rounded-3xl bg-white" /> });
-const AdminCourseEditor = dynamic(() => import('./AdminCourseEditor'), { loading: TabLoading });
+const CourseWorkspace = dynamic(() => import('./CourseWorkspace'), { loading: () => null });
 const AdminPaymentSetup = dynamic(() => import('./AdminPaymentSetup'), { loading: TabLoading });
 const AdminQuizzes = dynamic(() => import('./AdminQuizzes'), { loading: TabLoading });
 const AdminExams = dynamic(() => import('./AdminExams'), { loading: TabLoading });
@@ -58,6 +58,10 @@ const navTabs = [
   { name: 'Instructor Access', icon: Shield },
 ];
 
+// These are worked on inside each course (Courses → Manage), so they get no menu entry of their own
+// for anyone who can open the Courses tab.
+const IN_COURSE_TABS = ['Quizzes', 'Exams', 'Assignments', 'Live Classes'];
+
 const fetcher = (url: string) => fetch(url).then((res) => res.json());
 
 export default function AdminDashboard({
@@ -71,6 +75,8 @@ export default function AdminDashboard({
   const [searchTerm, setSearchTerm] = useState('');
   const [menuOpen, setMenuOpen] = useState(false);
   const [editingCourse, setEditingCourse] = useState<string | null>(null);
+  // Set while the workspace is open for a course that was created a moment ago.
+  const [justCreated, setJustCreated] = useState<string | null>(null);
   const [addingCourse, setAddingCourse] = useState(false);
   const [editsVersion, setEditsVersion] = useState(0);
   const courseEdits = useCourseEdits(editsVersion);
@@ -89,15 +95,17 @@ export default function AdminDashboard({
     dedupingInterval: 10000,
   });
   const serviceRequests = requestData?.requests || [];
+  const hasCoursesTab = variant === 'admin' || (allowedTabs || []).includes('Courses');
   const visibleTabs = navTabs.filter((tab) => {
+    if (hasCoursesTab && IN_COURSE_TABS.includes(tab.name)) return false;
     if (tab.name === 'Instructor Access') return variant === 'admin';
     if (variant === 'admin') return true;
     return (allowedTabs || []).includes(tab.name);
   });
 
   useEffect(() => {
-    if (variant === 'instructor' && allowedTabs && !allowedTabs.includes(activeTab)) {
-      setActiveTab(allowedTabs[0] || '');
+    if (variant === 'instructor' && allowedTabs && !visibleTabs.some((tab) => tab.name === activeTab)) {
+      setActiveTab(visibleTabs[0]?.name || '');
     }
   }, [activeTab, allowedTabs, variant]);
 
@@ -251,7 +259,7 @@ export default function AdminDashboard({
             <div className="flex items-center justify-between">
               <div>
                 <h2 className="font-display font-extrabold text-xl text-slate-900">Manage Courses ({filteredCourses.length})</h2>
-                <p className="text-xs text-slate-500">Live database inventory of all published courses.</p>
+                <p className="text-xs text-slate-500">Press Manage on a course to work on its lessons, mentor, timeline, quizzes, assignments, exams and live classes in one place.</p>
               </div>
               <button
                 type="button"
@@ -312,10 +320,11 @@ export default function AdminDashboard({
                           </Link>
                           <button
                             onClick={() => setEditingCourse(String(course.id))}
-                            className="p-1.5 hover:bg-amber-50 rounded-lg text-slate-500 hover:text-slate-900"
-                            title="Edit"
+                            className="inline-flex items-center gap-1.5 rounded-full bg-[#111827] px-3 py-1.5 text-[11px] font-bold text-white hover:bg-slate-800"
+                            title="Open course workspace"
                           >
-                            <Pencil className="w-4 h-4" />
+                            <Pencil className="w-3.5 h-3.5" />
+                            <span>Manage</span>
                           </button>
                           <button
                             onClick={() => handleDeleteCourse(course.id)}
@@ -355,18 +364,28 @@ export default function AdminDashboard({
           <CourseUploadModal
             asAdmin={variant === 'admin'}
             onClose={() => setAddingCourse(false)}
-            onCreated={() => mutate()}
+            onCreated={(courseId) => { void mutate(); setJustCreated(courseId); setEditingCourse(courseId); }}
           />
         )}
 
         {/* ── TAB 5, 6, 7: CERTIFICATE, QUIZZES, ASSIGNMENTS ── */}
-        {editingCourse && (
-          <AdminCourseEditor
-            courseId={editingCourse}
-            onClose={() => setEditingCourse(null)}
-            onSaved={() => setEditsVersion((v) => v + 1)}
-          />
-        )}
+        {editingCourse && (() => {
+          const row = coursesList.find((item: any) => String(item.id) === editingCourse);
+          return (
+            <CourseWorkspace
+              key={editingCourse}
+              courseId={editingCourse}
+              title={row?.title || 'New course'}
+              thumbnail={row?.thumbnail}
+              category={row?.category}
+              isAdmin={variant === 'admin'}
+              allowedTabs={allowedTabs}
+              isNew={justCreated === editingCourse}
+              onClose={() => { setEditingCourse(null); setJustCreated(null); }}
+              onSaved={() => { setEditsVersion((v) => v + 1); void mutate(); }}
+            />
+          );
+        })()}
 
         {activeTab === 'Payments' && (
           <div className="space-y-6">

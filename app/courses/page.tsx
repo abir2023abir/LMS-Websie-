@@ -29,7 +29,6 @@ import { motion } from 'framer-motion';
 export default function CoursesCatalogPage() {
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedCategory, setSelectedCategory] = useState('All');
-  const [selectedLevel, setSelectedLevel] = useState('All');
   const [priceFilter, setPriceFilter] = useState<'All' | 'Free' | 'Paid'>('All');
   const [sortBy, setSortBy] = useState<'popular' | 'rating' | 'price-low' | 'price-high' | 'newest'>('popular');
 
@@ -78,7 +77,6 @@ export default function CoursesCatalogPage() {
           c.tags?.some((t) => t.toLowerCase().includes(searchQuery.toLowerCase()));
 
         const matchesCat = selectedCategory === 'All' || c.category === selectedCategory;
-        const matchesLevel = selectedLevel === 'All' || c.level === selectedLevel;
         const matchesPrice =
           priceFilter === 'All'
             ? true
@@ -87,7 +85,7 @@ export default function CoursesCatalogPage() {
             : c.price > 0;
         const isVisible = !hiddenIds.includes(String(c.id));
 
-        return matchesSearch && matchesCat && matchesLevel && matchesPrice && isVisible;
+        return matchesSearch && matchesCat && matchesPrice && isVisible;
       })
       .sort((a, b) => {
         if (sortBy === 'rating') return (b.rating || 0) - (a.rating || 0);
@@ -97,7 +95,7 @@ export default function CoursesCatalogPage() {
         if (sortBy === 'newest') return (b.isNew ? 1 : 0) - (a.isNew ? 1 : 0);
         return 0;
       });
-  }, [searchQuery, selectedCategory, selectedLevel, priceFilter, sortBy, hiddenIds, courseEdits]);
+  }, [searchQuery, selectedCategory, priceFilter, sortBy, hiddenIds, courseEdits]);
 
   const handleEnroll = useCallback((course: any) => {
     setSelectedCourse({
@@ -203,24 +201,9 @@ export default function CoursesCatalogPage() {
             </div>
           </div>
 
-          {/* Secondary Controls: Level, Price, Sorting */}
+          {/* Secondary Controls: Price, Sorting */}
           <div className="flex flex-wrap items-center justify-between gap-4 pt-4 border-t border-slate-100">
             <div className="flex flex-wrap items-center gap-3">
-              {/* Level Dropdown */}
-              <div className="flex items-center gap-2 bg-slate-100 border border-slate-200 rounded-xl px-3 py-1.5 text-xs text-slate-700">
-                <span className="text-slate-500 font-semibold">Level:</span>
-                <select
-                  value={selectedLevel}
-                  onChange={(e) => setSelectedLevel(e.target.value)}
-                  className="bg-transparent text-[#111827] focus:outline-none cursor-pointer font-bold"
-                >
-                  <option value="All">All Levels</option>
-                  <option value="Beginner">Beginner</option>
-                  <option value="Intermediate">Intermediate</option>
-                  <option value="Advanced">Advanced</option>
-                </select>
-              </div>
-
               {/* Price Filter */}
               <div className="flex items-center gap-2 bg-slate-100 border border-slate-200 rounded-xl px-3 py-1.5 text-xs text-slate-700">
                 <span className="text-slate-500 font-semibold">Pricing:</span>
@@ -286,7 +269,6 @@ export default function CoursesCatalogPage() {
                 onClick={() => {
                   setSearchQuery('');
                   setSelectedCategory('All');
-                  setSelectedLevel('All');
                   setPriceFilter('All');
                 }}
                 className="bg-[#FACC15] text-[#111827] font-extrabold text-xs px-6 py-2.5 rounded-xl shadow"
@@ -319,11 +301,6 @@ export default function CoursesCatalogPage() {
                       {/* Category Pill */}
                       <span className="absolute top-3.5 left-3.5 bg-[#111827]/90 text-[#FACC15] text-[10px] font-extrabold px-3 py-1 rounded-full backdrop-blur-md shadow">
                         {course.category}
-                      </span>
-
-                      {/* Level Badge */}
-                      <span className="absolute top-3.5 right-3.5 bg-white/90 text-[#111827] text-[10px] font-bold px-2.5 py-1 rounded-full backdrop-blur-md shadow">
-                        {course.level}
                       </span>
 
                       {/* Bestseller Badge */}

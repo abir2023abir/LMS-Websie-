@@ -21,7 +21,10 @@ const toLocalInput = (iso: string) => {
 };
 const when = (iso: string) => new Date(iso).toLocaleString('en-BD', { weekday: 'short', day: 'numeric', month: 'short', hour: 'numeric', minute: '2-digit' });
 
-export default function AdminLiveClasses() {
+export default function AdminLiveClasses({ courseId }: {
+  /** When set, the list and every new item belong to this one course (course workspace). */
+  courseId?: string;
+}) {
   const outline = useCourseOutline();
   const [classes, setClasses] = useState<LiveClass[]>([]);
   const [roster, setRoster] = useState<Roster>({});
@@ -32,7 +35,7 @@ export default function AdminLiveClasses() {
   const [saving, setSaving] = useState(false);
   const [note, setNote] = useState('');
 
-  const apply = (data: { classes?: LiveClass[]; roster?: Roster }) => { setClasses(data.classes || []); setRoster(data.roster || {}); };
+  const apply = (data: { classes?: LiveClass[]; roster?: Roster }) => { setClasses((data.classes || []).filter((live) => !courseId || live.courseId === courseId)); setRoster(data.roster || {}); };
   useEffect(() => {
     fetch('/api/admin/live-classes', { cache: 'no-store' }).then((res) => res.json()).then(apply)
       .catch(() => toast.error('Could not load live classes')).finally(() => setLoading(false));
@@ -68,9 +71,9 @@ export default function AdminLiveClasses() {
       <div className="flex flex-wrap items-start justify-between gap-3">
         <div className="min-w-0">
           <h2 className="font-display text-xl font-extrabold">Live classes</h2>
-          <p className="text-sm text-slate-500">Schedule a live class for a lesson. Students get the join link only after they finish the lesson’s video, quiz, assignment and exam. Mark attendance afterwards to open their next lesson.</p>
+          <p className="text-sm text-slate-500">Schedule a live class for a lesson. Enrolled students can join from 15 minutes before the start until the class ends. Mark attendance afterwards to open their next lesson.</p>
         </div>
-        <button type="button" onClick={() => { setNote(''); setDraft(blank()); }} className="inline-flex shrink-0 items-center gap-1.5 rounded-xl bg-[#111827] px-4 py-2 text-sm font-bold text-white hover:bg-slate-800"><Plus className="h-4 w-4" />Schedule class</button>
+        <button type="button" onClick={() => { setNote(''); setDraft({ ...blank(), courseId: courseId || '', courseTitle: outline.find((item) => item.id === courseId)?.title || '' }); }} className="inline-flex shrink-0 items-center gap-1.5 rounded-xl bg-[#111827] px-4 py-2 text-sm font-bold text-white hover:bg-slate-800"><Plus className="h-4 w-4" />Schedule class</button>
       </div>
 
       <div className="flex flex-wrap items-center gap-2">
