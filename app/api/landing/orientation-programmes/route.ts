@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server';
 import { localOrientationProgrammes } from '@/lib/orientation-programme-store';
+import { withProgrammeExtras } from '@/lib/programme-extras';
 
 export const dynamic = 'force-dynamic';
 
@@ -26,5 +27,5 @@ export async function GET() {
     })
     .sort((a, b) => new Date(String(a.event_date)).getTime() - new Date(String(b.event_date)).getTime());
 
-  return NextResponse.json({ success: true, programmes });
+  return NextResponse.json({ success: true, programmes: await withProgrammeExtras(programmes) });
 }

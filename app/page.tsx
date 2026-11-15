@@ -3,7 +3,9 @@ import Navbar from '@/components/landing/Navbar';
 import Hero from '@/components/landing/Hero';
 import About from '@/components/landing/About';
 import SuccessStories from '@/components/landing/SuccessStories';
+import ServiceSection from '@/components/landing/ServiceSection';
 import WhyChooseUs from '@/components/landing/WhyChooseUs';
+import LatestFromLms from '@/components/landing/LatestFromLms';
 import BlogAndContact from '@/components/landing/BlogAndContact';
 
 const CoursesSection = dynamic(() => import('@/components/landing/CoursesSection'));
@@ -18,8 +20,10 @@ export default function HomePage() {
       <About />
       <SuccessStories />
       <CoursesSection />
+      <ServiceSection />
       <WhyChooseUs />
       <Testimonials />
+      <LatestFromLms />
       <BlogAndContact />
       <Footer />
     </main>

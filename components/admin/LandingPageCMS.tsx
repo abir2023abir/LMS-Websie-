@@ -24,9 +24,9 @@ const groups: { label: string; sections: Section[] }[] = [
       { id: 'hero', name: 'Hero', icon: Home, description: 'The first screen visitors see: headline, text, buttons and picture.', preview: '/' },
       { id: 'about', name: 'About', icon: Info, description: 'The "A Better Learning Journey" section with its four cards.', preview: '/' },
       { id: 'features', name: 'Why Choose Us', icon: Sparkles, description: 'The reasons to learn with Career Bridge.Studio.', preview: '/' },
-      { id: 'stories', name: 'Success Stories', icon: Trophy, description: 'Real learner stories. The section stays hidden until you add one.', preview: '/' },
+      { id: 'stories', name: 'Success Stories', icon: Trophy, description: 'Learner story videos. The section stays hidden until you add one.', preview: '/' },
       { id: 'orientation', name: 'Live Programmes', icon: CalendarDays, description: 'Orientation sessions and workshops. Shown only when one is scheduled.', preview: '/' },
-      { id: 'reviews', name: 'Reviews', icon: MessageSquareQuote, description: 'Verified learner reviews for "What Our Learners Say".', preview: '/' },
+      { id: 'reviews', name: 'Reviews', icon: MessageSquareQuote, description: 'Verified learner reviews for "Student Reviews".', preview: '/' },
     ],
   },
   {
@@ -39,7 +39,7 @@ const groups: { label: string; sections: Section[] }[] = [
   {
     label: 'More',
     sections: [
-      { id: 'blog', name: 'Blog', icon: BookOpen, description: 'Articles. The blog is hidden on the site until you publish real articles.' },
+      { id: 'blog', name: 'Blog', icon: BookOpen, description: 'Articles for "Latest from LMS" on the home page. The two newest are shown; the section stays hidden until you add one.', preview: '/' },
       { id: 'enquiries', name: 'Enquiries', icon: Inbox, description: 'Messages sent from the website contact form.' },
     ],
   },

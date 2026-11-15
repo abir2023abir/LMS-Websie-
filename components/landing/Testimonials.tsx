@@ -13,6 +13,9 @@ type LearnerReview = {
   rating: number | null;
 };
 
+// "Md. Arif" -> "MA": first letters of the first two words.
+const initials = (name: string) => name.trim().split(/\s+/).slice(0, 2).map((word) => word.charAt(0)).join('').toUpperCase();
+
 export default function Testimonials() {
   const [reviews, setReviews] = useState<LearnerReview[]>([]);
   const [currentIndex, setCurrentIndex] = useState(0);
@@ -53,14 +56,14 @@ export default function Testimonials() {
             <span className="flex items-center justify-center rounded-full bg-[#FACC15] p-1 text-[#111827]">
               <ChevronsRight className="h-3.5 w-3.5" />
             </span>
-            <span className="text-xs font-bold tracking-wide">LEARNER FEEDBACK</span>
+            <span className="text-xs font-bold tracking-wide">STUDENT REVIEWS</span>
           </div>
 
           <h2 className="font-display text-3xl font-extrabold tracking-tight text-white sm:text-4xl">
-            What Our Learners Say
+            Student Reviews
           </h2>
           <p className="max-w-2xl text-sm text-slate-400 sm:text-base">
-            Real experiences from learners who have used our courses and learning resources.
+            শিক্ষার্থীদের অভিজ্ঞতা আমাদের শেখার মান আরও উন্নত করে।
           </p>
         </div>
 
@@ -80,20 +83,6 @@ export default function Testimonials() {
               >
                 <Quote aria-hidden="true" className="absolute right-6 top-6 h-10 w-10 text-[#FACC15]/25" />
                 <div className="space-y-4 pr-10">
-                  <h3 className="font-display text-lg font-bold text-white">{review.title}</h3>
-                  <p className="text-sm leading-relaxed text-slate-300">“{review.text}”</p>
-                </div>
-
-                <div className="mt-7 flex flex-wrap items-center justify-between gap-4 border-t border-white/10 pt-5">
-                  <div className="flex min-w-0 items-center gap-3">
-                    <div aria-hidden="true" className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full border border-[#FACC15]/70 bg-slate-700 font-bold text-[#FACC15]">
-                      {review.name.trim().charAt(0).toUpperCase()}
-                    </div>
-                    <div className="min-w-0">
-                      <p className="truncate text-sm font-bold text-white">{review.name}</p>
-                      {review.role && <p className="mt-0.5 truncate text-xs text-slate-400">{review.role}</p>}
-                    </div>
-                  </div>
                   {review.rating && (
                     <div className="flex items-center gap-0.5" aria-label={`${review.rating} out of 5 stars`}>
                       {Array.from({ length: review.rating }).map((_, starIndex) => (
@@ -101,6 +90,20 @@ export default function Testimonials() {
                       ))}
                     </div>
                   )}
+                  {review.title && review.title !== 'A Better Learning Experience' && <h3 className="font-display text-lg font-bold text-white">{review.title}</h3>}
+                  <p className="text-sm leading-relaxed text-slate-300">“{review.text}”</p>
+                </div>
+
+                <div className="mt-7 flex flex-wrap items-center justify-between gap-4 border-t border-white/10 pt-5">
+                  <div className="flex min-w-0 items-center gap-3">
+                    <div aria-hidden="true" className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl border border-[#FACC15]/70 bg-slate-700 text-sm font-bold text-[#FACC15]">
+                      {initials(review.name)}
+                    </div>
+                    <div className="min-w-0">
+                      <p className="truncate text-sm font-bold text-white">{review.name}</p>
+                      {review.role && <p className="mt-0.5 truncate text-xs text-slate-400">{review.role}</p>}
+                    </div>
+                  </div>
                 </div>
               </motion.article>
             ))}

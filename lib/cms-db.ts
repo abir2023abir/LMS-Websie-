@@ -119,6 +119,8 @@ export type SuccessStory = {
   headline: string;
   description: string;
   caption: string;
+  /** YouTube link of the story video; the card shows the headline when it is empty. */
+  videoUrl?: string;
   order: number;
   updatedAt?: any;
 };

@@ -1,3 +1,4 @@
+import Image from 'next/image';
 import { ChevronsRight, Award, Users, ShieldCheck, Banknote, BookOpen, Clock, CheckCircle, Star } from 'lucide-react';
 import { getFeatures } from '@/lib/cms-db';
 
@@ -43,21 +44,33 @@ export default async function WhyChooseUs() {
           </p>
         </div>
 
-        {/* Two Column Layout: Left Image, Right 4 Grid Feature Cards */}
-        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-          {featuresData.map((feat) => {
-            const Icon = iconMap[feat.icon] || ShieldCheck;
-            return (
-              <article key={feat.title} className="flex min-h-44 flex-col items-center rounded-3xl border border-slate-200 bg-white px-6 py-8 text-center shadow-[0_16px_36px_-24px_rgba(17,24,39,0.35)]">
-                <span className="flex h-20 w-20 items-center justify-center rounded-3xl bg-[#111827] text-[#FACC15]">
-                  <Icon className="h-10 w-10" strokeWidth={2.25} />
-                </span>
-                <h3 className="mt-5 font-display text-xl font-extrabold text-[#111827]">{feat.title}</h3>
-                <span className="mt-3 h-1 w-10 rounded-full bg-[#FACC15]" />
-                <p className="mt-3 max-w-sm text-sm leading-relaxed text-slate-600">{feat.description}</p>
-              </article>
-            );
-          })}
+        {/* Left: picture. Right: the four reasons in a 2 x 2 grid. */}
+        <div className="grid grid-cols-1 gap-4 lg:grid-cols-12 lg:gap-6">
+          <div className="relative min-h-72 overflow-hidden rounded-3xl border border-slate-200 bg-slate-100 shadow-[0_16px_36px_-24px_rgba(17,24,39,0.35)] lg:col-span-5">
+            <Image
+              src="https://images.unsplash.com/photo-1522071820081-009f0129c71c?w=900&h=1100&fit=crop"
+              alt="Students learning together in a study environment"
+              fill
+              className="object-cover"
+              sizes="(max-width: 1024px) 100vw, 40vw"
+            />
+          </div>
+
+          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:col-span-7">
+            {featuresData.map((feat) => {
+              const Icon = iconMap[feat.icon] || ShieldCheck;
+              return (
+                <article key={feat.title} className="flex min-h-44 flex-col items-center rounded-3xl border border-slate-200 bg-white px-6 py-8 text-center shadow-[0_16px_36px_-24px_rgba(17,24,39,0.35)]">
+                  <span className="flex h-20 w-20 items-center justify-center rounded-3xl bg-[#111827] text-[#FACC15]">
+                    <Icon className="h-10 w-10" strokeWidth={2.25} />
+                  </span>
+                  <h3 className="mt-5 font-display text-xl font-extrabold text-[#111827]">{feat.title}</h3>
+                  <span className="mt-3 h-1 w-10 rounded-full bg-[#FACC15]" />
+                  <p className="mt-3 max-w-sm text-sm leading-relaxed text-slate-600">{feat.description}</p>
+                </article>
+              );
+            })}
+          </div>
         </div>
       </div>
     </section>

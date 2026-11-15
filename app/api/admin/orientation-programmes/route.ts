@@ -6,6 +6,7 @@ import {
   saveLocalOrientationProgramme,
   updateLocalOrientationProgramme,
 } from '@/lib/orientation-programme-store';
+import { saveProgrammeExtras, withProgrammeExtras } from '@/lib/programme-extras';
 
 const hasCmsDatabase = () => Boolean(
   process.env.NEXT_PUBLIC_SUPABASE_URL &&
@@ -13,10 +14,14 @@ const hasCmsDatabase = () => Boolean(
   process.env.SUPABASE_SERVICE_ROLE_KEY
 );
 
-async function allProgrammes() {
+async function programmeRows() {
   if (!hasCmsDatabase()) return localOrientationProgrammes();
   const { getAllOrientationProgrammes } = await import('@/lib/landing-cms');
   return getAllOrientationProgrammes();
+}
+
+async function allProgrammes() {
+  return withProgrammeExtras(await programmeRows());
 }
 
 export async function GET() {
@@ -45,6 +50,7 @@ export async function POST(request: Request) {
         const { deleteOrientationProgramme } = await import('@/lib/landing-cms');
         await deleteOrientationProgramme(id);
       } else deleteLocalOrientationProgramme(id);
+      await saveProgrammeExtras(id, null);
       return NextResponse.json({ success: true, programmes: await allProgrammes() });
     }
 
@@ -68,6 +74,12 @@ export async function POST(request: Request) {
       throw new Error('Registration URL must be an https:// link or an internal path such as /signup.');
     }
 
+    const imageUrl = String(body.image_url || '').trim();
+    if (imageUrl && !(/^https:\/\//i.test(imageUrl) || /^\/(?!\/)/.test(imageUrl))) {
+      throw new Error('Picture link must be an https:// link.');
+    }
+    const venue = String(body.venue || '').trim().slice(0, 80);
+
     const programme = {
       title,
       description,
@@ -89,6 +101,12 @@ export async function POST(request: Request) {
       if (id) updateLocalOrientationProgramme(id, { ...localProgramme, id });
       else saveLocalOrientationProgramme(localProgramme);
     }
+
+    // The picture and venue are stored beside the programme, keyed by its id.
+    const savedId = id || (await programmeRows())
+      .filter((row) => row.title === title)
+      .sort((a, b) => (b.order_index || 0) - (a.order_index || 0))[0]?.id;
+    if (savedId) await saveProgrammeExtras(savedId, { image_url: imageUrl, venue });
 
     return NextResponse.json({ success: true, programmes: await allProgrammes() });
   } catch (error) {

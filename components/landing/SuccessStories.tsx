@@ -1,5 +1,5 @@
-import { motion } from 'framer-motion';
-import { ChevronsRight, ArrowRight } from 'lucide-react';
+import { ChevronsRight } from 'lucide-react';
+import SuccessStoryGrid from './SuccessStoryGrid';
 import { getSuccessStories } from '@/lib/cms-db';
 
 export default async function SuccessStories() {
@@ -30,43 +30,16 @@ export default async function SuccessStories() {
           </p>
         </div>
 
-        {/* ── 4-Column Success Stories Grid ── */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-          {stories.map((story, index) => (
-            <div
-              key={story.id}
-              className="bg-[#FEFCE8]/60 border border-[#FEF9C3] hover:border-[#FACC15]/60 hover:shadow-lg hover:shadow-[#FACC15]/10 rounded-3xl p-6 shadow-sm transition-all flex flex-col justify-between h-full hover:-translate-y-2"
-            >
-              <div className="space-y-4">
-                <h3 className="font-display font-bold text-lg text-[#111827] leading-tight min-h-[3.5rem]">
-                  {story.headline}
-                </h3>
-                <p className="text-sm text-slate-600 leading-relaxed">
-                  {story.description}
-                </p>
-              </div>
-              <div className="pt-4 border-t border-[#FACC15]/20">
-                <p className="text-xs text-slate-500 italic">
-                  {story.caption}
-                </p>
-              </div>
-            </div>
-          ))}
-        </div>
-
-        {/* ── Bottom Action Button ── */}
-        <div className="pt-4 text-center">
-          <a
-            href="#contact"
-            className="group inline-flex items-center bg-[#FACC15] hover:bg-[#eab308] text-[#111827] rounded-full pl-6 pr-1.5 py-2.5 text-sm font-bold shadow-lg shadow-[#FACC15]/20 transition-all"
-          >
-            <span>Start Your Journey</span>
-            <div className="ml-3 w-8 h-8 rounded-full bg-[#111827] flex items-center justify-center transition-colors">
-              <ArrowRight className="w-4 h-4 text-[#FACC15]" />
-            </div>
-          </a>
-        </div>
-
+        {/* ── Two-column video story cards, four at first, then "See More" ── */}
+        <SuccessStoryGrid
+          stories={stories.map((story, index) => ({
+            id: story.id || String(index),
+            headline: story.headline,
+            description: story.description,
+            caption: story.caption,
+            videoUrl: story.videoUrl,
+          }))}
+        />
       </div>
     </section>
   );

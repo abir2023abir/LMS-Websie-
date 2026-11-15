@@ -24,6 +24,8 @@ type LiveProgramme = {
   format?: string | null;
   status?: string | null;
   registration_url?: string | null;
+  image_url?: string;
+  venue?: string;
 };
 
 export default function CoursesSection() {
@@ -104,49 +106,65 @@ export default function CoursesSection() {
           </motion.div>
 
           {/* Publish only programmes that have a real upcoming schedule. */}
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-            {liveProgrammes.map((programme, index) => (
-              <motion.div
-                key={programme.id}
-                initial={{ opacity: 0, y: 30 }}
-                whileInView={{ opacity: 1, y: 0 }}
-                viewport={{ once: true }}
-                transition={{ duration: 0.5, delay: index * 0.1 }}
-                whileHover={{ y: -8, transition: { duration: 0.2 } }}
-                className="bg-[#FEFCE8]/60 border border-[#FEF9C3] hover:border-[#FACC15]/60 hover:shadow-lg hover:shadow-[#FACC15]/10 rounded-3xl p-6 shadow-sm transition-all flex flex-col justify-between h-full"
-              >
-                <div className="space-y-4">
-                  <h3 className="font-display font-bold text-lg text-[#111827] leading-tight">
-                    {programme.title}
-                  </h3>
-                  <p className="text-sm text-slate-600 leading-relaxed">
-                    {programme.description}
-                  </p>
-                  <div className="pt-3 space-y-2 text-xs text-slate-500">
-                    <p className="flex items-center gap-2"><CalendarDays className="h-4 w-4 shrink-0 text-[#A16207]" /><span>{new Date(programme.event_date).toLocaleDateString('en-BD', { day: 'numeric', month: 'long', year: 'numeric', timeZone: 'Asia/Dhaka' })}{programme.event_time ? ` · ${programme.event_time}` : ''}</span></p>
-                    {programme.duration && <p className="flex items-center gap-2"><Timer className="h-4 w-4 shrink-0 text-[#A16207]" /><span>{programme.duration}</span></p>}
-                    {programme.format && <p className="flex items-center gap-2"><MonitorPlay className="h-4 w-4 shrink-0 text-[#A16207]" /><span>{programme.format}</span></p>}
-                    {programme.status && <p><span className="font-semibold">Registration:</span> {programme.status}</p>}
-                  </div>
-                </div>
-                {programme.registration_url && (
-                  <div className="pt-4">
-                  <a
-                    href={programme.registration_url}
-                    target={programme.registration_url.startsWith('http') ? '_blank' : undefined}
-                    rel={programme.registration_url.startsWith('http') ? 'noopener noreferrer' : undefined}
-                    className="group inline-flex items-center bg-[#FACC15] hover:bg-[#eab308] text-[#111827] rounded-full pl-4 pr-1 py-1.5 text-xs font-bold transition-all shadow-md shadow-[#FACC15]/20"
-                  >
-                    <span>{programme.status?.toLowerCase().includes('open') ? 'Register Now' : 'View Programme'}</span>
-                    <div className="ml-2 w-6 h-6 rounded-full bg-[#111827] flex items-center justify-center">
-                      <ArrowRight className="w-3.5 h-3.5 text-[#FACC15]" />
+          <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
+            {liveProgrammes.map((programme, index) => {
+              const date = new Date(programme.event_date);
+              const external = programme.registration_url?.startsWith('http');
+              return (
+                <motion.article
+                  key={programme.id}
+                  initial={{ opacity: 0, y: 30 }}
+                  whileInView={{ opacity: 1, y: 0 }}
+                  viewport={{ once: true }}
+                  transition={{ duration: 0.5, delay: index * 0.1 }}
+                  className="flex h-full flex-col overflow-hidden rounded-3xl border border-slate-200 bg-white shadow-[0_16px_36px_-24px_rgba(17,24,39,0.35)] transition hover:-translate-y-1 hover:border-[#FACC15]"
+                >
+                  <div className="relative aspect-[16/9] overflow-hidden bg-[#111827]">
+                    {programme.image_url ? (
+                      // eslint-disable-next-line @next/next/no-img-element
+                      <img src={programme.image_url} alt="" loading="lazy" className="absolute inset-0 h-full w-full object-cover" />
+                    ) : (
+                      <div className="absolute inset-0 flex flex-col items-center justify-center text-[#FACC15]">
+                        <span className="font-display text-6xl font-extrabold leading-none">{date.toLocaleDateString('en-BD', { day: 'numeric', timeZone: 'Asia/Dhaka' })}</span>
+                        <span className="mt-2 text-sm font-bold uppercase tracking-[0.2em] text-white">{date.toLocaleDateString('en-BD', { month: 'long', year: 'numeric', timeZone: 'Asia/Dhaka' })}</span>
+                      </div>
+                    )}
+                    <div className="absolute inset-x-3 top-3 flex items-start justify-between gap-2">
+                      <span className="rounded-full bg-[#FACC15] px-3 py-1 text-[11px] font-extrabold uppercase tracking-wide text-[#111827] shadow">{programme.format || 'Live Online'}</span>
+                      <span className="rounded-full border border-white/20 bg-[#111827]/90 px-3 py-1 text-[11px] font-extrabold text-[#FACC15] shadow">Upcoming</span>
                     </div>
-                  </a>
                   </div>
-                )}
-              </motion.div>
-            ))}
-            </div>
+
+                  <div className="flex flex-1 flex-col gap-3 border-t border-slate-200 p-5 sm:p-6">
+                    <div className="flex flex-wrap items-center justify-between gap-x-4 gap-y-1 text-xs font-semibold text-slate-500">
+                      <span className="flex items-center gap-1.5"><MonitorPlay className="h-4 w-4 shrink-0 text-[#A16207]" />{programme.venue || programme.format || 'Online'}</span>
+                      {programme.event_time && <span className="flex items-center gap-1.5 font-bold text-[#111827]"><Clock className="h-4 w-4 shrink-0 text-[#A16207]" />{programme.event_time}</span>}
+                    </div>
+                    <h3 className="font-display text-xl font-extrabold leading-snug text-[#111827]">{programme.title}</h3>
+                    <p className="text-sm leading-relaxed text-slate-600">{programme.description}</p>
+                    <div className="mt-auto flex flex-wrap items-center gap-x-4 gap-y-1 pt-1 text-xs text-slate-500">
+                      <span className="flex items-center gap-1.5"><CalendarDays className="h-4 w-4 shrink-0 text-[#A16207]" />{date.toLocaleDateString('en-BD', { day: 'numeric', month: 'long', year: 'numeric', timeZone: 'Asia/Dhaka' })}</span>
+                      {programme.duration && <span className="flex items-center gap-1.5"><Timer className="h-4 w-4 shrink-0 text-[#A16207]" />{programme.duration}</span>}
+                      {programme.status && <span>{programme.status}</span>}
+                    </div>
+                    {programme.registration_url && (
+                      <a
+                        href={programme.registration_url}
+                        target={external ? '_blank' : undefined}
+                        rel={external ? 'noopener noreferrer' : undefined}
+                        className="group inline-flex items-center self-start rounded-full bg-[#FACC15] py-1.5 pl-4 pr-1 text-xs font-bold text-[#111827] shadow-md shadow-[#FACC15]/20 transition-all hover:bg-[#eab308]"
+                      >
+                        <span>{programme.status?.toLowerCase().includes('open') ? 'Register Now' : 'View Programme'}</span>
+                        <span className="ml-2 flex h-6 w-6 items-center justify-center rounded-full bg-[#111827]">
+                          <ArrowRight className="h-3.5 w-3.5 text-[#FACC15]" />
+                        </span>
+                      </a>
+                    )}
+                  </div>
+                </motion.article>
+              );
+            })}
+          </div>
         </div>
       </div>
       )}

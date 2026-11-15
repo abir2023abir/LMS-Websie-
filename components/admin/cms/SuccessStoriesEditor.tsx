@@ -15,6 +15,7 @@ export default function SuccessStoriesEditor() {
     headline: '',
     description: '',
     caption: '',
+    videoUrl: '',
   });
 
   useEffect(() => {
@@ -55,7 +56,7 @@ export default function SuccessStoriesEditor() {
       }
       setIsModalOpen(false);
       setEditingStory(null);
-      setFormData({ headline: '', description: '', caption: '' });
+      setFormData({ headline: '', description: '', caption: '', videoUrl: '' });
       fetchStories();
     } catch (error) {
       console.error('Error saving story:', error);
@@ -83,6 +84,7 @@ export default function SuccessStoriesEditor() {
       headline: story.headline,
       description: story.description,
       caption: story.caption,
+      videoUrl: story.videoUrl || '',
     });
     setIsModalOpen(true);
   };
@@ -125,7 +127,7 @@ export default function SuccessStoriesEditor() {
         <button
           onClick={() => {
             setEditingStory(null);
-            setFormData({ headline: '', description: '', caption: '' });
+            setFormData({ headline: '', description: '', caption: '', videoUrl: '' });
             setIsModalOpen(true);
           }}
           className="flex shrink-0 items-center gap-1.5 rounded-xl bg-[#111827] px-4 py-2 text-sm font-bold text-white hover:bg-slate-800"
@@ -205,7 +207,7 @@ export default function SuccessStoriesEditor() {
           onClose={() => {
             setIsModalOpen(false);
             setEditingStory(null);
-            setFormData({ headline: '', description: '', caption: '' });
+            setFormData({ headline: '', description: '', caption: '', videoUrl: '' });
           }}
         >
           <div className="space-y-4">
@@ -236,12 +238,23 @@ export default function SuccessStoriesEditor() {
                 className="w-full px-4 py-2 border border-slate-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#FACC15]"
               />
             </div>
+            <div className="space-y-2">
+              <label className="block text-xs font-bold text-slate-500 uppercase">Video link (YouTube)</label>
+              <input
+                type="url"
+                value={formData.videoUrl}
+                onChange={(e) => setFormData({ ...formData, videoUrl: e.target.value })}
+                placeholder="https://www.youtube.com/watch?v=…"
+                className="w-full px-4 py-2 border border-slate-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#FACC15]"
+              />
+              <p className="text-xs text-slate-500">The story card plays this video. Leave it empty to show the headline instead.</p>
+            </div>
             <div className="flex justify-end gap-3 pt-4">
               <button
                 onClick={() => {
                   setIsModalOpen(false);
                   setEditingStory(null);
-                  setFormData({ headline: '', description: '', caption: '' });
+                  setFormData({ headline: '', description: '', caption: '', videoUrl: '' });
                 }}
                 className="px-4 py-2 border border-slate-300 rounded-lg text-sm font-medium text-slate-700 hover:bg-slate-50 transition-colors"
               >

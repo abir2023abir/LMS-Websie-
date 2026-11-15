@@ -13,6 +13,8 @@ type Programme = {
   format?: string | null;
   status?: string | null;
   registration_url?: string | null;
+  image_url?: string;
+  venue?: string;
   is_active: boolean;
 };
 
@@ -26,12 +28,14 @@ type Draft = {
   format: string;
   status: string;
   registration_url: string;
+  image_url: string;
+  venue: string;
   is_active: boolean;
 };
 
 const blankDraft: Draft = {
   title: '', description: '', event_date: '', event_time: '', duration: '', format: '',
-  status: 'Registration Open', registration_url: '', is_active: true,
+  status: 'Registration Open', registration_url: '', image_url: '', venue: '', is_active: true,
 };
 
 const fieldClass = 'w-full rounded-xl border border-slate-200 bg-white px-3.5 py-2.5 text-sm text-slate-900 outline-none focus:border-amber-400 focus:ring-2 focus:ring-amber-100';
@@ -116,6 +120,8 @@ export default function OrientationProgrammesManager() {
     format: programme.format || '',
     status: programme.status || 'Scheduled',
     registration_url: programme.registration_url || '',
+    image_url: programme.image_url || '',
+    venue: programme.venue || '',
     is_active: programme.is_active,
   });
 
@@ -189,6 +195,8 @@ export default function OrientationProgrammesManager() {
               <label className="space-y-1.5 text-xs font-semibold text-slate-600">Format<input value={draft.format} onChange={(e) => setDraft({ ...draft, format: e.target.value })} placeholder="e.g. Live online session" className={fieldClass} /></label>
               <label className="space-y-1.5 text-xs font-semibold text-slate-600">Registration status<select value={draft.status} onChange={(e) => setDraft({ ...draft, status: e.target.value })} className={fieldClass}><option>Registration Open</option><option>Registration Closed</option><option>Full</option><option>Scheduled</option></select></label>
               <label className="space-y-1.5 text-xs font-semibold text-slate-600">Registration URL<input type="text" value={draft.registration_url} onChange={(e) => setDraft({ ...draft, registration_url: e.target.value })} placeholder="https://… or /signup" className={fieldClass} /></label>
+              <label className="space-y-1.5 text-xs font-semibold text-slate-600">Platform / venue<input value={draft.venue} onChange={(e) => setDraft({ ...draft, venue: e.target.value })} placeholder="e.g. Zoom, or Mirpur office" className={fieldClass} /></label>
+              <label className="space-y-1.5 text-xs font-semibold text-slate-600">Card picture link<input type="text" value={draft.image_url} onChange={(e) => setDraft({ ...draft, image_url: e.target.value })} placeholder="https://… (optional)" className={fieldClass} /></label>
               <label className="flex min-h-11 items-center gap-2 text-sm font-medium text-slate-700 sm:col-span-2"><input type="checkbox" checked={draft.is_active} onChange={(e) => setDraft({ ...draft, is_active: e.target.checked })} className="h-4 w-4 accent-amber-500" /> Publish on the homepage when the event is upcoming</label>
             </div>
             <div className="flex flex-col-reverse gap-2 border-t border-slate-100 pt-4 sm:flex-row sm:justify-end">
