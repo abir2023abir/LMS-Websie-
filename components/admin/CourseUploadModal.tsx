@@ -3,6 +3,7 @@
 import { useState, type ChangeEvent, type FormEvent } from 'react';
 import Image from 'next/image';
 import { AlertCircle, CheckCircle, Film, Image as ImageIcon, Layers, Plus, Trash2, Upload, X } from 'lucide-react';
+import { toast } from 'sonner';
 import { useAuth } from '@/context/AuthContext';
 import LessonVideoField from '@/components/admin/LessonVideoField';
 import CourseLengthField from './CourseLengthField';
@@ -90,14 +91,19 @@ export default function CourseUploadModal({
       });
       const data = await res.json();
       if (!res.ok || !data.success) throw new Error(data.error || 'Failed to create course');
+      // From here the course exists. A date or mentor that could not be saved must not keep the
+      // person on this form (pressing the button again would make a second course): they are
+      // told what is missing and taken to the builder, where both can be set.
+      const notSaved: string[] = [];
       if (asAdmin && filled === 4) {
-        const saved = await fetch('/api/courses/timeline', { method: 'PUT', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ courseId: draftCourseId, ...Object.fromEntries(Object.entries(dates).map(([key, value]) => [key, new Date(value).toISOString()])) }) });
-        const result = await saved.json().catch(() => ({}));
-        if (!saved.ok || !result.success) throw new Error(`The course was created, but the dates were not saved: ${result.message || 'please set them in the course editor.'}`);
+        const saved = await fetch('/api/courses/timeline', { method: 'PUT', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ courseId: draftCourseId, ...Object.fromEntries(Object.entries(dates).map(([key, value]) => [key, new Date(value).toISOString()])) }) }).catch(() => null);
+        const result = saved ? await saved.json().catch(() => ({})) : {};
+        if (!saved?.ok || !result.success) notSaved.push(`The timeline dates were not saved: ${result.message || 'set them in Timeline.'}`);
       }
       if (asAdmin && mentorEmail) {
-        await saveCourseMentor(draftCourseId, mentorEmail).catch((error) => { throw new Error(`The course was created, but the mentor was not saved: ${error instanceof Error ? error.message : 'choose the mentor in the course workspace.'}`); });
+        await saveCourseMentor(draftCourseId, mentorEmail).catch((error) => { notSaved.push(`The mentor was not saved: ${error instanceof Error ? error.message : 'choose the mentor in Mentor.'}`); });
       }
+      notSaved.forEach((message) => toast.error(`The course was created. ${message}`, { duration: 15000 }));
       setFormSuccess('Course created. Opening the course builder…');
       onCreated(draftCourseId);
       setTimeout(onClose, 700);
