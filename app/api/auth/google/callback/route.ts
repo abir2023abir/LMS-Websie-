@@ -5,6 +5,8 @@ import { googleProfileFromCode } from '@/lib/google-oauth';
 import { homeForRole } from '@/lib/roles';
 import { rateLimited } from '@/lib/rate-limit';
 import { setUserSession } from '@/lib/user-session';
+import { attachDeviceCookie, checkDevice } from '@/lib/device-guard';
+import { clientIp } from '@/lib/login-limit';
 
 export const dynamic = 'force-dynamic';
 
@@ -44,8 +46,11 @@ export async function GET(request: Request) {
       });
     }
     const next = saved.next && saved.next.startsWith('/') && !saved.next.startsWith('//') ? saved.next : homeForRole(profile.active_role);
+    const device = await checkDevice(request, profile, clientIp(request));
+    if (!device.ok) return fail(url.origin, 'device-blocked');
     const response = NextResponse.redirect(new URL(next, url.origin));
     setUserSession(response, profile.id);
+    attachDeviceCookie(response, device.deviceId);
     response.cookies.delete('google_oauth');
     return response;
   } catch {

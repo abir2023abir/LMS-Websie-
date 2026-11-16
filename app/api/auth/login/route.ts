@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server';
 import { checkPassword, hashPassword, profileByEmail, publicProfile } from '@/lib/accounts';
 import { setUserSession } from '@/lib/user-session';
 import { attemptsLeftMessage, clientIp, loginFailed, loginLocked, loginSucceeded } from '@/lib/login-limit';
+import { attachDeviceCookie, checkDevice } from '@/lib/device-guard';
 
 export const dynamic = 'force-dynamic';
 
@@ -40,8 +41,14 @@ export async function POST(request: Request) {
 
     await loginSucceeded(ATTEMPTS_KEY, ip);
     await loginSucceeded(ACCOUNT_KEY, account);
+    // Single-device rule: a student's account works on the device it was first used on.
+    const device = await checkDevice(request, profile, ip);
+    if (!device.ok) {
+      return NextResponse.json({ success: false, code: 'auth/device-blocked', message: device.message }, { status: 403 });
+    }
     const response = NextResponse.json({ success: true, profile: publicProfile(profile) });
     setUserSession(response, profile.id);
+    attachDeviceCookie(response, device.deviceId);
     return response;
   } catch (error: any) {
     return NextResponse.json({ success: false, message: error.message || 'Login failed.' }, { status: 500 });

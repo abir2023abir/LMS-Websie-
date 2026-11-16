@@ -109,6 +109,8 @@ function LoginPageContent() {
             <div className="p-4 rounded-xl bg-rose-50 border border-rose-200 text-xs font-medium text-rose-700">
               {googleError === 'google-not-ready'
                 ? 'Google sign-in is not switched on yet. The Client ID and Client secret still need to be added.'
+                : googleError === 'device-blocked'
+                  ? 'This account is already in use on another device. Ask the admin to allow this device.'
                 : googleError === 'google-denied'
                   ? 'Google sign-in was cancelled.'
                   : 'Google sign-in did not finish. Try again.'}

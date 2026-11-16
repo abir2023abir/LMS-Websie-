@@ -22,6 +22,7 @@ const TabLoading = () => <div className="h-64 animate-pulse rounded-3xl bg-white
 const StatsCards = dynamic(() => import('./StatsCards'), { ssr: false, loading: () => <div className="h-32 animate-pulse rounded-3xl bg-white" /> });
 const RevenueAreaChart = dynamic(() => import('./RevenueAreaChart'), { ssr: false, loading: () => <div className="h-[360px] animate-pulse rounded-3xl bg-white" /> });
 const CourseWorkspace = dynamic(() => import('./CourseWorkspace'), { loading: () => null });
+const OverviewFeed = dynamic(() => import('./OverviewFeed'), { loading: () => null });
 const AdminPaymentSetup = dynamic(() => import('./AdminPaymentSetup'), { loading: TabLoading });
 const AdminQuizzes = dynamic(() => import('./AdminQuizzes'), { loading: TabLoading });
 const AdminExams = dynamic(() => import('./AdminExams'), { loading: TabLoading });
@@ -250,6 +251,9 @@ export default function AdminDashboard({
                 </div>
               </div>
             )}
+
+            {/* Schedule, notifications, device alerts and new enrollments (admin only) */}
+            {variant === 'admin' && <OverviewFeed onOpenTab={setActiveTab} />}
           </div>
         )}
 

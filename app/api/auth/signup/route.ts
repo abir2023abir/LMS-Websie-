@@ -3,6 +3,8 @@ import { NextResponse } from 'next/server';
 import { ROLES, createProfile, profileByEmail, publicProfile, requestGuardianLink, type Role } from '@/lib/accounts';
 import { verifyAdminSession } from '@/lib/auth-server';
 import { setUserSession } from '@/lib/user-session';
+import { attachDeviceCookie, checkDevice } from '@/lib/device-guard';
+import { clientIp } from '@/lib/login-limit';
 import { rateLimited, TOO_MANY } from '@/lib/rate-limit';
 
 export const dynamic = 'force-dynamic';
@@ -52,6 +54,12 @@ export async function POST(request: Request) {
 
     const response = NextResponse.json({ success: true, profile: publicProfile(profile) });
     setUserSession(response, profile.id);
+    // A new student account is tied to the device it was created on (single-device rule).
+    // An account an admin creates for someone else is tied on that person's first sign-in instead.
+    if (role === 'Student') {
+      const device = await checkDevice(request, profile, clientIp(request));
+      if (device.ok) attachDeviceCookie(response, device.deviceId);
+    }
     return response;
   } catch (error: any) {
     const duplicate = error.message === 'duplicate';
