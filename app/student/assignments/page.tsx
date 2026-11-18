@@ -4,7 +4,7 @@ import { useEffect, useMemo, useState } from 'react';
 import Link from 'next/link';
 import { CalendarDays, ChevronRight, ClipboardList } from 'lucide-react';
 import AuthGuard from '@/components/auth/AuthGuard';
-import FloatingNavbar from '@/components/english/FloatingNavbar';
+import StudentShell from '@/components/student/StudentShell';
 
 type Assignment = {
   id: string; title: string; courseId: string; courseTitle: string; moduleTitle: string; lessonTitle: string; dueDate: string; maxScore: number;
@@ -41,10 +41,8 @@ export default function StudentAssignmentsPage() {
 
   return (
     <AuthGuard>
-      <div className="min-h-screen bg-slate-50">
-        <FloatingNavbar />
-        <main className="mx-auto max-w-3xl space-y-6 px-4 pb-16 pt-28">
-          <Link href="/student" className="text-xs font-bold text-slate-500 hover:text-slate-900">← Back to dashboard</Link>
+      <StudentShell active="assignments" title="Assignments">
+        <div className="mx-auto max-w-3xl space-y-6">
           <div className="flex flex-wrap items-end justify-between gap-3">
             <div>
               <h1 className="font-display text-3xl font-extrabold">My assignments</h1>
@@ -78,8 +76,8 @@ export default function StudentAssignmentsPage() {
               </div>
             </section>
           ))}
-        </main>
-      </div>
+        </div>
+      </StudentShell>
     </AuthGuard>
   );
 }

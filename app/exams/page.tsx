@@ -4,8 +4,7 @@ import { useCallback, useEffect, useRef, useState } from 'react';
 import Link from 'next/link';
 import { AlertTriangle, Award, CalendarClock, Check, Clock, GraduationCap, X } from 'lucide-react';
 import AuthGuard from '@/components/auth/AuthGuard';
-import FloatingNavbar from '@/components/english/FloatingNavbar';
-import EnglishFooter from '@/components/english/EnglishFooter';
+import StudentShell from '@/components/student/StudentShell';
 
 type ExamSummary = {
   id: string; title: string; description: string; courseTitle: string; moduleTitle: string; lessonTitle: string;
@@ -115,15 +114,14 @@ export default function ExamsPage() {
 
   return (
     <AuthGuard>
-      <div className="flex min-h-screen flex-col bg-slate-50 text-[#111827]">
-        <FloatingNavbar />
-        <main className="mx-auto w-full max-w-3xl flex-1 space-y-6 px-4 pb-16 pt-28">
+      <StudentShell active="exams" title="Exams">
+        <div className="mx-auto w-full max-w-3xl space-y-6 text-[#111827]">
           {error && <p className="flex items-center gap-2 rounded-2xl border border-rose-200 bg-rose-50 p-4 text-sm font-semibold text-rose-700"><AlertTriangle className="h-4 w-4" />{error}</p>}
 
           {running ? (
             <>
               {/* Sticky exam bar */}
-              <div className="sticky top-20 z-20 flex flex-wrap items-center justify-between gap-3 rounded-2xl bg-[#111827] p-4 text-white shadow-lg">
+              <div className="sticky top-[4.5rem] z-20 flex flex-wrap items-center justify-between gap-3 rounded-2xl bg-[#111827] p-4 text-white shadow-lg">
                 <div className="min-w-0">
                   <p className="truncate font-display font-bold">{running.title}</p>
                   <p className="text-xs text-slate-300">{answered} of {running.questions.length} answered · saved automatically</p>
@@ -178,8 +176,7 @@ export default function ExamsPage() {
           ) : (
             <>
               <div>
-                <Link href="/student" className="text-xs font-bold text-slate-500 hover:text-slate-900">← Back to dashboard</Link>
-                <h1 className="mt-2 font-display text-3xl font-extrabold">My exams</h1>
+                <h1 className="font-display text-3xl font-extrabold">My exams</h1>
                 <p className="text-sm text-slate-500">Exams from your courses. Each exam is timed — make sure you have a steady connection before you start.</p>
               </div>
               {loading ? (
@@ -220,9 +217,8 @@ export default function ExamsPage() {
               })}
             </>
           )}
-        </main>
-        <EnglishFooter />
-      </div>
+        </div>
+      </StudentShell>
     </AuthGuard>
   );
 }

@@ -121,6 +121,8 @@ export type SuccessStory = {
   caption: string;
   /** YouTube link of the story video; the card shows the headline when it is empty. */
   videoUrl?: string;
+  /** Where the card is shown: the home page ("Success Stories") or the bookkeeping page ("Business Insights"). Empty means home. */
+  page?: 'home' | 'bookkeeping';
   order: number;
   updatedAt?: any;
 };

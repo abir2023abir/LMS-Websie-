@@ -25,7 +25,7 @@ const left = (ms: number) => {
  * path: a student can always join one.
  */
 export default function LessonSteps({
-  courseId, lesson, lives, timeline, rank, rankTotal, onOpenTab, onChanged,
+  courseId, lesson, lives, timeline, rank, rankTotal, onOpenTab, onChanged, section = 'all',
 }: {
   courseId: string;
   lesson: LessonProgress;
@@ -35,6 +35,8 @@ export default function LessonSteps({
   rankTotal: number;
   onOpenTab: (tab: 'overview' | 'quiz' | 'assignment' | 'resources') => void;
   onChanged: () => void;
+  /** 'steps': the lesson path only; 'lives': the live classes only; 'all': both. */
+  section?: 'all' | 'steps' | 'lives';
 }) {
   const [sending, setSending] = useState(false);
   const [note, setNote] = useState('');
@@ -69,6 +71,8 @@ export default function LessonSteps({
 
   return (
     <div className="space-y-4 rounded-3xl border border-slate-200 bg-white p-5 shadow-sm">
+      {section !== 'lives' && (
+      <>
       <div className="flex flex-wrap items-center justify-between gap-2">
         <div>
           <p className="text-[11px] font-bold uppercase tracking-wide text-amber-600">Lesson path</p>
@@ -145,8 +149,14 @@ export default function LessonSteps({
         </div>
       )}
 
+      </>
+      )}
+
       {/* Live classes: always open, even when behind */}
-      {lives.length > 0 && (
+      {section === 'lives' && lives.length === 0 && (
+        <p className="rounded-2xl border border-dashed border-slate-200 px-4 py-6 text-center text-sm text-slate-500">No live class is scheduled for this lesson yet.</p>
+      )}
+      {section !== 'steps' && lives.length > 0 && (
         <div className="space-y-2 rounded-2xl border border-slate-200 p-4">
           <p className="flex items-center gap-2 text-xs font-bold uppercase tracking-wide text-slate-500"><Video className="h-4 w-4" />Live class</p>
           {lives.map((live) => (

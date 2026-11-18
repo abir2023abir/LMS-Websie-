@@ -12,6 +12,8 @@ export type LearnerReview = {
   verified: boolean;
   permission: boolean;
   published: boolean;
+  /** Where it is shown: the home page ("Student Reviews") or the bookkeeping page ("Client Experiences"). */
+  page: 'home' | 'bookkeeping';
   createdAt: string;
 };
 
@@ -22,8 +24,8 @@ export async function listReviews(): Promise<LearnerReview[]> {
   return Array.isArray(list) ? list : [];
 }
 
-export async function publishedReviews() {
-  return (await listReviews()).filter((review) => review.published && review.verified && review.permission);
+export async function publishedReviews(page: 'home' | 'bookkeeping' = 'home') {
+  return (await listReviews()).filter((review) => review.published && review.verified && review.permission && (review.page || 'home') === page);
 }
 
 export async function saveReview(input: Partial<LearnerReview>): Promise<LearnerReview> {
@@ -43,6 +45,7 @@ export async function saveReview(input: Partial<LearnerReview>): Promise<Learner
     verified: Boolean(input.verified),
     permission: Boolean(input.permission),
     published: Boolean(input.published) && Boolean(input.verified) && Boolean(input.permission),
+    page: input.page === 'bookkeeping' ? 'bookkeeping' : 'home',
     createdAt: existing?.createdAt || new Date().toISOString(),
   };
   await kvSet(KEY, existing ? list.map((item) => (item.id === review.id ? review : item)) : [review, ...list]);

@@ -4,7 +4,7 @@ import { useEffect, useMemo, useState } from 'react';
 import Link from 'next/link';
 import { Award, ChevronRight, HelpCircle } from 'lucide-react';
 import AuthGuard from '@/components/auth/AuthGuard';
-import FloatingNavbar from '@/components/english/FloatingNavbar';
+import StudentShell from '@/components/student/StudentShell';
 
 type Quiz = {
   id: string; title: string; passMark: number; questions: unknown[];
@@ -33,10 +33,8 @@ export default function StudentQuizzesPage() {
 
   return (
     <AuthGuard>
-      <div className="min-h-screen bg-slate-50">
-        <FloatingNavbar />
-        <main className="mx-auto max-w-3xl space-y-6 px-4 pb-16 pt-28">
-          <Link href="/student" className="text-xs font-bold text-slate-500 hover:text-slate-900">← Back to dashboard</Link>
+      <StudentShell active="quizzes" title="Quizzes">
+        <div className="mx-auto max-w-3xl space-y-6">
           <div className="flex flex-wrap items-end justify-between gap-3">
             <div>
               <h1 className="font-display text-3xl font-extrabold">My quizzes</h1>
@@ -76,8 +74,8 @@ export default function StudentQuizzesPage() {
               </div>
             </section>
           ))}
-        </main>
-      </div>
+        </div>
+      </StudentShell>
     </AuthGuard>
   );
 }

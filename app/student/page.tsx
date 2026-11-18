@@ -1,16 +1,16 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { Suspense, useState, useEffect } from 'react';
+import { useSearchParams } from 'next/navigation';
 import Link from 'next/link';
 import Image from 'next/image';
 import MyProgressPanel from '@/components/student/MyProgressPanel';
 import AuthGuard from '@/components/auth/AuthGuard';
 import { useAuth } from '@/context/AuthContext';
-import FloatingNavbar from '@/components/english/FloatingNavbar';
-import EnglishFooter from '@/components/english/EnglishFooter';
+import StudentShell, { type StudentNavKey } from '@/components/student/StudentShell';
+import StudentOverview from '@/components/student/StudentOverview';
 import CertificateModal from '@/components/student/CertificateModal';
 import DashboardCalendar from '@/components/dashboard/DashboardCalendar';
-import InboxButton from '@/components/inbox/InboxButton';
 import CampusMessageForm from '@/components/messages/CampusMessageForm';
 import GuardianRequests from '@/components/student/GuardianRequests';
 import {
@@ -35,8 +35,27 @@ import {
   Flame,
 } from 'lucide-react';
 
+const PARTS: Record<string, { key: StudentNavKey; title: string }> = {
+  overview: { key: 'overview', title: 'Overview' },
+  courses: { key: 'courses', title: 'My Courses' },
+  calendar: { key: 'calendar', title: 'Calendar' },
+  progress: { key: 'progress', title: 'My Progress' },
+  certificates: { key: 'certificates', title: 'Certificates' },
+  messages: { key: 'messages', title: 'Messages' },
+};
+
 export default function StudentDashboardPage() {
-  const { userProfile, user, logout } = useAuth();
+  // useSearchParams needs a Suspense boundary in the App Router.
+  return (
+    <Suspense fallback={null}>
+      <StudentDashboard />
+    </Suspense>
+  );
+}
+
+function StudentDashboard() {
+  const part = PARTS[useSearchParams().get('tab') || ''] || PARTS.overview;
+  const { userProfile, user } = useAuth();
   const [enrolledCourses, setEnrolledCourses] = useState<EnrolledCourseWithProgress[]>([]);
   const [loading, setLoading] = useState(true);
   const [activeTab, setActiveTab] = useState<'all' | 'in_progress' | 'completed' | 'certificates'>('all');
@@ -77,7 +96,7 @@ export default function StudentDashboardPage() {
     if (activeTab === 'in_progress') {
       return item.progress.progressPercentage < 100;
     }
-    if (activeTab === 'completed' || activeTab === 'certificates') {
+    if (activeTab === 'completed' || part.key === 'certificates') {
       return item.progress.progressPercentage >= 100;
     }
     return true;
@@ -96,57 +115,17 @@ export default function StudentDashboardPage() {
     setIsCertModalOpen(true);
   };
 
+  const name = userProfile?.name || user?.displayName || 'Learner';
+  const subtitle = enrolledCourses.length
+    ? `${enrolledCourses.length} course${enrolledCourses.length === 1 ? '' : 's'} in progress · Career Bridge.Studio student`
+    : 'Career Bridge.Studio student · explore a course to get started';
+
   return (
     <AuthGuard allowedRole="Student">
-      <div className="min-h-screen bg-slate-50 text-[#111827] flex flex-col justify-between selection:bg-[#FACC15] selection:text-[#111827]">
-        <FloatingNavbar />
-
-        {/* ── WELCOME HERO HEADER (HOMEPAGE GOLD/YELLOW GRADIENT) ── */}
-        <section className="bg-gradient-to-b from-[#FACC15] via-[#FACC15] to-[#EAB308] pt-32 lg:pt-36 pb-14 px-4 sm:px-6 lg:px-8 text-[#111827]">
-          <div className="max-w-7xl mx-auto flex flex-col md:flex-row items-start md:items-center justify-between gap-6">
-            <div className="flex min-w-0 items-center gap-3 sm:gap-5">
-              <div className="w-16 h-16 sm:w-20 sm:h-20 rounded-2xl bg-[#111827] text-[#FACC15] flex items-center justify-center font-extrabold text-2xl sm:text-3xl shadow-xl shadow-black/20 flex-shrink-0">
-                {userProfile?.name ? userProfile.name.charAt(0).toUpperCase() : 'S'}
-              </div>
-              <div className="min-w-0 space-y-1">
-                <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-[#111827] text-white text-xs font-bold shadow-sm">
-                  <GraduationCap className="w-3.5 h-3.5 text-[#FACC15]" /> Student Panel
-                </div>
-                <h1 className="font-display font-extrabold text-2xl sm:text-4xl text-[#111827] tracking-tight break-words">
-                  Welcome back, {userProfile?.name || user?.displayName || 'Learner'}!
-                </h1>
-                <p className="text-xs sm:text-sm text-[#111827]/80 font-medium break-all sm:break-normal">
-                  {user?.email || 'Logged in to Career Bridge.Studio'}
-                </p>
-              </div>
-            </div>
-
-            <div className="flex w-full sm:w-auto items-center gap-2 sm:gap-3">
-              <InboxButton scope="own" />
-              <Link
-                href="/courses"
-                className="min-h-11 flex-1 sm:flex-none justify-center bg-[#111827] hover:bg-black text-white font-extrabold text-xs sm:text-sm px-4 sm:px-6 py-3.5 rounded-full transition-all shadow-lg shadow-black/20 flex items-center gap-2"
-              >
-                <Sparkles className="w-4 h-4 text-[#FACC15]" />
-                <span>Explore Courses</span>
-              </Link>
-              <button
-                onClick={logout}
-                className="min-h-11 min-w-11 flex-shrink-0 flex items-center justify-center p-3 rounded-full bg-white/40 hover:bg-rose-500 hover:text-white text-[#111827] border border-black/10 transition-colors"
-                title="Sign Out"
-              >
-                <LogOut className="w-4 h-4" />
-              </button>
-            </div>
-          </div>
-        </section>
-
-        {/* ── MAIN DASHBOARD CONTENT ── */}
-        <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10 w-full flex-1 space-y-10">
+      <StudentShell active={part.key} title={part.title}>
           {justPaid && (
             <div className="rounded-2xl border border-emerald-200 bg-emerald-50 p-4 text-sm font-semibold text-emerald-800">Payment received — your course is now open below.</div>
           )}
-          <MyProgressPanel />
           {pendingPayments.length > 0 && (
             <div className="rounded-2xl border border-amber-200 bg-amber-50 p-4 text-sm text-amber-900">
               <p className="font-bold">Waiting for payment approval</p>
@@ -156,75 +135,26 @@ export default function StudentDashboardPage() {
               <p className="mt-1 text-xs">The course opens here as soon as we confirm your payment.</p>
             </div>
           )}
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
-            <div className="bg-white rounded-3xl border border-slate-200/80 p-6 space-y-2 shadow-sm">
-              <div className="flex items-center justify-between">
-                <div className="w-10 h-10 rounded-xl bg-purple-50 text-purple-600 flex items-center justify-center">
-                  <BookOpen className="w-5 h-5" />
-                </div>
-                <span className="text-xs font-bold text-slate-500 uppercase">Enrolled</span>
-              </div>
-              <div className="font-display font-extrabold text-3xl text-[#111827]">
-                {enrolledCourses.length}
-              </div>
-              <div className="text-xs text-slate-500">Active Courses</div>
-            </div>
 
-            <div className="bg-white rounded-3xl border border-slate-200/80 p-6 space-y-2 shadow-sm">
-              <div className="flex items-center justify-between">
-                <div className="w-10 h-10 rounded-xl bg-amber-50 text-amber-600 flex items-center justify-center">
-                  <Flame className="w-5 h-5 fill-amber-500" />
-                </div>
-                <span className="text-xs font-bold text-amber-600 bg-amber-50 px-2 py-0.5 rounded-full">
-                  🔥 Active
+        {part.key === 'overview' && (
+          <>
+            <StudentOverview name={name} subtitle={subtitle} />
+            <GuardianRequests />
+          <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
+            {[
+              { label: 'Active courses', value: enrolledCourses.length, icon: BookOpen, href: '/student?tab=courses' },
+              { label: 'Completed courses', value: completedCount, icon: CheckCircle, href: '/student?tab=courses' },
+              { label: 'Certificates', value: completedCount, icon: Award, href: '/student?tab=certificates' },
+            ].map(({ label, value, icon: Icon, href }) => (
+              <Link key={label} href={href} className="flex items-center gap-4 rounded-3xl border border-slate-200/80 bg-white p-5 shadow-sm transition hover:-translate-y-0.5 hover:border-[#FACC15]">
+                <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl bg-[#111827] text-[#FACC15]"><Icon className="h-5 w-5" /></span>
+                <span>
+                  <span className="block font-display text-2xl font-extrabold text-[#111827]">{value}</span>
+                  <span className="text-xs font-semibold text-slate-500">{label}</span>
                 </span>
-              </div>
-              <div className="font-display font-extrabold text-3xl text-[#111827]">
-                7 Days
-              </div>
-              <div className="text-xs text-slate-500">Daily Study Streak</div>
-            </div>
-
-            <div className="bg-white rounded-3xl border border-slate-200/80 p-6 space-y-2 shadow-sm">
-              <div className="flex items-center justify-between">
-                <div className="w-10 h-10 rounded-xl bg-emerald-50 text-emerald-600 flex items-center justify-center">
-                  <CheckCircle className="w-5 h-5" />
-                </div>
-                <span className="text-xs font-bold text-slate-500 uppercase">Completed</span>
-              </div>
-              <div className="font-display font-extrabold text-3xl text-[#111827]">
-                {completedCount}
-              </div>
-              <div className="text-xs text-slate-500">100% Finished Courses</div>
-            </div>
-
-            <div className="bg-white rounded-3xl border border-slate-200/80 p-6 space-y-2 shadow-sm">
-              <div className="flex items-center justify-between">
-                <div className="w-10 h-10 rounded-xl bg-blue-50 text-blue-600 flex items-center justify-center">
-                  <Award className="w-5 h-5" />
-                </div>
-                <span className="text-xs font-bold text-slate-500 uppercase">Diplomas</span>
-              </div>
-              <div className="font-display font-extrabold text-3xl text-[#111827]">
-                {completedCount}
-              </div>
-              <div className="text-xs text-slate-500">Verified Credentials Issued</div>
-            </div>
+              </Link>
+            ))}
           </div>
-
-          <div className="flex flex-wrap gap-3">
-            <Link href="/student/assignments" className="rounded-full bg-[#111827] text-white text-xs font-bold px-4 py-2">Assignments</Link>
-            <Link href="/student/quizzes" className="rounded-full bg-[#FACC15] text-[#111827] text-xs font-bold px-4 py-2">Quizzes</Link>
-          </div>
-
-          <section className="bg-white border border-slate-200 rounded-3xl p-6 max-w-xl">
-            <CampusMessageForm kind="student" lockedKind defaultName={userProfile?.name || user?.displayName || ''} defaultEmail={user?.email || ''} />
-          </section>
-
-          <GuardianRequests />
-
-          <DashboardCalendar />
-
           {/* ── QUICK RESUME HERO CARD ── */}
           {resumeCourse && (
             <div className="bg-white rounded-3xl border border-slate-200/80 p-6 sm:p-8 shadow-sm space-y-4">
@@ -274,17 +204,19 @@ export default function StudentDashboardPage() {
               </div>
             </div>
           )}
+          </>
+        )}
 
-          {/* ── COURSE LIST & FILTER TABS ── */}
+        {(part.key === 'courses' || part.key === 'certificates') && (
           <div className="space-y-6">
+            {part.key === 'certificates' && <p className="text-sm text-slate-600">Courses you finished. Open a certificate to download or print it.</p>}
             <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
               {/* Tabs */}
-              <div className="flex items-center gap-2 bg-white border border-slate-200/80 p-1.5 rounded-2xl shadow-sm overflow-x-auto scrollbar-none">
+              <div className={`${part.key === 'certificates' ? 'hidden' : 'flex'} items-center gap-2 bg-white border border-slate-200/80 p-1.5 rounded-2xl shadow-sm overflow-x-auto scrollbar-none`}>
                 {[
                   { key: 'all', label: `All (${enrolledCourses.length})` },
                   { key: 'in_progress', label: `In Progress (${inProgressCount})` },
                   { key: 'completed', label: `Completed (${completedCount})` },
-                  { key: 'certificates', label: `Certificates (${completedCount})` },
                 ].map(({ key, label }) => (
                   <button
                     key={key}
@@ -414,7 +346,15 @@ export default function StudentDashboardPage() {
               </div>
             )}
           </div>
-        </main>
+        )}
+
+        {part.key === 'calendar' && <DashboardCalendar />}
+        {part.key === 'progress' && <MyProgressPanel />}
+        {part.key === 'messages' && (
+          <section className="max-w-xl rounded-3xl border border-slate-200 bg-white p-6">
+            <CampusMessageForm kind="student" lockedKind defaultName={name} defaultEmail={user?.email || ''} />
+          </section>
+        )}
 
         {/* ── CERTIFICATE MODAL ── */}
         {selectedCertCourse && (
@@ -424,9 +364,7 @@ export default function StudentDashboardPage() {
             courseId={String(selectedCertCourse.course.id)}
           />
         )}
-
-        <EnglishFooter />
-      </div>
+      </StudentShell>
     </AuthGuard>
   );
 }

@@ -16,6 +16,7 @@ export default function SuccessStoriesEditor() {
     description: '',
     caption: '',
     videoUrl: '',
+    page: 'home' as 'home' | 'bookkeeping',
   });
 
   useEffect(() => {
@@ -56,7 +57,7 @@ export default function SuccessStoriesEditor() {
       }
       setIsModalOpen(false);
       setEditingStory(null);
-      setFormData({ headline: '', description: '', caption: '', videoUrl: '' });
+      setFormData({ headline: '', description: '', caption: '', videoUrl: '', page: 'home' });
       fetchStories();
     } catch (error) {
       console.error('Error saving story:', error);
@@ -85,6 +86,7 @@ export default function SuccessStoriesEditor() {
       description: story.description,
       caption: story.caption,
       videoUrl: story.videoUrl || '',
+      page: story.page === 'bookkeeping' ? 'bookkeeping' : 'home',
     });
     setIsModalOpen(true);
   };
@@ -127,7 +129,7 @@ export default function SuccessStoriesEditor() {
         <button
           onClick={() => {
             setEditingStory(null);
-            setFormData({ headline: '', description: '', caption: '', videoUrl: '' });
+            setFormData({ headline: '', description: '', caption: '', videoUrl: '', page: 'home' });
             setIsModalOpen(true);
           }}
           className="flex shrink-0 items-center gap-1.5 rounded-xl bg-[#111827] px-4 py-2 text-sm font-bold text-white hover:bg-slate-800"
@@ -163,6 +165,7 @@ export default function SuccessStoriesEditor() {
                   readOnly
                   className="w-full px-3 py-1.5 border border-slate-200 rounded text-xs bg-slate-50 italic"
                 />
+                <p className="text-[11px] font-bold text-[#A16207]">{story.page === 'bookkeeping' ? 'Bookkeeping page' : 'Home page'}{story.videoUrl ? ' · has video' : ''}</p>
               </div>
               <div className="flex flex-col gap-1">
                 <button
@@ -207,7 +210,7 @@ export default function SuccessStoriesEditor() {
           onClose={() => {
             setIsModalOpen(false);
             setEditingStory(null);
-            setFormData({ headline: '', description: '', caption: '', videoUrl: '' });
+            setFormData({ headline: '', description: '', caption: '', videoUrl: '', page: 'home' });
           }}
         >
           <div className="space-y-4">
@@ -239,6 +242,18 @@ export default function SuccessStoriesEditor() {
               />
             </div>
             <div className="space-y-2">
+              <label className="block text-xs font-bold text-slate-500 uppercase">Show on</label>
+              <select
+                value={formData.page}
+                onChange={(e) => setFormData({ ...formData, page: e.target.value === 'bookkeeping' ? 'bookkeeping' : 'home' })}
+                className="w-full px-4 py-2 border border-slate-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#FACC15]"
+              >
+                <option value="home">Home page — Success Stories</option>
+                <option value="bookkeeping">Bookkeeping page — Business Insights &amp; Advice</option>
+              </select>
+              <p className="text-xs text-slate-500">On the bookkeeping page the Caption is shown as the topic, e.g. BUSINESS FINANCE.</p>
+            </div>
+            <div className="space-y-2">
               <label className="block text-xs font-bold text-slate-500 uppercase">Video link (YouTube)</label>
               <input
                 type="url"
@@ -254,7 +269,7 @@ export default function SuccessStoriesEditor() {
                 onClick={() => {
                   setIsModalOpen(false);
                   setEditingStory(null);
-                  setFormData({ headline: '', description: '', caption: '', videoUrl: '' });
+                  setFormData({ headline: '', description: '', caption: '', videoUrl: '', page: 'home' });
                 }}
                 className="px-4 py-2 border border-slate-300 rounded-lg text-sm font-medium text-slate-700 hover:bg-slate-50 transition-colors"
               >

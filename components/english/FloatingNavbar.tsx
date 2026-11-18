@@ -8,16 +8,20 @@ import { useAuth } from '@/context/AuthContext';
 import { homeForRole } from '@/lib/roles';
 import BrandLogo from '@/components/brand/BrandLogo';
 
-export default function FloatingNavbar() {
+type NavItem = { name: string; href: string };
+
+const DEFAULT_ITEMS: NavItem[] = [
+  { name: 'Home', href: '/' },
+  { name: 'All Courses', href: '/courses' },
+  { name: 'Bookkeeping', href: '/bookkeeping' },
+  { name: 'Contact', href: '/contact#contact' },
+];
+
+export default function FloatingNavbar({ items }: { items?: NavItem[] } = {}) {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const { user, role } = useAuth();
 
-  const navItems = [
-    { name: 'Home', href: '/' },
-    { name: 'All Courses', href: '/courses' },
-    { name: 'Bookkeeping', href: '/bookkeeping' },
-    { name: 'Contact', href: '/contact#contact' },
-  ];
+  const navItems = items || DEFAULT_ITEMS;
 
   return (
     <header className="fixed top-3 sm:top-4 left-0 right-0 z-50 mx-auto w-full max-w-6xl px-3 sm:px-4">

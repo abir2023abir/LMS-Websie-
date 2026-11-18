@@ -252,6 +252,10 @@ export default function CoursesSection() {
                       <span className="flex items-center gap-1">
                         <Clock className="w-3.5 h-3.5 text-[#FACC15]" /> {course.duration}
                       </span>
+                      {/* Every course runs with live classes (client layout: "◷ 20h 00m · Live"). */}
+                      <span className="flex items-center gap-1.5 rounded-full bg-[#FACC15]/15 px-2 py-0.5 text-[10px] font-bold uppercase tracking-wide text-[#FACC15]">
+                        <span className="h-1.5 w-1.5 rounded-full bg-rose-500" aria-hidden="true" /> Live
+                      </span>
                     </div>
 
                     <Link href={`/courses/${course.id}`}>

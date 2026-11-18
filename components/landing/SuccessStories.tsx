@@ -3,7 +3,7 @@ import SuccessStoryGrid from './SuccessStoryGrid';
 import { getSuccessStories } from '@/lib/cms-db';
 
 export default async function SuccessStories() {
-  const stories = await getSuccessStories();
+  const stories = (await getSuccessStories()).filter((story) => (story.page || 'home') === 'home');
   if (stories.length === 0) return null;
 
   return (

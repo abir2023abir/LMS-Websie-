@@ -12,12 +12,13 @@ type Review = {
   title: string;
   text: string;
   rating: number | null;
+  page?: 'home' | 'bookkeeping';
   verified: boolean;
   permission: boolean;
   published: boolean;
 };
 
-const empty: Review = { name: '', role: '', title: '', text: '', rating: 5, verified: false, permission: false, published: false };
+const empty: Review = { name: '', role: '', title: '', text: '', rating: 5, verified: false, permission: false, published: false, page: 'home' };
 
 export default function ReviewsEditor() {
   const [reviews, setReviews] = useState<Review[]>([]);
@@ -75,6 +76,7 @@ export default function ReviewsEditor() {
                 <div className="min-w-0">
                   <p className="truncate font-bold text-slate-900">{review.name}</p>
                   {review.role && <p className="truncate text-xs text-slate-500">{review.role}</p>}
+                  <p className="text-[11px] font-bold text-[#A16207]">{review.page === 'bookkeeping' ? 'Bookkeeping page' : 'Home page'}</p>
                 </div>
                 <span className={`shrink-0 rounded-full px-2.5 py-0.5 text-[11px] font-bold ${review.published ? 'bg-emerald-50 text-emerald-700' : 'bg-slate-100 text-slate-600'}`}>{review.published ? 'Published' : 'Hidden'}</span>
               </div>
@@ -102,6 +104,12 @@ export default function ReviewsEditor() {
             </div>
             <label className="block text-xs font-bold text-slate-500">Headline (optional)<input className={`${fieldClass} mt-1`} value={draft.title} onChange={(e) => setDraft({ ...draft, title: e.target.value })} /></label>
             <label className="block text-xs font-bold text-slate-500">Review<textarea className={`${fieldClass} mt-1`} rows={4} value={draft.text} onChange={(e) => setDraft({ ...draft, text: e.target.value })} /></label>
+            <label className="block text-xs font-bold text-slate-500">Show on
+              <select className={`${fieldClass} mt-1`} value={draft.page || 'home'} onChange={(e) => setDraft({ ...draft, page: e.target.value === 'bookkeeping' ? 'bookkeeping' : 'home' })}>
+                <option value="home">Home page — Student Reviews</option>
+                <option value="bookkeeping">Bookkeeping page — Client Experiences</option>
+              </select>
+            </label>
             <label className="block text-xs font-bold text-slate-500">Rating
               <select className={`${fieldClass} mt-1`} value={draft.rating ?? ''} onChange={(e) => setDraft({ ...draft, rating: e.target.value ? Number(e.target.value) : null })}>
                 <option value="">No rating</option>

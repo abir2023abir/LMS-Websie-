@@ -28,6 +28,8 @@ interface SecureVideoPlayerProps {
   studentName?: string;
   studentEmail?: string;
   autoPlayNext?: boolean;
+  /** Playback speed a new video starts at (Settings tab). */
+  defaultSpeed?: number;
   onEnded?: () => void;
   onNextLesson?: () => void;
   onPrevLesson?: () => void;
@@ -45,6 +47,7 @@ export default function SecureVideoPlayer({
   studentName = 'Student Learner',
   studentEmail = 'student@example.com',
   autoPlayNext = true,
+  defaultSpeed = 1,
   onEnded,
   onNextLesson,
   onPrevLesson,
@@ -63,7 +66,13 @@ export default function SecureVideoPlayer({
   const [duration, setDuration] = useState(0);
   const [volume, setVolume] = useState(1);
   const [isMuted, setIsMuted] = useState(false);
-  const [playbackSpeed, setPlaybackSpeed] = useState(1);
+  const [playbackSpeed, setPlaybackSpeed] = useState(defaultSpeed);
+  // A new lesson video, or a new preferred speed, starts at the preferred speed.
+  useEffect(() => {
+    setPlaybackSpeed(defaultSpeed);
+    // defaultPlaybackRate survives the browser resetting the rate when a new video loads.
+    if (videoRef.current) { videoRef.current.defaultPlaybackRate = defaultSpeed; videoRef.current.playbackRate = defaultSpeed; }
+  }, [defaultSpeed, videoUrl]);
   const [showSpeedMenu, setShowSpeedMenu] = useState(false);
   const [isFullscreen, setIsFullscreen] = useState(false);
   const [showControls, setShowControls] = useState(true);

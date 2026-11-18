@@ -22,9 +22,16 @@ import LessonQuestions from '@/components/student/LessonQuestions';
 import LessonQuiz from '@/components/student/LessonQuiz';
 import LessonAssignment from '@/components/student/LessonAssignment';
 import LessonSteps, { type CourseTimeline, type LessonProgress, type LiveSession } from '@/components/student/LessonSteps';
+import CourseReviewForm from '@/components/student/CourseReviewForm';
+import LearningSettings, { useLearningPrefs } from '@/components/student/LearningSettings';
+import CampusMessageForm from '@/components/messages/CampusMessageForm';
 import { lessonNote, lessonVideo, recordWatch, saveLessonNote, watchPercent } from '@/lib/workspace';
 import type { CourseSchema, ModuleSchema, LessonSchema } from '@/types/course';
 import {
+  Layers,
+  Star,
+  Mail,
+  Settings,
   BookOpen,
   CheckCircle2,
   PlayCircle,
@@ -71,7 +78,15 @@ export default function StudentLearnPage() {
   });
 
   // Active tab beneath the video player
-  const [activeTab, setActiveTab] = useState<'overview' | 'quiz' | 'assignment' | 'discussion' | 'resources'>('overview');
+  // Classroom tabs (client layout): Overview, Modules, Discussion, Reviews, Relevant Questions, Classroom, Message, Settings.
+  type ClassTab = 'overview' | 'modules' | 'discussion' | 'reviews' | 'questions' | 'classroom' | 'message' | 'settings';
+  const [activeTab, setActiveTab] = useState<ClassTab>('overview');
+  const [prefs, setPrefs] = useLearningPrefs();
+  // The lesson path's buttons open the tab that holds that part.
+  const openPart = (part: 'overview' | 'quiz' | 'assignment' | 'resources') => {
+    setActiveTab(part === 'quiz' ? 'questions' : part === 'assignment' ? 'classroom' : 'overview');
+    document.getElementById('classroom-panel')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  };
 
   // Lesson path from the server: overview + video → quiz → notes + assignment → exam. Live classes stay open.
   const [path, setPath] = useState<{ lessons: LessonProgress[]; lives: LiveSession[]; timeline?: CourseTimeline; notices?: { id: string; kind: string; text: string; by: string }[]; examsPaused?: boolean; rank: number | null; rankTotal: number } | null>(null);
@@ -360,8 +375,35 @@ export default function StudentLearnPage() {
                 }}
                 onNextLesson={hasNextLesson ? handleNextLesson : undefined}
                 onPrevLesson={hasPrevLesson ? handlePrevLesson : undefined}
+                autoPlayNext={prefs.autoPlayNext}
+                defaultSpeed={prefs.speed}
               />
             </div>
+
+            {/* ── CLASSROOM TABS (right under the video, as in the client layout) ── */}
+            <nav aria-label="Classroom" className="flex gap-2 overflow-x-auto rounded-2xl border border-slate-200/80 bg-white p-2 shadow-sm scrollbar-none">
+              {([
+                { key: 'overview', label: 'Overview', icon: FileText },
+                { key: 'modules', label: 'Modules', icon: Layers },
+                { key: 'discussion', label: 'Discussion', icon: MessageSquare },
+                { key: 'reviews', label: 'Reviews', icon: Star },
+                { key: 'questions', label: 'Relevant Questions', icon: HelpCircle },
+                { key: 'classroom', label: 'Classroom', icon: ClipboardList },
+                { key: 'message', label: 'Message', icon: Mail },
+                { key: 'settings', label: 'Settings', icon: Settings },
+              ] as { key: ClassTab; label: string; icon: typeof FileText }[]).map(({ key, label, icon: Icon }) => (
+                <button
+                  key={key}
+                  type="button"
+                  onClick={() => setActiveTab(key)}
+                  aria-current={activeTab === key ? 'page' : undefined}
+                  className={`flex min-h-10 shrink-0 items-center gap-2 rounded-xl px-3.5 text-xs font-bold transition-all whitespace-nowrap ${activeTab === key ? 'bg-[#FACC15] text-[#111827] shadow-sm' : 'text-slate-600 hover:bg-slate-100 hover:text-[#111827]'}`}
+                >
+                  <Icon className="h-4 w-4" />
+                  <span>{label}</span>
+                </button>
+              ))}
+            </nav>
 
             {currentLesson && (
               <div className="bg-white rounded-3xl border border-slate-200 p-5 shadow-sm space-y-3">
@@ -393,19 +435,6 @@ export default function StudentLearnPage() {
                 <p className="mt-1 whitespace-pre-line font-medium">{notice.text}</p>
               </div>
             ))}
-            {currentPath && path && (
-              <LessonSteps
-                courseId={courseId}
-                lesson={currentPath}
-                lives={path.lives}
-                timeline={path.timeline}
-                rank={path.rank}
-                rankTotal={path.rankTotal}
-                onOpenTab={(tab) => setActiveTab(tab)}
-                onChanged={() => loadPath(currentLesson?.id)}
-              />
-            )}
-
             {/* ── LESSON ACTION & CONTROLS BAR ── */}
             <div className="bg-white rounded-3xl border border-slate-200/80 p-5 shadow-sm flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
               <div className="space-y-1">
@@ -455,57 +484,44 @@ export default function StudentLearnPage() {
               </div>
             </div>
 
-            {/* ── INTERACTIVE LEARNING TABS ── */}
-            <div className="bg-white rounded-3xl border border-slate-200/80 p-6 sm:p-7 shadow-sm space-y-6">
-              {/* Tab Selector Buttons */}
-              <div className="flex items-center gap-2 border-b border-slate-100 pb-4 overflow-x-auto scrollbar-none">
-                {[
-                  { key: 'overview', label: 'Overview & Study Notes', icon: FileText },
-                  { key: 'quiz', label: 'Quiz', icon: HelpCircle },
-                  { key: 'assignment', label: 'Assignment', icon: ClipboardList },
-                  { key: 'discussion', label: 'Ask Instructor', icon: MessageSquare },
-                  { key: 'resources', label: 'Resources', icon: Download },
-                ].map(({ key, label, icon: Icon }) => (
-                  <button
-                    key={key}
-                    onClick={() => setActiveTab(key as any)}
-                    className={`flex items-center gap-2 px-4 py-2.5 rounded-full text-xs font-bold transition-all whitespace-nowrap ${
-                      activeTab === key
-                        ? 'bg-[#FACC15] text-[#111827] shadow-sm'
-                        : 'text-slate-600 hover:text-[#111827] bg-slate-100'
-                    }`}
-                  >
-                    <Icon className="w-4 h-4" />
-                    <span>{label}</span>
-                  </button>
-                ))}
-              </div>
 
-              {/* TAB 1: OVERVIEW */}
+            {/* ── TAB CONTENT ── */}
+            <div id="classroom-panel" className="scroll-mt-24 space-y-6 rounded-3xl border border-slate-200/80 bg-white p-6 shadow-sm sm:p-7">
               {activeTab === 'overview' && (
-                <div className="space-y-4 text-xs sm:text-sm text-slate-700 leading-relaxed font-medium">
+                <div className="space-y-6 text-xs font-medium leading-relaxed text-slate-700 sm:text-sm">
                   {currentLesson?.overview ? (
-                    <>
-                      <h3 className="font-display font-bold text-base text-[#111827]">Lesson overview</h3>
+                    <div className="space-y-4">
+                      <h3 className="font-display text-base font-bold text-[#111827]">Lesson overview</h3>
                       <p className="whitespace-pre-line">{currentLesson.overview}</p>
                       {partButton('overview')}
-                    </>
+                    </div>
                   ) : (
-                    <div className="rounded-2xl border border-dashed border-slate-200 py-10 text-center text-sm text-slate-500">No overview for this lesson. Watch the video to continue.</div>
+                    <div className="rounded-2xl border border-dashed border-slate-200 py-8 text-center text-sm text-slate-500">No overview for this lesson. Watch the video to continue.</div>
+                  )}
+                  {currentLesson?.notes && (
+                    <div className="space-y-4 border-t border-slate-100 pt-6">
+                      <h3 className="font-display text-base font-bold text-[#111827]">Notes and resources</h3>
+                      <p className="whitespace-pre-line break-words">{currentLesson.notes}</p>
+                      {partButton('notes')}
+                    </div>
                   )}
                 </div>
               )}
 
-              {/* TAB 2: KNOWLEDGE QUIZ */}
-              {activeTab === 'quiz' && currentLesson && (
-                <LessonQuiz courseId={courseId} lessonId={currentLesson.id} onChanged={() => loadPath(currentLesson.id)} />
-              )}
+              {activeTab === 'modules' && (currentPath && path ? (
+                <LessonSteps
+                  section="steps"
+                  courseId={courseId}
+                  lesson={currentPath}
+                  lives={path.lives}
+                  timeline={path.timeline}
+                  rank={path.rank}
+                  rankTotal={path.rankTotal}
+                  onOpenTab={openPart}
+                  onChanged={() => loadPath(currentLesson?.id)}
+                />
+              ) : <p className="text-sm text-slate-500">Loading the lesson path…</p>)}
 
-              {activeTab === 'assignment' && currentLesson && (
-                <LessonAssignment courseId={courseId} lessonId={currentLesson.id} onChanged={() => loadPath(currentLesson.id)} />
-              )}
-
-              {/* TAB 3: DISCUSSION COMMUNITY */}
               {activeTab === 'discussion' && currentLesson && (
                 <LessonQuestions
                   courseId={courseId}
@@ -521,20 +537,38 @@ export default function StudentLearnPage() {
                 />
               )}
 
-              {/* TAB 4: NOTES & RESOURCES */}
-              {activeTab === 'resources' && (
-                currentLesson?.notes ? (
-                  <div className="space-y-4 text-xs sm:text-sm text-slate-700 leading-relaxed font-medium">
-                    <h3 className="font-display font-bold text-base text-[#111827]">Notes and resources</h3>
-                    <p className="whitespace-pre-line break-words">{currentLesson.notes}</p>
-                    {partButton('notes')}
-                  </div>
-                ) : (
-                  <div className="rounded-2xl border border-dashed border-slate-200 py-10 text-center text-sm text-slate-500">
-                    No notes or resources for this lesson.
-                  </div>
-                )
+              {activeTab === 'reviews' && <CourseReviewForm courseId={courseId} courseTitle={course?.title || 'this course'} />}
+
+              {activeTab === 'questions' && currentLesson && (
+                <LessonQuiz courseId={courseId} lessonId={currentLesson.id} onChanged={() => loadPath(currentLesson.id)} />
               )}
+
+              {activeTab === 'classroom' && currentLesson && (
+                <div className="space-y-6">
+                  {currentPath && path && (
+                    <LessonSteps
+                      section="lives"
+                      courseId={courseId}
+                      lesson={currentPath}
+                      lives={path.lives}
+                      timeline={path.timeline}
+                      rank={path.rank}
+                      rankTotal={path.rankTotal}
+                      onOpenTab={openPart}
+                      onChanged={() => loadPath(currentLesson.id)}
+                    />
+                  )}
+                  <LessonAssignment courseId={courseId} lessonId={currentLesson.id} onChanged={() => loadPath(currentLesson.id)} />
+                </div>
+              )}
+
+              {activeTab === 'message' && (
+                <div className="max-w-xl">
+                  <CampusMessageForm kind="student" lockedKind defaultName={userProfile?.name || user?.displayName || ''} defaultEmail={user?.email || ''} />
+                </div>
+              )}
+
+              {activeTab === 'settings' && <LearningSettings prefs={prefs} onChange={setPrefs} />}
             </div>
           </div>
 

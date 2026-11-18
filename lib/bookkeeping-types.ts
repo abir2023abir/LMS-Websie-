@@ -32,7 +32,7 @@ export const defaultBookkeepingContent: BookkeepingPageContent = {
   eyebrow: 'BOOKKEEPING SERVICES',
   headline: 'Bookkeeping that keeps your business on track',
   description: 'Choose the support that fits your business. Compare monthly plans and contact our team to confirm the right service and pricing for you.',
-  selectorHint: 'Pick the service you need to see its pricing.',
+  selectorHint: 'Pick the service you need to explore our services.',
   tabs: ['Bookkeeping + Software', 'Just Bookkeeping', 'Catch-up bookkeeping', 'Taxes'],
   monthlyCta: 'Get started',
   includedHeading: "What's included",
