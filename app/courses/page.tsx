@@ -6,7 +6,7 @@ import Image from 'next/image';
 import FloatingNavbar from '@/components/english/FloatingNavbar';
 import EnglishFooter from '@/components/english/EnglishFooter';
 import CheckoutModal from '@/components/checkout/CheckoutModal';
-import { featuredCourses } from '@/lib/data';
+import { featuredCourses, type Course } from '@/lib/data';
 import { applyCourseEdit, useCourseEdits } from '@/lib/course-edits-client';
 import { useAuth } from '@/context/AuthContext';
 import { takaFromUsd } from '@/lib/utils';
@@ -26,6 +26,41 @@ import {
 } from 'lucide-react';
 import { motion } from 'framer-motion';
 
+type StoredCourse = {
+  id: string; title: string; description?: string; price?: number; originalPrice?: number; thumbnail?: string;
+  category?: string; duration?: string; instructorName?: string; studentCount?: number; createdAt?: string;
+  modules?: { lessons?: unknown[] }[];
+};
+
+const FALLBACK_THUMB = 'https://images.unsplash.com/photo-1522202176988-66273c2fd55f?w=600&h=340&fit=crop';
+
+/** A course made in the admin or instructor panel, shaped like the built-in catalog entries. */
+function toCatalogCourse(course: StoredCourse): Course {
+  const lessons = (course.modules || []).reduce((sum, mod) => sum + (mod.lessons?.length || 0), 0);
+  return {
+    id: String(course.id),
+    slug: String(course.id),
+    title: course.title || 'Course',
+    description: course.description || '',
+    instructor: { name: course.instructorName || 'Career Bridge Team', avatar: '', title: '' },
+    thumbnail: course.thumbnail || FALLBACK_THUMB,
+    category: course.category || 'Accounting',
+    categoryColor: '',
+    price: Number(course.price) || 0,
+    originalPrice: Number(course.originalPrice) || 0,
+    rating: 0,
+    reviewCount: 0,
+    studentCount: Number(course.studentCount) || 0,
+    duration: course.duration || '',
+    lessonCount: lessons,
+    level: 'Beginner',
+    tags: [],
+    isFeatured: false,
+    isNew: true,
+    isBestseller: false,
+  };
+}
+
 export default function CoursesCatalogPage() {
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedCategory, setSelectedCategory] = useState('All');
@@ -40,6 +75,19 @@ export default function CoursesCatalogPage() {
   const [hiddenIds, setHiddenIds] = useState<string[]>([]);
   const [discounts, setDiscounts] = useState<Record<string, number>>({});
   const courseEdits = useCourseEdits();
+  // Courses made in the admin / instructor panel (the built-in three are already in featuredCourses).
+  const [storedCourses, setStoredCourses] = useState<Course[]>([]);
+  useEffect(() => {
+    fetch('/api/courses', { cache: 'no-store' })
+      .then((res) => (res.ok ? res.json() : null))
+      .then((data) => {
+        const builtIn = new Set(featuredCourses.map((course) => String(course.id)));
+        const list = (Array.isArray(data?.courses) ? data.courses : []) as StoredCourse[];
+        setStoredCourses(list.filter((course) => course.id && !builtIn.has(String(course.id))).map(toCatalogCourse));
+      })
+      .catch(() => setStoredCourses([]));
+  }, []);
+  const allCourses = useMemo(() => [...featuredCourses, ...storedCourses], [storedCourses]);
   const { user, role } = useAuth();
 
   useEffect(() => {
@@ -59,15 +107,15 @@ export default function CoursesCatalogPage() {
   // All categories list
   const categoryNames = useMemo(() => {
     const set = new Set<string>();
-    featuredCourses.forEach((c) => {
+    allCourses.forEach((c) => {
       if (c.category) set.add(c.category);
     });
     return ['All', ...Array.from(set)];
-  }, []);
+  }, [allCourses]);
 
   // Filtered & Sorted courses
   const filteredCourses = useMemo(() => {
-    const catalog = featuredCourses.map((course) => applyCourseEdit(course, courseEdits[String(course.id)]));
+    const catalog = allCourses.map((course) => applyCourseEdit(course, courseEdits[String(course.id)]));
     return catalog
       .filter((c) => {
         const matchesSearch =
@@ -95,7 +143,7 @@ export default function CoursesCatalogPage() {
         if (sortBy === 'newest') return (b.isNew ? 1 : 0) - (a.isNew ? 1 : 0);
         return 0;
       });
-  }, [searchQuery, selectedCategory, priceFilter, sortBy, hiddenIds, courseEdits]);
+  }, [searchQuery, selectedCategory, priceFilter, sortBy, hiddenIds, courseEdits, allCourses]);
 
   const handleEnroll = useCallback((course: any) => {
     setSelectedCourse({
@@ -119,11 +167,11 @@ export default function CoursesCatalogPage() {
     if (!user || role !== 'Student') return;
     const courseId = new URLSearchParams(window.location.search).get('enroll');
     if (!courseId) return;
-    const course = featuredCourses.find((item) => String(item.id) === courseId);
+    const course = allCourses.find((item) => String(item.id) === courseId);
     if (!course) return;
     handleEnroll(applyCourseEdit(course, courseEdits[courseId]));
     window.history.replaceState(null, '', '/courses');
-  }, [user, role, courseEdits, handleEnroll]);
+  }, [user, role, courseEdits, handleEnroll, allCourses]);
 
   return (
     <div className="min-h-screen bg-slate-50 text-[#111827] flex flex-col justify-between selection:bg-[#FACC15] selection:text-[#111827]">
@@ -294,6 +342,7 @@ export default function CoursesCatalogPage() {
                         src={course.thumbnail}
                         alt={course.title}
                         fill
+                        unoptimized={!course.thumbnail.startsWith('https://images.unsplash.com/')}
                         className="object-cover group-hover:scale-105 transition-transform duration-500"
                       />
                       <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent" />
@@ -350,13 +399,17 @@ export default function CoursesCatalogPage() {
 
                         {/* Instructor */}
                         <div className="flex items-center gap-2.5 pt-1">
-                          <div className="w-7 h-7 rounded-full overflow-hidden relative border border-slate-200 flex-shrink-0">
-                            <Image
-                              src={course.instructor.avatar}
-                              alt={course.instructor.name}
-                              fill
-                              className="object-cover"
-                            />
+                          <div className="w-7 h-7 rounded-full overflow-hidden relative border border-slate-200 flex-shrink-0 bg-[#111827] text-[#FACC15] flex items-center justify-center text-[10px] font-extrabold">
+                            {course.instructor.avatar ? (
+                              <Image
+                                src={course.instructor.avatar}
+                                alt={course.instructor.name}
+                                fill
+                                className="object-cover"
+                              />
+                            ) : (
+                              <span aria-hidden="true">{course.instructor.name.trim().split(/\s+/).slice(0, 2).map((word) => word.charAt(0)).join('').toUpperCase()}</span>
+                            )}
                           </div>
                           <span className="text-xs text-slate-700 font-medium truncate">
                             {course.instructor.name}
