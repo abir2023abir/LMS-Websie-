@@ -9,6 +9,14 @@ export interface LessonSchema {
   overview?: string;
   /** Notes and resources for the lesson. Empty means the part is skipped. */
   notes?: string;
+  /** Video 2, 3, … of the lesson (videoUrl is video 1). Each must be watched to finish the video step. */
+  moreVideos?: LessonVideo[];
+}
+
+export interface LessonVideo {
+  id: string;
+  title: string;
+  url: string;
 }
 
 export interface ModuleSchema {

@@ -92,6 +92,8 @@ export default function StudentLearnPage() {
   const [path, setPath] = useState<{ lessons: LessonProgress[]; lives: LiveSession[]; timeline?: CourseTimeline; notices?: { id: string; kind: string; text: string; by: string }[]; examsPaused?: boolean; rank: number | null; rankTotal: number } | null>(null);
   const [partBusy, setPartBusy] = useState(false);
   const [videoReported, setVideoReported] = useState<Record<string, boolean>>({});
+  // Which of the lesson's videos is playing (video 1 is 'main').
+  const [videoChoice, setVideoChoice] = useState<Record<string, string>>({});
 
   // Certificate Modal state
   const [isCertModalOpen, setIsCertModalOpen] = useState(false);
@@ -189,10 +191,13 @@ export default function StudentLearnPage() {
   }, [currentLesson?.id, loadPath]);
 
   // Tell the server once a lesson's video reaches 80%, then refresh the path.
-  const reportWatch = (lessonId: string, percent: number) => {
-    if (percent < 80 || videoReported[lessonId]) return;
-    setVideoReported((prev) => ({ ...prev, [lessonId]: true }));
-    fetch('/api/progress', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ action: 'video', courseId, lessonId, percent }) })
+  // Video 1 is tracked as the lesson id, video 2, 3, … as "lessonId#videoId".
+  const watchKey = (lessonId: string, videoId: string) => (videoId === 'main' ? lessonId : `${lessonId}#${videoId}`);
+  const reportWatch = (lessonId: string, percent: number, videoId = 'main') => {
+    const key = watchKey(lessonId, videoId);
+    if (percent < 80 || videoReported[key]) return;
+    setVideoReported((prev) => ({ ...prev, [key]: true }));
+    fetch('/api/progress', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ action: 'video', courseId, lessonId, percent, videoId }) })
       .then(() => loadPath(lessonId)).catch(() => undefined);
   };
 
@@ -229,9 +234,17 @@ export default function StudentLearnPage() {
     setProgress(applyServerPath(user?.uid || 'local_student', courseId, course.modules, path.lessons));
   }, [path, course, courseId, user]);
 
+  const lessonVideos = currentLesson
+    ? [
+        { id: 'main', title: currentLesson.title, url: courseEdits[courseId]?.videos?.[currentLesson.id] || lessonVideo(courseId, currentLesson.id) || currentLesson.videoUrl },
+        ...(currentLesson.moreVideos || []).filter((video) => video.url).map((video, index) => ({ id: video.id, title: video.title || `Part ${index + 2}`, url: video.url })),
+      ]
+    : [];
+  const currentVideo = lessonVideos.find((video) => video.id === videoChoice[currentLesson?.id || '']) || lessonVideos[0] || { id: 'main', title: '', url: '' };
+
   // Video finished: tell the server. The lesson is only complete once every later step is done too.
   const handleVideoEnded = () => {
-    if (currentLesson) reportWatch(currentLesson.id, 100);
+    if (currentLesson) reportWatch(currentLesson.id, 100, currentVideo.id);
   };
 
   const handleNextLesson = () => {
@@ -361,16 +374,16 @@ export default function StudentLearnPage() {
             {/* Secure Video Player */}
             <div className="w-full">
               <SecureVideoPlayer
-                videoUrl={currentLesson ? courseEdits[courseId]?.videos?.[currentLesson.id] || lessonVideo(courseId, currentLesson.id) || currentLesson.videoUrl : undefined}
+                videoUrl={currentLesson ? currentVideo.url || undefined : undefined}
                 poster={course.thumbnail}
-                title={currentLesson?.title || course.title}
+                title={lessonVideos.length > 1 ? `${currentLesson?.title} · ${currentVideo.title}` : currentLesson?.title || course.title}
                 studentName={userProfile?.name || user?.displayName || 'Student Learner'}
                 studentEmail={user?.email || 'student@example.com'}
                 onEnded={handleVideoEnded}
                 onProgress={(percent) => {
                   if (!currentLesson) return;
-                  recordWatch(currentLesson.id, percent);
-                  reportWatch(currentLesson.id, percent);
+                  recordWatch(watchKey(currentLesson.id, currentVideo.id), percent);
+                  reportWatch(currentLesson.id, percent, currentVideo.id);
                   setWatchTick(percent);
                 }}
                 onNextLesson={hasNextLesson ? handleNextLesson : undefined}
@@ -379,6 +392,22 @@ export default function StudentLearnPage() {
                 defaultSpeed={prefs.speed}
               />
             </div>
+
+            {currentLesson && lessonVideos.length > 1 && (
+              <div className="flex gap-2 overflow-x-auto rounded-2xl border border-slate-200/80 bg-white p-2 shadow-sm scrollbar-none" role="tablist" aria-label="Lesson videos">
+                {lessonVideos.map((video, index) => {
+                  const watched = watchPercent(watchKey(currentLesson.id, video.id));
+                  const on = video.id === currentVideo.id;
+                  return (
+                    <button key={video.id} type="button" role="tab" aria-selected={on} onClick={() => setVideoChoice((prev) => ({ ...prev, [currentLesson.id]: video.id }))}
+                      className={`flex min-h-11 shrink-0 items-center gap-2 rounded-xl px-3.5 text-left text-xs font-bold transition ${on ? 'bg-[#111827] text-white' : 'text-slate-600 hover:bg-slate-100'}`}>
+                      <span className={`flex h-6 w-6 shrink-0 items-center justify-center rounded-full text-[11px] ${watched >= 80 ? 'bg-emerald-500 text-white' : on ? 'bg-[#FACC15] text-[#111827]' : 'bg-slate-200 text-slate-600'}`}>{watched >= 80 ? '✓' : index + 1}</span>
+                      <span className="max-w-[12rem] truncate">{index === 0 ? 'Video 1' : video.title}</span>
+                    </button>
+                  );
+                })}
+              </div>
+            )}
 
             {/* ── CLASSROOM TABS (right under the video, as in the client layout) ── */}
             <nav aria-label="Classroom" className="flex gap-2 overflow-x-auto rounded-2xl border border-slate-200/80 bg-white p-2 shadow-sm scrollbar-none">
@@ -408,7 +437,7 @@ export default function StudentLearnPage() {
             {currentLesson && (
               <div className="bg-white rounded-3xl border border-slate-200 p-5 shadow-sm space-y-3">
                 <p className="text-xs font-bold uppercase text-slate-500">
-                  Watched {watchPercent(currentLesson.id)}%. Watch 80% to finish this step.
+                  {lessonVideos.length > 1 ? `Video ${lessonVideos.findIndex((video) => video.id === currentVideo.id) + 1} of ${lessonVideos.length}: watched ${watchPercent(watchKey(currentLesson.id, currentVideo.id))}%. Watch 80% of every video to finish this step.` : `Watched ${watchPercent(currentLesson.id)}%. Watch 80% to finish this step.`}
                 </p>
                 <label className="block text-xs font-bold text-slate-500">Lesson notes</label>
                 <textarea

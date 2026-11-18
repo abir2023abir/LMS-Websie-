@@ -314,12 +314,44 @@ export default function AdminCourseEditor({
                     placeholder="Notes and resource links (optional). Opens after the quiz is passed."
                     className={fieldClass}
                   />
+                  {(lesson.moreVideos?.length || 0) > 0 && <p className="text-[11px] font-bold uppercase tracking-wide text-slate-500">Video 1</p>}
                   <LessonVideoField
                     courseId={courseId}
                     lessonId={lesson.id}
                     value={videos[lesson.id] || lesson.videoUrl || ''}
                     onChange={(value) => setVideos((prev) => ({ ...prev, [lesson.id]: value }))}
                   />
+                  {/* Video 2, 3, …: the student watches each one to finish the video step. */}
+                  {(lesson.moreVideos || []).map((video, videoIndex) => {
+                    const setVideo = (patch: Partial<typeof video> | null) => setModules((prev) => prev.map((item) => item.id === mod.id ? {
+                      ...item,
+                      lessons: item.lessons.map((row) => row.id === lesson.id ? {
+                        ...row,
+                        moreVideos: patch === null
+                          ? (row.moreVideos || []).filter((entry) => entry.id !== video.id)
+                          : (row.moreVideos || []).map((entry) => entry.id === video.id ? { ...entry, ...patch } : entry),
+                      } : row),
+                    } : item));
+                    return (
+                      <div key={video.id} className="space-y-2 rounded-xl border border-slate-200 bg-slate-50 p-3">
+                        <div className="flex items-center gap-2">
+                          <span className="shrink-0 text-[11px] font-bold uppercase tracking-wide text-slate-500">Video {videoIndex + 2}</span>
+                          <input value={video.title} onChange={(e) => setVideo({ title: e.target.value })} placeholder="Title (optional), e.g. Part 2: Practice" className={`${fieldClass} min-w-0 flex-1`} />
+                          <button type="button" onClick={() => setVideo(null)} className="shrink-0 text-[11px] font-bold text-rose-600">Remove</button>
+                        </div>
+                        <LessonVideoField courseId={courseId} lessonId={lesson.id} value={video.url} onChange={(value) => setVideo({ url: value })} />
+                      </div>
+                    );
+                  })}
+                  {(lesson.moreVideos?.length || 0) < 10 && (
+                    <button
+                      type="button"
+                      onClick={() => setModules((prev) => prev.map((item) => item.id === mod.id ? { ...item, lessons: item.lessons.map((row) => row.id === lesson.id ? { ...row, moreVideos: [...(row.moreVideos || []), { id: `v${Date.now().toString(36)}`, title: '', url: '' }] } : row) } : item))}
+                      className="inline-flex items-center gap-1.5 rounded-full border border-dashed border-slate-300 bg-white px-3 py-1.5 text-[11px] font-bold text-slate-600 hover:border-[#111827] hover:text-[#111827]"
+                    >
+                      + Add another video
+                    </button>
+                  )}
                   {lessonTools && (
                     <div className="space-y-1.5 border-t border-slate-100 pt-3">
                       <p className="text-[11px] font-bold uppercase tracking-wide text-slate-500">In this lesson</p>

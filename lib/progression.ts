@@ -56,7 +56,7 @@ const WINDOWS_KEY = 'lesson-windows'; // studentId → courseId → lessonId →
 const HOUR = 3600000;
 
 /* ── course structure (cached for 30 s: it changes rarely and every progress check needs it) ── */
-type LessonShape = { lessonId: string; lessonTitle: string; moduleId: string; moduleTitle: string; overview: string; notes: string; days?: number };
+type LessonShape = { lessonId: string; lessonTitle: string; moduleId: string; moduleTitle: string; overview: string; notes: string; days?: number; extraVideoIds?: string[] };
 type CourseShape = { title: string; lessons: LessonShape[] };
 const shapeCache = new Map<string, { at: number; value: Promise<CourseShape> }>();
 
@@ -82,6 +82,7 @@ async function loadCourseLessons(courseId: string): Promise<CourseShape> {
       lessonId: lesson.id, lessonTitle: lesson.title, moduleId: mod.id, moduleTitle: mod.title,
       overview: String(lesson.overview || '').trim(), notes: String(lesson.notes || '').trim(),
       days: Number(lesson.days) > 0 ? Math.round(Number(lesson.days)) : 0,
+      extraVideoIds: (lesson.moreVideos || []).filter((video) => video.url).map((video) => video.id),
     }))),
   };
 }
@@ -90,11 +91,13 @@ async function loadCourseLessons(courseId: string): Promise<CourseShape> {
 type CourseSets = Record<string, Record<string, string[]>>; // studentId → courseId → lessonIds
 type PartMap = Record<string, Record<string, Record<string, Record<string, string>>>>;
 
-export async function markVideoDone(studentId: string, courseId: string, lessonId: string) {
+/** Video 1 is stored as the lesson id, video 2, 3, … as "lessonId#videoId". */
+export async function markVideoDone(studentId: string, courseId: string, lessonId: string, videoId = '') {
+  const entry = videoId && videoId !== 'main' ? `${lessonId}#${videoId}` : lessonId;
   const all = await kvGet<CourseSets>(VIDEO_KEY, {});
   const current = all[studentId]?.[courseId] || [];
-  if (current.includes(lessonId)) return;
-  await kvSet(VIDEO_KEY, { ...all, [studentId]: { ...all[studentId], [courseId]: [...current, lessonId] } });
+  if (current.includes(entry)) return;
+  await kvSet(VIDEO_KEY, { ...all, [studentId]: { ...all[studentId], [courseId]: [...current, entry] } });
 }
 
 /** The student confirms they read the overview or the notes (an explicit action, never just opening the tab). */
@@ -202,7 +205,11 @@ export async function courseProgress(studentId: string, courseId: string, option
     const mine = parts[lesson.lessonId] || {};
 
     const overview: RawStep | null = lesson.overview ? { key: 'overview', label: 'Read the overview', done: Boolean(mine.overview), detail: mine.overview ? 'Marked as read' : 'Read it, then mark it as read' } : null;
-    const video: RawStep = { key: 'video', label: 'Watch the video', done: videos.has(lesson.lessonId), detail: 'Watch at least 80% of the video' };
+    const extras = lesson.extraVideoIds || [];
+    const watched = (videos.has(lesson.lessonId) ? 1 : 0) + extras.filter((id) => videos.has(`${lesson.lessonId}#${id}`)).length;
+    const video: RawStep = extras.length
+      ? { key: 'video', label: `Watch the ${extras.length + 1} videos`, done: watched === extras.length + 1, detail: `${watched} of ${extras.length + 1} watched · at least 80% of each` }
+      : { key: 'video', label: 'Watch the video', done: videos.has(lesson.lessonId), detail: 'Watch at least 80% of the video' };
     let quiz: RawStep | null = null;
     if (lessonQuizzes.length) {
       const passed = lessonQuizzes.filter((q) => quizAttempts.some((a) => a.quizId === q.id && a.passed)).length;

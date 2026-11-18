@@ -46,7 +46,7 @@ export async function POST(request: Request) {
     const lessonId = String(body.lessonId || '');
     if (!(await getEnrollments(profile.id)).includes(courseId)) throw new Error('Enroll in this course first.');
     if (body.action === 'video') {
-      if (Number(body.percent) >= 80 && (await lessonOpen(profile.id, courseId, lessonId))) await markVideoDone(profile.id, courseId, lessonId);
+      if (Number(body.percent) >= 80 && (await lessonOpen(profile.id, courseId, lessonId))) await markVideoDone(profile.id, courseId, lessonId, String(body.videoId || '').replace(/[^\w-]/g, '').slice(0, 40));
       return NextResponse.json({ success: true });
     }
     if (body.action === 'part') {
