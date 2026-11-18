@@ -38,6 +38,10 @@ export async function saveR2Config(input: R2Config) {
     bucket: input.bucket.trim().toLowerCase(),
   };
   if (!complete(clean)) throw new Error('Fill in all four fields.');
+  // R2 S3 keys have a fixed shape. The token page also shows a longer "Token value", which is not one of them.
+  if (!/^[a-f0-9]{32}$/i.test(clean.accountId)) throw new Error('The Account ID should be 32 letters and numbers. Copy it from the right side of the R2 page.');
+  if (!/^[a-f0-9]{32}$/i.test(clean.accessKeyId)) throw new Error(`The Access Key ID should be 32 letters and numbers (you pasted ${clean.accessKeyId.length}). On the token page, copy the line called "Access Key ID", not "Token value".`);
+  if (!/^[a-f0-9]{64}$/i.test(clean.secretAccessKey)) throw new Error(`The Secret Access Key should be 64 letters and numbers (you pasted ${clean.secretAccessKey.length}). On the token page, copy the line called "Secret Access Key", not "Token value".`);
   if (!/^[a-z0-9][a-z0-9-]{1,61}[a-z0-9]$/.test(clean.bucket)) throw new Error('The bucket name can only have lowercase letters, numbers and dashes.');
   await testR2(clean);
   await kvSet(SETTINGS_KEY, clean);
@@ -49,7 +53,15 @@ export async function testR2(config: R2Config) {
   const key = `connection-check/${Date.now()}.txt`;
   const put = await fetch(presignWith(config, 'PUT', key, 300), { method: 'PUT', body: 'ok' }).catch(() => null);
   if (!put) throw new Error('Could not reach Cloudflare R2. Check the Account ID.');
-  if (put.status === 403 || put.status === 401) throw new Error('Cloudflare refused the key. Check the Access Key ID and Secret, and that the token has Object Read & Write for this bucket.');
+  if (put.status === 403 || put.status === 401) {
+    // R2 says why in an XML <Code>: name the field that is wrong.
+    const code = ((await put.text().catch(() => '')).match(/<Code>([^<]+)<\/Code>/) || [])[1] || '';
+    if (code === 'Unauthorized') throw new Error('Cloudflare does not accept this Access Key ID and Secret. Copy both again from the token page (the "Access Key ID" and "Secret Access Key" lines). If the secret page is closed, make a new token.');
+    if (code === 'InvalidAccessKeyId') throw new Error('Cloudflare does not know this Access Key ID. Check that it is from the token you just made and that the Account ID is this account.');
+    if (code === 'SignatureDoesNotMatch') throw new Error('The Secret Access Key does not match the Access Key ID. Copy the "Secret Access Key" line again (it is shown only once; if it is lost, make a new token).');
+    if (code === 'AccessDenied') throw new Error('The key works but has no permission for this bucket. Make the token with "Object Read & Write" and pick the bucket career-bridge-videos.');
+    throw new Error(`Cloudflare refused the key${code ? ` (${code})` : ''}. Check the Access Key ID and Secret, and that the token has Object Read & Write for this bucket.`);
+  }
   if (put.status === 404) throw new Error('The bucket was not found. Check the bucket name.');
   if (!put.ok) throw new Error(`Cloudflare R2 answered with status ${put.status}.`);
   await fetch(presignWith(config, 'DELETE', key, 300), { method: 'DELETE' }).catch(() => undefined);

@@ -53,7 +53,7 @@ export default function VideoStorageSetup({ onClose, onConnected }: { onClose: (
               <pre className="mt-2 max-h-40 overflow-auto rounded-xl bg-slate-900 p-3 text-[11px] leading-relaxed text-slate-100">{cors}</pre>
             </li>
             <li><span className="font-bold">4.</span> R2 page: <b>Manage R2 API Tokens → Create API token</b>, permission <b>Object Read &amp; Write</b> for this bucket. Copy the Access Key ID and the Secret.</li>
-            <li><span className="font-bold">5.</span> The <b>Account ID</b> is on the right of the R2 page. Paste everything here and press Connect.</li>
+            <li><span className="font-bold">5.</span> The token page shows three values. Use <b>Access Key ID</b> (32 characters) and <b>Secret Access Key</b> (64 characters). Do <b>not</b> use &ldquo;Token value&rdquo;. The <b>Account ID</b> is on the right of the R2 page.</li>
           </ol>
           <div className="space-y-3">
             <label className="block text-xs font-bold text-slate-500">Account ID<input className={`${fieldClass} mt-1`} value={form.accountId} onChange={set('accountId')} autoComplete="off" /></label>
