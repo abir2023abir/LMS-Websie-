@@ -26,7 +26,7 @@ export async function GET(request: Request) {
   }
 
   try {
-    const response = NextResponse.redirect(presignPlayback(key), 302);
+    const response = NextResponse.redirect(await presignPlayback(key), 302);
     response.headers.set('Cache-Control', 'private, no-store');
     return response;
   } catch (error) {

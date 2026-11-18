@@ -1,7 +1,25 @@
 'use client';
 
-import { useRef, useState } from 'react';
-import { CheckCircle2, Film, Link2, Upload, X } from 'lucide-react';
+import { useEffect, useRef, useState } from 'react';
+import dynamic from 'next/dynamic';
+import { CheckCircle2, Film, Link2, PlugZap, Upload, X } from 'lucide-react';
+
+const VideoStorageSetup = dynamic(() => import('./VideoStorageSetup'), { ssr: false });
+
+type StorageStatus = { configured: boolean; canConfigure: boolean };
+// One request per page for every video field; refreshed after the admin connects storage.
+let statusRequest: Promise<StorageStatus> | null = null;
+const listeners = new Set<(status: StorageStatus) => void>();
+function loadStatus(force = false) {
+  if (!statusRequest || force) {
+    statusRequest = fetch('/api/videos/upload-url', { cache: 'no-store' })
+      .then((res) => (res.ok ? res.json() : null))
+      .then((data) => ({ configured: Boolean(data?.configured), canConfigure: Boolean(data?.canConfigure) }))
+      .catch(() => ({ configured: true, canConfigure: false }));
+    statusRequest.then((status) => listeners.forEach((listener) => listener(status)));
+  }
+  return statusRequest;
+}
 
 type Props = {
   courseId: string;
@@ -21,6 +39,19 @@ export default function LessonVideoField({ courseId, lessonId, value, onChange, 
   const [mode, setMode] = useState<'upload' | 'link'>(value && !value.startsWith('r2:') ? 'link' : 'upload');
   const request = useRef<XMLHttpRequest | null>(null);
   const uploaded = value.startsWith('r2:');
+  const [storage, setStorage] = useState<StorageStatus | null>(null);
+  const [connecting, setConnecting] = useState(false);
+
+  useEffect(() => {
+    listeners.add(setStorage);
+    loadStatus().then((status) => {
+      setStorage(status);
+      // Without video storage, a new lesson starts on "Paste link", which works right away.
+      if (!status.configured && !value) setMode('link');
+    });
+    return () => { listeners.delete(setStorage); };
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps
+  const notConnected = storage !== null && !storage.configured;
 
   const upload = async (file: File) => {
     setError('');
@@ -31,6 +62,7 @@ export default function LessonVideoField({ courseId, lessonId, value, onChange, 
         body: JSON.stringify({ courseId, lessonId, fileName: file.name, contentType: file.type, size: file.size }),
       });
       const data = await res.json();
+      if (data.code === 'storage-not-connected') { loadStatus(true); return; }
       if (!res.ok || !data.uploadUrl) throw new Error(data.message || 'Could not start the upload.');
 
       setProgress(0);
@@ -61,7 +93,19 @@ export default function LessonVideoField({ courseId, lessonId, value, onChange, 
         <button type="button" onClick={() => setMode('link')} className={`flex items-center gap-1 rounded-full px-2.5 py-1 ${mode === 'link' ? 'bg-[#111827] text-white' : 'text-slate-500 hover:bg-slate-100'}`}><Link2 className="h-3 w-3" />Paste link</button>
       </div>
 
-      {mode === 'upload' ? (
+      {mode === 'upload' && notConnected ? (
+        <div className="space-y-2 rounded-lg bg-slate-50 p-3 text-xs text-slate-600">
+          <p className="flex items-center gap-1.5 font-bold text-[#111827]"><PlugZap className="h-4 w-4 text-[#A16207]" />File upload is not connected yet</p>
+          {storage?.canConfigure ? (
+            <>
+              <p>Connect video storage once, and every lesson can take uploaded videos. Until then, use Paste link (for example an unlisted YouTube video).</p>
+              <button type="button" onClick={() => setConnecting(true)} className="rounded-full bg-[#FACC15] px-3 py-1.5 text-xs font-bold text-[#111827] hover:bg-[#EAB308]">Connect video storage</button>
+            </>
+          ) : (
+            <p>Ask an admin to connect video storage. Until then, use Paste link (for example an unlisted YouTube video).</p>
+          )}
+        </div>
+      ) : mode === 'upload' ? (
         progress !== null ? (
           <div className="space-y-1.5">
             <div className="flex items-center justify-between text-xs font-semibold text-slate-600">
@@ -89,7 +133,8 @@ export default function LessonVideoField({ courseId, lessonId, value, onChange, 
       )}
 
       {error && <p className="text-xs text-rose-600">{error}</p>}
-      {mode === 'upload' && progress === null && <p className="text-[11px] text-slate-400">MP4 recommended · up to 5 GB · {uploaded ? 'Press Save to keep changes.' : 'After upload, press Save.'}</p>}
+      {connecting && <VideoStorageSetup onClose={() => setConnecting(false)} onConnected={() => { void loadStatus(true); setMode('upload'); }} />}
+      {mode === 'upload' && !notConnected && progress === null && <p className="text-[11px] text-slate-400">MP4 recommended · up to 5 GB · {uploaded ? 'Press Save to keep changes.' : 'After upload, press Save.'}</p>}
     </div>
   );
 }

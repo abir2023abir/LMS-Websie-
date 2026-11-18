@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server';
 import { staffDenied, staffIdentity } from '@/lib/user-session';
-import { lessonVideoKey, presignUpload, r2Configured, R2_PREFIX } from '@/lib/r2';
+import { getR2Config, lessonVideoKey, presignUpload, r2Configured, R2_PREFIX } from '@/lib/r2';
 
 export const dynamic = 'force-dynamic';
 
@@ -12,8 +12,8 @@ const VIDEO_TYPES = new Set(['video/mp4', 'video/webm', 'video/quicktime', 'vide
 export async function POST(request: Request) {
   const staff = await staffIdentity();
   if (!staff) return staffDenied();
-  if (!r2Configured) {
-    return NextResponse.json({ success: false, message: 'Video storage is not set up yet. Add the R2 settings first (docs/video-storage.md).' }, { status: 503 });
+  if (!(await r2Configured())) {
+    return NextResponse.json({ success: false, code: 'storage-not-connected', message: 'Video storage is not connected yet.' }, { status: 503 });
   }
   try {
     const body = (await request.json()) as { courseId?: string; lessonId?: string; fileName?: string; contentType?: string; size?: number };
@@ -24,9 +24,17 @@ export async function POST(request: Request) {
     if (!Number(body.size) || Number(body.size) > MAX_BYTES) return NextResponse.json({ success: false, message: 'The video must be smaller than 5 GB.' }, { status: 400 });
 
     const key = lessonVideoKey(courseId, lessonId, String(body.fileName || 'video.mp4'));
-    return NextResponse.json({ success: true, uploadUrl: presignUpload(key), videoRef: `${R2_PREFIX}${key}` });
+    return NextResponse.json({ success: true, uploadUrl: await presignUpload(key), videoRef: `${R2_PREFIX}${key}` });
   } catch (error) {
     const message = error instanceof Error ? error.message : 'Could not prepare the upload.';
     return NextResponse.json({ success: false, message }, { status: 500 });
   }
+}
+
+// Whether file uploads are available, for the course builder (and whether this person may connect storage).
+export async function GET() {
+  const staff = await staffIdentity();
+  if (!staff) return staffDenied();
+  const found = await getR2Config();
+  return NextResponse.json({ success: true, configured: Boolean(found), source: found?.source || '', canConfigure: staff.admin });
 }
