@@ -6,7 +6,7 @@ import { listQuizzes, listAttempts } from '@/lib/quizzes';
 import { listAssignments, listSubmissions } from '@/lib/assignments';
 import { attemptsFor, listExams } from '@/lib/exams';
 import { listCourseEdits } from '@/lib/course-edits';
-import { endingOverride, enrollmentDate, extendCourseEnding, getTimeline } from '@/lib/course-timeline';
+import { endingOverride, extendCourseEnding, timelineFor } from '@/lib/course-timeline';
 import { dynamicAllocation, initialAllocation, minimumLessonTime, timelineState, type TimelineStatus } from '@/lib/timeline-math';
 
 /*
@@ -56,7 +56,7 @@ const WINDOWS_KEY = 'lesson-windows'; // studentId → courseId → lessonId →
 const HOUR = 3600000;
 
 /* ── course structure (cached for 30 s: it changes rarely and every progress check needs it) ── */
-type LessonShape = { lessonId: string; lessonTitle: string; moduleId: string; moduleTitle: string; overview: string; notes: string };
+type LessonShape = { lessonId: string; lessonTitle: string; moduleId: string; moduleTitle: string; overview: string; notes: string; days?: number };
 type CourseShape = { title: string; lessons: LessonShape[] };
 const shapeCache = new Map<string, { at: number; value: Promise<CourseShape> }>();
 
@@ -81,6 +81,7 @@ async function loadCourseLessons(courseId: string): Promise<CourseShape> {
     lessons: modules.flatMap((mod) => (mod.lessons || []).map((lesson) => ({
       lessonId: lesson.id, lessonTitle: lesson.title, moduleId: mod.id, moduleTitle: mod.title,
       overview: String(lesson.overview || '').trim(), notes: String(lesson.notes || '').trim(),
+      days: Number(lesson.days) > 0 ? Math.round(Number(lesson.days)) : 0,
     }))),
   };
 }
@@ -174,11 +175,13 @@ export async function courseProgress(studentId: string, courseId: string, option
   courseTitle: string; lessons: LessonProgress[]; percent: number; currentLessonId: string; timeline: CourseTimeline;
   finalExam: { total: number; passed: number; open: boolean };
 }> {
-  const [{ title, lessons }, videoAll, partsAll, approvalsAll, quizzes, quizAttempts, assignments, submissions, exams, examAttempts, requests, windowsAll, timeline] = await Promise.all([
+  const [{ title, lessons }, videoAll, partsAll, approvalsAll, quizzes, quizAttempts, assignments, submissions, exams, examAttempts, requests, windowsAll] = await Promise.all([
     courseLessons(courseId), kvGet<CourseSets>(VIDEO_KEY, {}), kvGet<PartMap>(PARTS_KEY, {}), kvGet<CourseSets>(APPROVALS_KEY, {}),
     listQuizzes(), listAttempts(studentId), listAssignments(), listSubmissions(), listExams(), attemptsFor(studentId), listRequests(),
-    kvGet<WindowMap>(WINDOWS_KEY, {}), getTimeline(courseId),
+    kvGet<WindowMap>(WINDOWS_KEY, {}),
   ]);
+  const lessonDays = new Map(lessons.map((lesson) => [lesson.lessonId, lesson.days || 0]));
+  const timeline = await timelineFor(studentId, courseId, lessons.reduce((sum, lesson) => sum + (lesson.days || 0), 0));
   const videos = new Set(videoAll[studentId]?.[courseId] || []);
   const parts = partsAll[studentId]?.[courseId] || {};
   const approvals = new Set(approvalsAll[studentId]?.[courseId] || []);
@@ -258,9 +261,10 @@ export async function courseProgress(studentId: string, courseId: string, option
   const completed = result.filter((item) => item.state === 'done').length;
   let courseTimeline: CourseTimeline = { configured: false, status: 'none', minimumHours: 0, allocationHours: 0, remainingDays: 0, projectedCompletion: '', endingAt: '', enrolledAt: '', warning: '' };
   if (timeline && total > 0) {
-    const [enrolledAt, override] = await Promise.all([enrollmentDate(studentId, courseId), endingOverride(studentId, courseId)]);
+    const enrolledAt = timeline.enrolledAt;
+    const override = await endingOverride(studentId, courseId);
     const dates = { ...timeline.dates, courseEnding: Math.max(timeline.dates.courseEnding, override) };
-    const state = timelineState(timeline.dates, now, total, completed, override);
+    const state = timelineState(timeline.dates, now, total, completed, override, timeline.mode === 'days' ? HOUR : 0);
     const mineWin: Record<string, Window> = { ...(windowsAll[studentId]?.[courseId] || {}) };
     let changed = false;
     let cursor = enrolledAt; // when the next lesson's clock starts
@@ -279,7 +283,9 @@ export async function courseProgress(studentId: string, courseId: string, option
         // The window is created when the lesson opens and stays fixed while the student works;
         // only when it runs out is the time re-calculated from what is left.
         if (!win && options.sync) {
-          const allocMs = i === 0 ? initialAllocation(dates, enrolledAt, total) : dynamicAllocation(dates, cursor, total, completed);
+          // A lesson with its own days gets exactly that window; otherwise the timeline formulas decide.
+          const ownDays = lessonDays.get(lesson.lessonId) || 0;
+          const allocMs = ownDays ? ownDays * 24 * HOUR : i === 0 ? initialAllocation(dates, enrolledAt, total) : dynamicAllocation(dates, cursor, total, completed);
           win = { startedAt: new Date(cursor).toISOString(), allocMs };
           mineWin[lesson.lessonId] = win; changed = true;
         }

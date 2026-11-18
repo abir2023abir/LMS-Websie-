@@ -50,7 +50,7 @@ export type TimelineState = {
  * Where a student stands. At Risk when the time left per lesson drops below the minimum lesson
  * time: the minimum is never lowered; the projected completion date moves past the ending date.
  */
-export function timelineState(dates: TimelineDates, now: number, totalLessons: number, completedLessons: number, endingOverride = 0): TimelineState {
+export function timelineState(dates: TimelineDates, now: number, totalLessons: number, completedLessons: number, endingOverride = 0, slack = 0): TimelineState {
   const ending = Math.max(dates.courseEnding, endingOverride || 0);
   const effective = { ...dates, courseEnding: ending };
   const minimum = minimumLessonTime(dates, totalLessons);
@@ -64,7 +64,8 @@ export function timelineState(dates: TimelineDates, now: number, totalLessons: n
   }
   const allocation = dynamicAllocation(effective, now, totalLessons, completedLessons);
   const perLesson = remainingLessons ? remainingTime / remainingLessons : 0;
-  const atRisk = remainingLessons > 0 && perLesson < minimum;
+  // slack: a day-wise course starts exactly on the minimum, so a few seconds after enrolling must not count as behind.
+  const atRisk = remainingLessons > 0 && perLesson + slack < minimum;
   return {
     status: atRisk ? 'at-risk' : 'on-track',
     allocation,

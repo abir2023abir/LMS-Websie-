@@ -3,7 +3,7 @@ export interface LessonSchema {
   title: string;
   videoUrl: string;
   duration?: string;
-  /** Older courses stored a number of days here. The timeline now comes from the course dates. */
+  /** Days this lesson gets in the day-wise timeline (counted from each student's enrollment); empty = an even share. */
   days?: number;
   /** Short overview text the student reads before the quiz opens. Empty means the part is skipped. */
   overview?: string;

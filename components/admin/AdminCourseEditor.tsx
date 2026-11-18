@@ -4,7 +4,6 @@ import { useEffect, useRef, useState } from 'react';
 import { toast } from 'sonner';
 import AdminModal, { fieldClass } from './AdminModal';
 import LessonVideoField from './LessonVideoField';
-import CourseLengthField from './CourseLengthField';
 import LessonToolsBar, { type ToolCommand, type ToolItems, type ToolKind } from './LessonTools';
 import { getFallbackCourseData } from '@/lib/progress';
 import { loadCourseEdits, shrinkImage } from '@/lib/course-edits-client';
@@ -48,41 +47,36 @@ export default function AdminCourseEditor({
     })),
   );
   const [busy, setBusy] = useState(false);
-  const blankDates = { firstEnrolled: '', lastEnrolled: '', lastCounting: '', courseEnding: '' };
-  const [dates, setDates] = useState(blankDates);
-  const [minHours, setMinHours] = useState(0);
-  const [savingDates, setSavingDates] = useState(false);
-  // <input type="datetime-local"> wants local time without a zone; the server stores real instants.
-  const toLocal = (iso: string) => {
-    const at = new Date(iso);
-    if (Number.isNaN(at.getTime())) return '';
-    return new Date(at.getTime() - at.getTimezoneOffset() * 60000).toISOString().slice(0, 16);
-  };
+  // Day-wise timeline: the course length in days, counted from each student's own enrollment.
+  const [accessDays, setAccessDays] = useState('');
+  const [savedAccessDays, setSavedAccessDays] = useState(0);
+  const [savingDays, setSavingDays] = useState(false);
 
   useEffect(() => {
     fetch(`/api/courses/timeline?courseId=${encodeURIComponent(courseId)}`, { cache: 'no-store' })
       .then((res) => res.json())
       .then((data) => {
-        if (data.timeline) setDates({ firstEnrolled: toLocal(data.timeline.firstEnrolled), lastEnrolled: toLocal(data.timeline.lastEnrolled), lastCounting: toLocal(data.timeline.lastCounting), courseEnding: toLocal(data.timeline.courseEnding) });
-        setMinHours(Number(data.minimumLessonHours) || 0);
+        const days = Number(data.accessDays) || 0;
+        setSavedAccessDays(days);
+        setAccessDays(days ? String(days) : '');
       })
       .catch(() => undefined);
   }, [courseId]);
 
-  const saveDates = async () => {
-    setSavingDates(true);
-    const iso = (value: string) => (value ? new Date(value).toISOString() : '');
+  const saveDays = async () => {
+    const days = Math.round(Number(accessDays) || 0);
+    if (accessDays !== '' && (days < 1 || days > 3650)) { toast.error('Course length must be between 1 and 3650 days.'); return; }
+    setSavingDays(true);
     const res = await fetch('/api/courses/timeline', {
       method: 'PUT',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ courseId, firstEnrolled: iso(dates.firstEnrolled), lastEnrolled: iso(dates.lastEnrolled), lastCounting: iso(dates.lastCounting), courseEnding: iso(dates.courseEnding) }),
+      body: JSON.stringify({ courseId, accessDays: days }),
     });
     const data = await res.json().catch(() => ({}));
-    setSavingDates(false);
-    if (!res.ok || !data.success) { toast.error(data.message || 'Could not save the dates'); return; }
-    const fresh = await fetch(`/api/courses/timeline?courseId=${encodeURIComponent(courseId)}`, { cache: 'no-store' }).then((r) => r.json()).catch(() => null);
-    setMinHours(Number(fresh?.minimumLessonHours) || 0);
-    toast.success('Timeline dates saved.');
+    setSavingDays(false);
+    if (!res.ok || !data.success) { toast.error(data.message || 'Could not save the course length'); return; }
+    setSavedAccessDays(days);
+    toast.success(days ? `Course length saved: ${days} days from each student's enrollment.` : 'Course length removed.');
   };
 
   useEffect(() => {
@@ -227,35 +221,35 @@ export default function AdminCourseEditor({
     </>
   );
 
+  const allLessons = modules.flatMap((mod) => mod.lessons);
+  const lessonDaysTotal = allLessons.reduce((sum, lesson) => sum + (Number(lesson.days) || 0), 0);
+  const lessonsWithDays = allLessons.filter((lesson) => Number(lesson.days) > 0).length;
+  const lengthDays = Number(accessDays) || lessonDaysTotal;
   const timelinePart = (
     <>
-        <div className="space-y-3 rounded-2xl border border-slate-200 bg-slate-50 p-3">
-          <p className="text-xs font-bold text-slate-500">Course timeline</p>
-          <CourseLengthField dates={dates} onChange={setDates} inputClass={fieldClass} />
-          <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
-            <label className="block space-y-1 text-[11px] font-bold text-slate-500">First enrolled date
-              <input type="datetime-local" value={dates.firstEnrolled} onChange={(e) => setDates({ ...dates, firstEnrolled: e.target.value })} className={fieldClass} />
-              <span className="block font-medium">Enrollment opens</span>
-            </label>
-            <label className="block space-y-1 text-[11px] font-bold text-slate-500">Last enrolled date
-              <input type="datetime-local" value={dates.lastEnrolled} onChange={(e) => setDates({ ...dates, lastEnrolled: e.target.value })} className={fieldClass} />
-              <span className="block font-medium">No new students after this</span>
-            </label>
-            <label className="block space-y-1 text-[11px] font-bold text-slate-500">Last counting date
-              <input type="datetime-local" value={dates.lastCounting} onChange={(e) => setDates({ ...dates, lastCounting: e.target.value })} className={fieldClass} />
-              <span className="block font-medium">Used for the minimum lesson time</span>
-            </label>
-            <label className="block space-y-1 text-[11px] font-bold text-slate-500">Course ending date
-              <input type="datetime-local" value={dates.courseEnding} onChange={(e) => setDates({ ...dates, courseEnding: e.target.value })} className={fieldClass} />
-              <span className="block font-medium">Final deadline to finish</span>
-            </label>
+        <div className="space-y-4 rounded-3xl border border-[#FACC15] bg-[#FEFCE8] p-5">
+          <div>
+            <p className="text-xs font-extrabold uppercase tracking-wide text-[#A16207]">Course timeline</p>
+            <p className="mt-1 text-sm text-slate-600">Counted in days from the day each student enrolls, so a student who joins later still gets the full time.</p>
           </div>
-          <p className="text-[11px] font-semibold text-amber-700">
-            {minHours
-              ? `Minimum lesson time: ${minHours} hours (${(minHours / 24).toFixed(2)} days) for each lesson. It changes when the dates or the lesson count change.`
-              : 'Save all four dates to see the minimum time each lesson gets.'}
-          </p>
-          <button type="button" disabled={savingDates} onClick={saveDates} className="rounded-full bg-[#111827] px-4 py-2 text-[11px] font-bold text-white disabled:opacity-60">{savingDates ? 'Saving…' : 'Save dates'}</button>
+          <label className="block space-y-1 text-xs font-bold text-slate-600">Course length (days)
+            <div className="flex items-center gap-2">
+              <input type="number" min={1} max={3650} value={accessDays} onChange={(e) => setAccessDays(e.target.value)} placeholder={lessonDaysTotal ? String(lessonDaysTotal) : 'e.g. 30'} className={`${fieldClass} max-w-[9rem]`} />
+              <span className="text-sm font-semibold text-slate-600">days</span>
+            </div>
+          </label>
+          <ul className="space-y-1.5 text-xs text-slate-600">
+            <li><span className="font-bold text-[#111827]">{allLessons.length}</span> lesson{allLessons.length === 1 ? '' : 's'}{lessonsWithDays ? ` · ${lessonsWithDays} with their own days (${lessonDaysTotal} days in total)` : ''}</li>
+            {lengthDays > 0 && allLessons.length > lessonsWithDays && (
+              <li>Each of the {allLessons.length - lessonsWithDays} lesson{allLessons.length - lessonsWithDays === 1 ? '' : 's'} without its own days gets about <span className="font-bold text-[#111827]">{Math.max(0, Math.round(((lengthDays - lessonDaysTotal) / (allLessons.length - lessonsWithDays)) * 10) / 10)} days</span>.</li>
+            )}
+            {Number(accessDays) > 0 && lessonDaysTotal > Number(accessDays) && (
+              <li className="font-semibold text-rose-700">The lessons add up to {lessonDaysTotal} days, more than the course length.</li>
+            )}
+            {!accessDays && lessonDaysTotal > 0 && <li>Without a course length, the course lasts as long as the lesson days add up to.</li>}
+          </ul>
+          <button type="button" disabled={savingDays || Math.round(Number(accessDays) || 0) === savedAccessDays} onClick={saveDays} className="rounded-full bg-[#111827] px-5 py-2 text-xs font-bold text-white disabled:opacity-50">{savingDays ? 'Saving…' : 'Save course length'}</button>
+          <p className="text-[11px] leading-relaxed text-slate-500">Set days for a lesson in the box beside it in the curriculum, then press Save there.</p>
         </div>
     </>
   );
@@ -291,6 +285,19 @@ export default function AdminCourseEditor({
                       onChange={(e) => setModules((prev) => prev.map((item) => item.id === mod.id ? { ...item, lessons: item.lessons.map((row) => row.id === lesson.id ? { ...row, title: e.target.value } : row) } : item))}
                       className={`${fieldClass} min-w-0 flex-1`}
                     />
+                    <label className="flex shrink-0 items-center gap-1.5 rounded-xl border border-[#FACC15] bg-[#FEFCE8] px-2 py-1 text-[11px] font-bold text-[#A16207]" title="Days this lesson gets. Leave empty to share the course length evenly.">
+                      Days
+                      <input
+                        type="number"
+                        min={0}
+                        max={365}
+                        value={lesson.days || ''}
+                        onChange={(e) => setModules((prev) => prev.map((item) => item.id === mod.id ? { ...item, lessons: item.lessons.map((row) => row.id === lesson.id ? { ...row, days: Math.max(0, Math.min(365, Math.round(Number(e.target.value) || 0))) || undefined } : row) } : item))}
+                        placeholder="–"
+                        aria-label={`Days for ${lesson.title}`}
+                        className="w-14 rounded-lg border border-slate-200 bg-white px-2 py-1 text-center text-sm font-semibold text-[#111827] focus:border-[#111827] focus:outline-none"
+                      />
+                    </label>
                     <button type="button" onClick={() => setModules((prev) => prev.map((item) => item.id === mod.id ? { ...item, lessons: item.lessons.filter((row) => row.id !== lesson.id) } : item))} className="text-[11px] font-bold text-rose-600">Remove</button>
                   </div>
                   <textarea
@@ -361,7 +368,7 @@ export default function AdminCourseEditor({
               <p className="basis-full text-[11px] text-slate-500">Opens for a student only after every lesson of the course is finished.</p>
             </div>
           )}
-          <p className="text-[11px] text-slate-500">Each lesson has an overview, video, quiz, notes, assignment and exam. A part left empty is skipped. The time per lesson comes from the course timeline dates.</p>
+          <p className="text-[11px] text-slate-500">Each lesson has an overview, video, quiz, notes, assignment and exam. A part left empty is skipped. The days a lesson gets come from the box beside it, or an even share of the course length.</p>
         </div>
     </>
   );
@@ -386,7 +393,13 @@ export default function AdminCourseEditor({
       <div className="space-y-4">
         {view === 'details' && <>{detailsPart}{saveBar}</>}
         {view === 'timeline' && timelinePart}
-        {view === 'curriculum' && <>{curriculumPart}{saveBar}</>}
+        {view === 'curriculum' && (
+          <div className="grid grid-cols-1 items-start gap-6 lg:grid-cols-[minmax(0,1fr)_17rem]">
+            <div className="min-w-0 space-y-4">{curriculumPart}{saveBar}</div>
+            {/* The course timeline sits on the right; on a phone it comes first. */}
+            <div className="order-first lg:order-none lg:sticky lg:top-4">{timelinePart}</div>
+          </div>
+        )}
       </div>
     );
   }

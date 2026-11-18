@@ -9,6 +9,15 @@ import { enrollmentWindow, validateTimelineDates, type TimelineDates } from '@/l
 const TIMELINES_KEY = 'course-timelines'; // courseId → ISO strings
 const ENROLL_DATES_KEY = 'enrollment-dates'; // studentId → courseId → ISO (written by grantEnrollment)
 const EXTENSIONS_KEY = 'course-extensions'; // studentId → courseId → ISO of the new ending date
+const DAY_PLANS_KEY = 'course-day-plans'; // courseId → { accessDays }
+const DAY = 86400000;
+
+/**
+ * Day-wise timeline: the course runs for a number of days counted from each student's own
+ * enrollment, so a student who joins ten days later still gets the full time. Lessons may also
+ * have their own number of days (set beside each lesson in the course builder).
+ */
+export type DayPlan = { accessDays: number };
 
 export type TimelineInput = { firstEnrolled: string; lastEnrolled: string; lastCounting: string; courseEnding: string };
 
@@ -54,6 +63,7 @@ export async function clearTimeline(courseId: string) {
 
 /** A message when new students cannot enroll right now, '' when enrollment is open (or no timeline is set). */
 export async function enrollmentClosedReason(courseId: string, now = Date.now()): Promise<string> {
+  if (await getDayPlan(courseId)) return '';
   const timeline = await getTimeline(courseId);
   if (!timeline) return '';
   const state = enrollmentWindow(timeline.dates, now);
@@ -89,12 +99,57 @@ export async function endingOverride(studentId: string, courseId: string): Promi
 }
 
 export async function extendCourseEnding(studentId: string, courseId: string, days: number) {
-  const timeline = await getTimeline(courseId);
-  if (!timeline) throw new Error('This course has no timeline dates yet.');
+  const { courseLessons } = await import('@/lib/progression');
+  const lessonDays = (await courseLessons(courseId)).lessons.reduce((sum, lesson) => sum + (lesson.days || 0), 0);
+  const timeline = await timelineFor(studentId, courseId, lessonDays);
+  if (!timeline) throw new Error('This course has no timeline yet.');
   const add = Math.max(1, Math.min(365, Math.round(Number(days) || 0)));
   const base = Math.max(timeline.dates.courseEnding, await endingOverride(studentId, courseId), Date.now());
   const next = new Date(base + add * 86400000).toISOString();
   const all = await kvGet<Record<string, Record<string, string>>>(EXTENSIONS_KEY, {});
   await kvSet(EXTENSIONS_KEY, { ...all, [studentId]: { ...all[studentId], [courseId]: next } });
   return next;
+}
+
+/* ── day-wise plans ── */
+export async function listDayPlans(): Promise<Record<string, DayPlan>> {
+  const all = await kvGet<Record<string, DayPlan>>(DAY_PLANS_KEY, {});
+  return all && typeof all === 'object' ? all : {};
+}
+
+export async function getDayPlan(courseId: string): Promise<DayPlan | null> {
+  const plan = (await listDayPlans())[courseId];
+  return plan && plan.accessDays > 0 ? plan : null;
+}
+
+/** Saves the course length in days (0 removes it). A day-wise plan replaces the four fixed dates. */
+export async function saveDayPlan(courseId: string, accessDays: number) {
+  if (!courseId) throw new Error('Pick a course.');
+  const days = Math.round(Number(accessDays) || 0);
+  if (days < 0 || days > 3650) throw new Error('Course length must be between 1 and 3650 days.');
+  const all = await listDayPlans();
+  if (days === 0) delete all[courseId];
+  else all[courseId] = { accessDays: days };
+  await kvSet(DAY_PLANS_KEY, all);
+  if (days > 0) await clearTimeline(courseId);
+  return days ? { accessDays: days } : null;
+}
+
+/**
+ * The timeline one student works against. Day-wise courses (a course length, or days on the lessons)
+ * count from the student's enrollment; older courses use their four fixed dates. Null when neither is set.
+ */
+export async function timelineFor(studentId: string, courseId: string, lessonDaysTotal = 0): Promise<{ dates: TimelineDates; mode: 'days' | 'dates'; enrolledAt: number } | null> {
+  const plan = await getDayPlan(courseId);
+  const accessDays = plan?.accessDays || lessonDaysTotal;
+  if (accessDays > 0) {
+    const enrolledAt = await enrollmentDate(studentId, courseId);
+    return {
+      mode: 'days',
+      enrolledAt,
+      dates: { firstEnrolled: enrolledAt, lastEnrolled: enrolledAt, lastCounting: enrolledAt, courseEnding: enrolledAt + accessDays * DAY },
+    };
+  }
+  const fixed = await getTimeline(courseId);
+  return fixed ? { mode: 'dates', enrolledAt: await enrollmentDate(studentId, courseId), dates: fixed.dates } : null;
 }

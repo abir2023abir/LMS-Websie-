@@ -21,7 +21,7 @@ type Counts = Partial<Record<TabId, number>>;
 const TABS: { id: TabId; label: string; hint: string; icon: LucideIcon; group: 'Course' | 'Assessments' | 'Classes'; panelTab?: string; adminOnly?: boolean }[] = [
   { id: 'details', label: 'Details', hint: 'Name, price, category, picture and description.', icon: Settings2, group: 'Course' },
   { id: 'curriculum', label: 'Curriculum', hint: 'Build the course here: modules and lessons, and under each lesson its quiz, assignment, exam and live class.', icon: Layers, group: 'Course' },
-  { id: 'timeline', label: 'Timeline', hint: 'The four course dates and the minimum lesson time.', icon: CalendarClock, group: 'Course', adminOnly: true },
+  { id: 'timeline', label: 'Timeline', hint: 'How many days a student gets, counted from the day they enroll.', icon: CalendarClock, group: 'Course' },
   { id: 'mentor', label: 'Mentor', hint: 'The mentor who runs this course.', icon: UserRound, group: 'Course', adminOnly: true },
   { id: 'quizzes', label: 'Quizzes', hint: 'Lesson quizzes for this course.', icon: HelpCircle, group: 'Assessments', panelTab: 'Quizzes' },
   { id: 'assignments', label: 'Assignments', hint: 'Assignments and student submissions for this course.', icon: FileText, group: 'Assessments', panelTab: 'Assignments' },

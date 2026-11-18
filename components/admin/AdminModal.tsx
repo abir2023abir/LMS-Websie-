@@ -12,12 +12,12 @@ export default function AdminModal({
   wide?: boolean;
 }) {
   return (
-    <div className="fixed inset-0 z-[80] flex items-center justify-center p-4 bg-black/50" onClick={onClose}>
+    <div className="fixed inset-0 z-[80] flex items-center justify-center p-3 sm:p-4 bg-black/60" onClick={onClose}>
       <div
         role="dialog"
         aria-modal="true"
         aria-label={title}
-        className={`bg-white rounded-3xl w-full ${wide ? 'max-w-3xl' : 'max-w-xl'} max-h-[86vh] overflow-y-auto p-6 shadow-xl border border-slate-100`}
+        className={`bg-white rounded-3xl w-full ${wide ? 'max-w-5xl max-h-[94vh] sm:p-8' : 'max-w-xl max-h-[86vh]'} overflow-y-auto p-6 shadow-xl border border-slate-100`}
         onClick={(event) => event.stopPropagation()}
       >
         <div className="flex items-center justify-between gap-3 mb-4">

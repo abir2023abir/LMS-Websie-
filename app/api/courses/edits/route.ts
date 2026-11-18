@@ -62,6 +62,8 @@ export async function PUT(request: Request) {
               duration: lesson?.duration ? String(lesson.duration).slice(0, 20) : undefined,
               overview: String(lesson?.overview || '').trim().slice(0, 6000),
               notes: String(lesson?.notes || '').trim().slice(0, 6000),
+              // Days this lesson gets in the day-wise timeline (0 = share the course length evenly).
+              days: Math.max(0, Math.min(365, Math.round(Number(lesson?.days) || 0))) || undefined,
             }))
           : [],
       }));
