@@ -16,7 +16,7 @@ export default function Navbar() {
     { name: 'Home', href: '/' },
     { name: 'All Courses', href: '/courses' },
   { name: 'Bookkeeping', href: '/bookkeeping' },
-    { name: 'Contact', href: '/contact#contact' },
+    { name: 'Contact', href: '/contact' },
   ];
 
   return (

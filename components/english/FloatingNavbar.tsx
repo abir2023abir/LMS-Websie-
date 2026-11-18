@@ -14,7 +14,7 @@ const DEFAULT_ITEMS: NavItem[] = [
   { name: 'Home', href: '/' },
   { name: 'All Courses', href: '/courses' },
   { name: 'Bookkeeping', href: '/bookkeeping' },
-  { name: 'Contact', href: '/contact#contact' },
+  { name: 'Contact', href: '/contact' },
 ];
 
 export default function FloatingNavbar({ items }: { items?: NavItem[] } = {}) {

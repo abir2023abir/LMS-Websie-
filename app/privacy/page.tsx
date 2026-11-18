@@ -51,7 +51,7 @@ export default function PrivacyPage() {
         <h1 className="font-display font-extrabold text-3xl sm:text-4xl text-[#111827] mb-3">Privacy Policy</h1>
         <p className="text-slate-500 text-sm mb-10">
           Last updated: October 2026. Privacy questions?{' '}
-          <Link href="/#contact" className="text-amber-600 font-semibold hover:underline">Reach our advisors</Link>.
+          <Link href="/contact" className="text-amber-600 font-semibold hover:underline">Reach our advisors</Link>.
         </p>
         <div className="space-y-8">
           {sections.map((s) => (

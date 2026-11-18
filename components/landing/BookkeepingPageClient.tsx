@@ -16,7 +16,7 @@ const NAV = [
   { name: 'Home', href: '/' },
   { name: 'Industries', href: '/bookkeeping#industries' },
   { name: 'Bookkeeping', href: '/bookkeeping' },
-  { name: 'Contact', href: '/bookkeeping#consultation' },
+  { name: 'Contact', href: '/contact' },
 ];
 
 /** Bookkeeping page, in the order of the client's layout (sections 01–08). */
