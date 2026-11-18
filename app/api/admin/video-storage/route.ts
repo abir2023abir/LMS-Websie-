@@ -3,6 +3,8 @@ import { requireAdmin } from '@/lib/admin-guard';
 import { getR2Config, saveR2Config } from '@/lib/r2';
 
 export const dynamic = 'force-dynamic';
+// The connection check may retry for a few seconds while a new Cloudflare token starts working.
+export const maxDuration = 30;
 
 // Admin only: the video storage (Cloudflare R2) connection. The secret is never sent back.
 export async function GET() {
