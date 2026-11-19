@@ -193,6 +193,13 @@ export default function AdminDashboard({
             <RefreshCw className={`h-3.5 w-3.5 ${isLoading ? 'animate-spin' : ''}`} />
             <span className="hidden sm:inline">Refresh</span>
           </button>
+          {variant === 'admin' && (
+            // Opens the student panel as the demo student: every course open, nothing counted.
+            <a href="/api/admin/demo-student" target="_blank" rel="noopener" className="flex items-center gap-1.5 rounded-xl bg-[#111827] px-3 py-2 text-xs font-bold text-[#FACC15] transition-colors hover:bg-[#1f2937]" title="See the site as a student enrolled in every course">
+              <Eye className="h-3.5 w-3.5" />
+              <span className="hidden sm:inline">View as Demo Student</span>
+            </a>
+          )}
           <InboxButton scope="all" />
           {variant === 'instructor' && <MyPhoto />}
         </header>

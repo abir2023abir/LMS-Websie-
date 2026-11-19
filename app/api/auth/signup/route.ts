@@ -1,4 +1,5 @@
 import { cookies } from 'next/headers';
+import { isDemoEmail } from '@/lib/demo-shared';
 import { NextResponse } from 'next/server';
 import { ROLES, createProfile, profileByEmail, publicProfile, requestGuardianLink, type Role } from '@/lib/accounts';
 import { verifyAdminSession } from '@/lib/auth-server';
@@ -24,6 +25,7 @@ export async function POST(request: Request) {
     if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
       return NextResponse.json({ success: false, code: 'auth/invalid-email', message: 'Please provide a valid email address.' }, { status: 400 });
     }
+    if (isDemoEmail(email)) return NextResponse.json({ success: false, code: 'auth/invalid-email', message: 'This email address cannot be used.' }, { status: 400 });
     if (password.length < 6) {
       return NextResponse.json({ success: false, code: 'auth/weak-password', message: 'Password must be at least 6 characters.' }, { status: 400 });
     }

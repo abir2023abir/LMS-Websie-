@@ -193,6 +193,9 @@ export async function courseIsFull(courseId: string) {
 }
 
 export async function getEnrollments(studentId: string): Promise<string[]> {
+  // The admin's demo student sees every course, without paying and without joining any roster.
+  const demo = await import('@/lib/demo-student');
+  if (await demo.isDemoStudentId(studentId)) return demo.allCourseIds();
   const own = await kvGet<string[] | null>(`enroll-student:${studentId}`, null);
   if (own) return own;
   return (await legacyEnrollments())[studentId] || [];

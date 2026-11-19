@@ -1,7 +1,7 @@
 import { kvGet, kvSet } from '@/lib/kv-store';
 import { listQuizzes, listAttempts } from '@/lib/quizzes';
 import { attemptsFor, listExams } from '@/lib/exams';
-import { listProfiles } from '@/lib/accounts';
+import { demoAccountIds, listProfiles } from '@/lib/accounts';
 
 /*
  * Quiz and exam retakes, repeated-failure Risk Alerts and the admin's interventions.
@@ -111,10 +111,13 @@ export async function riskAlerts(courseIds: Set<string> | null): Promise<RiskAle
     riskThreshold(), listQuizzes(), listExams(), listAttempts(), attemptsFor(), listProfiles(), listActions(),
     kvGet<Record<string, Record<string, number>>>(EXTRA_KEY, {}), kvGet<Record<string, Record<string, Restriction>>>(RESTRICT_KEY, {}),
   ]);
+  // The admin's demo student never raises a risk alert.
+  const demoIds = await demoAccountIds();
   const people = new Map(profiles.map((profile) => [profile.id, profile]));
   type Row = { at: string; percent: number; passed: boolean };
   const groups = new Map<string, { kind: AssessmentKind; assessmentId: string; studentId: string; rows: Row[] }>();
   const push = (kind: AssessmentKind, assessmentId: string, studentId: string, row: Row) => {
+    if (demoIds.has(studentId)) return;
     const key = `${kind}:${assessmentId}:${studentId}`;
     const group = groups.get(key) || { kind, assessmentId, studentId, rows: [] };
     group.rows.push(row);

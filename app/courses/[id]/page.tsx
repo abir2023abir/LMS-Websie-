@@ -44,6 +44,14 @@ export default function CourseDetailsPage() {
   const [lessonVideos, setLessonVideos] = useState<Record<string, string>>({});
   const [activeLessonTitle, setActiveLessonTitle] = useState<string>('Introduction & Course Orientation');
   const [openModules, setOpenModules] = useState<Record<string, boolean>>({ 'mod-1': true, 'mod-0': true });
+  // A signed-in student who already has this course goes straight to the classroom.
+  const [enrolled, setEnrolled] = useState(false);
+  useEffect(() => {
+    fetch('/api/student/enrollments', { cache: 'no-store' })
+      .then((res) => (res.ok ? res.json() : null))
+      .then((data) => setEnrolled(Array.isArray(data?.courseIds) && data.courseIds.map(String).includes(String(courseId))))
+      .catch(() => setEnrolled(false));
+  }, [courseId]);
   const [mentor, setMentor] = useState<{ id: string; name: string; bio: string; university: string; degree: string } | null>(null);
 
   useEffect(() => {
@@ -392,6 +400,15 @@ export default function CourseDetailsPage() {
               </div>
 
               <div className="space-y-2">
+                {enrolled ? (
+                <Link
+                  href={`/student/learn/${encodeURIComponent(courseId)}`}
+                  className="w-full bg-[#111827] hover:bg-[#1f2937] text-[#FACC15] font-extrabold text-sm py-4 px-6 rounded-2xl flex items-center justify-center gap-2 transition-all shadow-lg"
+                >
+                  <PlayCircle className="w-5 h-5 fill-current" />
+                  <span>Go to Classroom</span>
+                </Link>
+                ) : (
                 <button
                   onClick={handleOpenCheckout}
                   className="w-full bg-[#FACC15] hover:bg-[#eab308] text-[#111827] font-extrabold text-sm py-4 px-6 rounded-2xl flex items-center justify-center gap-2 transition-all shadow-lg shadow-[#FACC15]/25"
@@ -399,6 +416,7 @@ export default function CourseDetailsPage() {
                   <PlayCircle className="w-5 h-5 fill-current" />
                   <span>Enroll Now</span>
                 </button>
+                )}
               </div>
 
               {/* Perks Checklist */}

@@ -261,11 +261,19 @@ export async function profileById(id: string) {
   return (await select('profiles', { id }))[0] || null;
 }
 
-export async function listProfiles() {
-  return select('profiles');
+/** Ids of the admin's demo student accounts (current and set aside), to leave out of reports. */
+export async function demoAccountIds() {
+  return new Set((await select('profiles')).filter((profile) => profile.email.endsWith('@preview.invalid')).map((profile) => profile.id));
 }
 
-export async function createProfile(input: { email: string; name: string; password: string; role: Role; phone?: string }) {
+/** Every account except the admin's demo student, which never shows in lists, counts or reports. */
+export async function listProfiles() {
+  return (await select('profiles')).filter((profile) => !profile.email.endsWith('@preview.invalid'));
+}
+
+export async function createProfile(input: { email: string; name: string; password: string; role: Role; phone?: string }, options: { demo?: boolean } = {}) {
+  // The preview domain belongs to the admin's demo student only (lib/demo-student.ts).
+  if (!options.demo && normalizeEmail(input.email).endsWith('@preview.invalid')) throw new Error('This email address cannot be used.');
   const profile: Profile = {
     id: crypto.randomUUID(),
     email: normalizeEmail(input.email),
@@ -281,7 +289,7 @@ export async function createProfile(input: { email: string; name: string; passwo
   return profile;
 }
 
-export async function updateProfile(id: string, patch: Partial<Pick<Profile, 'roles' | 'active_role' | 'disabled' | 'name' | 'mentor_level' | 'phone' | 'password_hash'>>) {
+export async function updateProfile(id: string, patch: Partial<Pick<Profile, 'roles' | 'active_role' | 'disabled' | 'name' | 'mentor_level' | 'phone' | 'password_hash' | 'email'>>) {
   await update('profiles', { id }, patch);
 }
 
