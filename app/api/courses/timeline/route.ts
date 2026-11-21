@@ -1,4 +1,5 @@
 import { NextResponse } from 'next/server';
+import { courseAccessDenied } from '@/lib/mentor-scope';
 import { requireAdminWrite } from '@/lib/admin-guard';
 import { clearTimeline, enrollmentClosedReason, getDayPlan, getTimeline, saveDayPlan, saveTimeline } from '@/lib/course-timeline';
 import { minimumLessonTime } from '@/lib/timeline-math';
@@ -41,6 +42,8 @@ export async function PUT(request: Request) {
   try {
     const body = await request.json();
     const courseId = String(body.courseId || '');
+    const outside = await courseAccessDenied(courseId);
+    if (outside) return outside;
     if (body.accessDays !== undefined) {
       return NextResponse.json({ success: true, plan: await saveDayPlan(courseId, Number(body.accessDays)) });
     }
@@ -59,6 +62,8 @@ export async function DELETE(request: Request) {
   if (denied) return denied;
   const courseId = new URL(request.url).searchParams.get('courseId') || '';
   if (!courseId) return NextResponse.json({ success: false, message: 'courseId is required.' }, { status: 400 });
+  const outside = await courseAccessDenied(courseId);
+  if (outside) return outside;
   await clearTimeline(courseId);
   await saveDayPlan(courseId, 0);
   return NextResponse.json({ success: true });

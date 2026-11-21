@@ -1,4 +1,5 @@
 import { NextResponse } from 'next/server';
+import { adminOnly } from '@/lib/mentor-scope';
 import { requireAdmin, requireAdminWrite } from '@/lib/admin-guard';
 import { deleteEarning, listEarnings, saveEarning } from '@/lib/admin-studio';
 
@@ -11,6 +12,8 @@ export async function GET() {
 export async function POST(request: Request) {
   const denied = await requireAdminWrite('Earnings');
   if (denied) return denied;
+  const notAdmin = adminOnly('Only the admin can change earnings records.');
+  if (notAdmin) return notAdmin;
   try {
     const body = await request.json();
     if (body.action === 'delete') {

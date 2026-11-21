@@ -1,4 +1,5 @@
 import { NextResponse } from 'next/server';
+import { courseAccessDenied } from '@/lib/mentor-scope';
 import { courseSettings, listCourseSettings, saveCourseSettings, type Approval, type Visibility } from '@/lib/accounts';
 import { staffDenied, staffIdentity } from '@/lib/user-session';
 
@@ -30,6 +31,8 @@ export async function PATCH(request: Request) {
     const body = await request.json();
     const courseId = String(body.courseId || '').trim();
     if (!courseId) return NextResponse.json({ success: false, message: 'Pick a course.' }, { status: 400 });
+    const outside = await courseAccessDenied(courseId);
+    if (outside) return outside;
 
     const current = await courseSettings(courseId);
     const next = { ...current, updated_by: staff.who };
@@ -37,8 +40,9 @@ export async function PATCH(request: Request) {
 
     if (body.approval !== undefined) {
       if (!APPROVAL.includes(body.approval)) return NextResponse.json({ success: false, message: 'Unknown approval state.' }, { status: 400 });
-      if (body.approval !== 'pending' && !lead) {
-        return NextResponse.json({ success: false, message: 'Assistant mentors can only send a course for approval.' }, { status: 403 });
+      // Only the admin approves a course; instructors can send it for approval.
+      if (body.approval !== 'pending' && !staff.admin) {
+        return NextResponse.json({ success: false, message: 'Only the admin can approve a course. Send it for approval instead.' }, { status: 403 });
       }
       next.approval = body.approval;
     }

@@ -1,4 +1,5 @@
 import { NextResponse } from 'next/server';
+import { adminOnly } from '@/lib/mentor-scope';
 import { requireAdmin, requireAdminWrite } from '@/lib/admin-guard';
 import { getPaymentSettings, savePaymentSettings, type ManualMethodId, type PaymentSettings } from '@/lib/payments';
 
@@ -10,6 +11,8 @@ const ACCOUNT_TYPES = new Set(['Personal', 'Agent', 'Merchant']);
 export async function GET() {
   const denied = await requireAdmin('Payments');
   if (denied) return denied;
+  const notAdmin = adminOnly('Only the admin can see or change payment settings.');
+  if (notAdmin) return notAdmin;
   const settings = await getPaymentSettings();
   // Never send the SSLCommerz password back to the browser.
   return NextResponse.json({
@@ -22,6 +25,8 @@ export async function GET() {
 export async function POST(request: Request) {
   const denied = await requireAdminWrite('Payments');
   if (denied) return denied;
+  const notAdmin = adminOnly('Only the admin can see or change payment settings.');
+  if (notAdmin) return notAdmin;
   try {
     const body = (await request.json()) as Partial<PaymentSettings>;
     const current = await getPaymentSettings();

@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server';
 import { staffDenied, staffIdentity } from '@/lib/user-session';
+import { courseAccessDenied } from '@/lib/mentor-scope';
 import { getR2Config, lessonVideoKey, presignUpload, r2Configured, R2_PREFIX } from '@/lib/r2';
 
 export const dynamic = 'force-dynamic';
@@ -20,6 +21,8 @@ export async function POST(request: Request) {
     const courseId = String(body.courseId || '').trim();
     const lessonId = String(body.lessonId || '').trim();
     if (!courseId || !lessonId) return NextResponse.json({ success: false, message: 'Save the course and lesson before uploading.' }, { status: 400 });
+    const outside = await courseAccessDenied(courseId);
+    if (outside) return outside;
     if (!VIDEO_TYPES.has(String(body.contentType))) return NextResponse.json({ success: false, message: 'Upload an MP4, WEBM, MOV or MKV video.' }, { status: 400 });
     if (!Number(body.size) || Number(body.size) > MAX_BYTES) return NextResponse.json({ success: false, message: 'The video must be smaller than 5 GB.' }, { status: 400 });
 

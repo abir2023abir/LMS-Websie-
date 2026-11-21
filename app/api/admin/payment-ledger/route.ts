@@ -1,4 +1,5 @@
 import { NextResponse } from 'next/server';
+import { adminOnly } from '@/lib/mentor-scope';
 import { requireAdmin, requireAdminWrite } from '@/lib/admin-guard';
 import { deletePayment, listPayments, readProof, saveProof, savePayment, setPaymentStatus, type PaymentStatus } from '@/lib/payments';
 
@@ -22,6 +23,8 @@ export async function GET(request: Request) {
 export async function POST(request: Request) {
   const denied = await requireAdminWrite('Payments');
   if (denied) return denied;
+  const notAdmin = adminOnly('Only the admin can add, approve or change payments.');
+  if (notAdmin) return notAdmin;
   try {
     const type = request.headers.get('content-type') || '';
     if (type.includes('multipart/form-data')) {

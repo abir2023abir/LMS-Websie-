@@ -1,3 +1,4 @@
+import { NextResponse } from 'next/server';
 import { isAdminSession } from '@/lib/admin-guard';
 import { listCourseSettings } from '@/lib/accounts';
 import { getCoursesByInstructor } from '@/lib/db';
@@ -23,3 +24,14 @@ export async function mentorCourseScope(): Promise<Set<string> | null> {
 export const inScope = (scope: Set<string> | null, courseId: string) => scope === null || scope.has(courseId);
 
 export const outOfScope = (message = 'This course is not assigned to you.') => ({ success: false, message });
+
+/** A 403 response unless the admin, or a mentor this course belongs to, is signed in. */
+export async function courseAccessDenied(courseId: string) {
+  if (inScope(await mentorCourseScope(), courseId)) return null;
+  return NextResponse.json(outOfScope(), { status: 403 });
+}
+
+/** A 403 response unless the admin session is signed in (instructor permissions never reach this). */
+export function adminOnly(message = 'Only the admin can do this.') {
+  return isAdminSession() ? null : NextResponse.json({ success: false, message }, { status: 403 });
+}

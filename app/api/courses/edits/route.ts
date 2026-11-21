@@ -1,4 +1,5 @@
 import { NextResponse } from 'next/server';
+import { courseAccessDenied } from '@/lib/mentor-scope';
 import { requireAdmin, requireAdminWrite } from '@/lib/admin-guard';
 import { listCourseEdits, saveCourseEdit, type CourseEdit } from '@/lib/course-edits';
 
@@ -21,6 +22,9 @@ export async function PUT(request: Request) {
     const body = await request.json();
     const courseId = String(body.courseId || '').trim();
     if (!courseId) return NextResponse.json({ success: false, message: 'Pick a course.' }, { status: 400 });
+    // Instructors change only the courses they made or were assigned.
+    const outside = await courseAccessDenied(courseId);
+    if (outside) return outside;
 
     const patch: CourseEdit = {};
     for (const key of ['title', 'category', 'level', 'description'] as const) {

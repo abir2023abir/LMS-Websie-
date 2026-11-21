@@ -1,4 +1,5 @@
 import { NextResponse } from 'next/server';
+import { adminOnly } from '@/lib/mentor-scope';
 import { requireAdmin } from '@/lib/admin-guard';
 import {
   assignCourseMentor, unassignCourseMentor,
@@ -44,6 +45,8 @@ export async function GET() {
 export async function POST(request: Request) {
   const denied = await requireAdmin('Accounts');
   if (denied) return denied;
+  const notAdmin = adminOnly('Only the admin can add, change or disable accounts.');
+  if (notAdmin) return notAdmin;
   try {
     const body = await request.json();
     const name = String(body.name || '').trim();
@@ -82,6 +85,8 @@ export async function POST(request: Request) {
 export async function PATCH(request: Request) {
   const denied = await requireAdmin('Accounts');
   if (denied) return denied;
+  const notAdmin = adminOnly('Only the admin can add, change or disable accounts.');
+  if (notAdmin) return notAdmin;
   try {
     const body = await request.json();
     if (body.linkId) {

@@ -21,7 +21,7 @@ export async function POST(request: Request) {
       return NextResponse.json({ success: false, message: 'Meeting link must start with https://' }, { status: 400 });
     }
     await addCalendarEvent({
-      id: String(body.id || crypto.randomUUID()),
+      id: crypto.randomUUID(),
       title: title.slice(0, 200),
       kind: body.kind,
       date,

@@ -1,7 +1,8 @@
 import { NextResponse } from 'next/server';
 import { requireAdmin, requireAdminWrite } from '@/lib/admin-guard';
 import { deleteCertificate, getCertificate, listCertificates, saveCertificate } from '@/lib/admin-studio';
-import { revokeCertificateRecord, saveCertificateRecord } from '@/lib/certificate-db';
+import { getCertificateById, revokeCertificateRecord, saveCertificateRecord } from '@/lib/certificate-db';
+import { courseAccessDenied } from '@/lib/mentor-scope';
 
 export async function GET() {
   const denied = await requireAdmin('Certificate');
@@ -16,10 +17,17 @@ export async function POST(request: Request) {
     const body = await request.json();
     if (body.action === 'delete') {
       const id = String(body.id || '');
+      // An instructor can revoke only certificates of their own courses.
+      const existing = getCertificate(id) || (await getCertificateById(id));
+      const outside = await courseAccessDenied(String(existing?.courseId || ''));
+      if (outside) return outside;
       deleteCertificate(id);
       await revokeCertificateRecord(id);
       return NextResponse.json({ success: true, certificates: listCertificates() });
     }
+    // An instructor can issue certificates only for their own courses (the admin for any).
+    const outside = await courseAccessDenied(String(body.courseId || ''));
+    if (outside) return outside;
     const certificate = saveCertificate({
       id: body.id ? String(body.id) : undefined,
       studentName: String(body.studentName || ''),

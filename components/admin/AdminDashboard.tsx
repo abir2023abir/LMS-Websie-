@@ -456,7 +456,8 @@ export default function AdminDashboard({
 
         {activeTab === 'Payments' && (
           <div className="space-y-6">
-            <AdminPaymentSetup />
+            {/* Payment gateway settings are admin only; instructors with Payments see the board. */}
+            {variant === 'admin' && <AdminPaymentSetup />}
             <AdminPaymentsBoard key="payments-board" />
           </div>
         )}
