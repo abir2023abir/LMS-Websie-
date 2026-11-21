@@ -25,27 +25,61 @@ const groups: { label: string; sections: Section[] }[] = [
       { id: 'about', name: 'About', icon: Info, description: 'The "A Better Learning Journey" section with its four cards.', preview: '/' },
       { id: 'features', name: 'Why Choose Us', icon: Sparkles, description: 'The reasons to learn with Career Bridge.Studio.', preview: '/' },
       { id: 'stories', name: 'Success Stories', icon: Trophy, description: 'Learner story videos. The section stays hidden until you add one.', preview: '/' },
-      { id: 'orientation', name: 'Live Programmes', icon: CalendarDays, description: 'Orientation sessions and workshops. Shown only when one is scheduled.', preview: '/' },
       { id: 'reviews', name: 'Reviews', icon: MessageSquareQuote, description: 'Verified learner reviews for "Student Reviews".', preview: '/' },
     ],
   },
   {
     label: 'Pages',
     sections: [
-      { id: 'bookkeeping', name: 'Bookkeeping', icon: BarChart3, description: 'Bookkeeping service page: plans, prices and features.', preview: '/bookkeeping' },
       { id: 'contact-booking', name: 'Contact & Booking', icon: CalendarClock, description: 'Consultation booking form text, days and time slots.', preview: '/contact' },
     ],
   },
   {
     label: 'More',
     sections: [
-      { id: 'blog', name: 'Blog', icon: BookOpen, description: 'Articles for "Latest from LMS" on the home page. The two newest are shown; the section stays hidden until you add one.', preview: '/' },
       { id: 'enquiries', name: 'Enquiries', icon: Inbox, description: 'Messages sent from the website contact form.' },
     ],
   },
 ];
 
 const allSections = groups.flatMap((group) => group.sections);
+
+// Program, Bookkeeping and Blog have their own entries in the admin menu (client layout), so they
+// are edited from there instead of from this list.
+const ownTabSections: Record<'program' | 'bookkeeping' | 'blog', Section> = {
+  program: { id: 'orientation', name: 'Program', icon: CalendarDays, description: 'Orientation sessions and workshops. Shown only when one is scheduled.', preview: '/' },
+  bookkeeping: { id: 'bookkeeping', name: 'Bookkeeping', icon: BarChart3, description: 'Bookkeeping service page: plans, prices and features.', preview: '/bookkeeping' },
+  blog: { id: 'blog', name: 'Blog', icon: BookOpen, description: 'Articles for "Latest from LMS" on the home page. The two newest are shown; the section stays hidden until you add one.', preview: '/' },
+};
+
+/** One website section as a full admin page: Program, Bookkeeping or Blog. */
+export function CmsSectionPage({ section: key }: { section: keyof typeof ownTabSections }) {
+  const section = ownTabSections[key];
+  const Icon = section.icon;
+  return (
+    <section className="min-w-0 rounded-3xl border border-slate-200 bg-white shadow-sm">
+      <header className="flex flex-wrap items-start justify-between gap-3 border-b border-slate-100 px-5 py-4 sm:px-6">
+        <div className="flex min-w-0 items-start gap-3">
+          <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-[#FEF9C3] text-[#A16207]"><Icon className="h-5 w-5" /></span>
+          <div className="min-w-0">
+            <h2 className="font-display text-lg font-extrabold text-slate-900">{section.name}</h2>
+            <p className="text-sm text-slate-500">{section.description}</p>
+          </div>
+        </div>
+        {section.preview && (
+          <a href={section.preview} target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-1.5 rounded-full border border-slate-200 px-3 py-1.5 text-xs font-bold text-slate-600 hover:border-slate-900 hover:text-slate-900">
+            View on site<ExternalLink className="h-3.5 w-3.5" />
+          </a>
+        )}
+      </header>
+      <div className="p-5 sm:p-6">
+        {key === 'program' && <OrientationProgrammesManager />}
+        {key === 'bookkeeping' && <BookkeepingPageEditor />}
+        {key === 'blog' && <BlogEditor />}
+      </div>
+    </section>
+  );
+}
 
 export default function LandingPageCMS() {
   const [activeSection, setActiveSection] = useState('hero');
@@ -110,11 +144,8 @@ export default function LandingPageCMS() {
           {activeSection === 'about' && <AboutEditor />}
           {activeSection === 'features' && <FeaturesEditor />}
           {activeSection === 'stories' && <SuccessStoriesEditor />}
-          {activeSection === 'orientation' && <OrientationProgrammesManager />}
           {activeSection === 'reviews' && <ReviewsEditor />}
-          {activeSection === 'bookkeeping' && <BookkeepingPageEditor />}
           {activeSection === 'contact-booking' && <ContactBookingEditor />}
-          {activeSection === 'blog' && <BlogEditor />}
           {activeSection === 'enquiries' && <EnquiriesEditor />}
         </div>
       </section>

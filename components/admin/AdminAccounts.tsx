@@ -84,7 +84,7 @@ export default function AdminAccounts() {
       }
       setAdded(data.photoSaved === false
         ? `${form.name} was added, but the photo was not saved. ${data.message || ''}`
-        : `${form.name} was added. Open Instructor Access to choose their tools.`);
+        : `${form.name} was added. Open Settings (Role & Permissions) to choose their tools.`);
       setForm({ name: '', email: '', password: '', mentorLevel: 'lead', card: blankCard() });
       setPhoto('');
       setPhotoName('');

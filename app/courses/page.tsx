@@ -11,19 +11,8 @@ import { applyCourseEdit, useCourseEdits } from '@/lib/course-edits-client';
 import { useAuth } from '@/context/AuthContext';
 import { takaFromUsd } from '@/lib/utils';
 import type { CourseSchema } from '@/types/course';
-import {
-  Search,
-  Star,
-  Clock,
-  BookOpen,
-  Users,
-  Filter,
-  Sparkles,
-  ChevronRight,
-  ChevronsRight,
-  Award,
-  CheckCircle,
-} from 'lucide-react';
+import { ArrowRight, BookOpen, ChevronsRight, Clock } from 'lucide-react';
+import LiveProgrammes from '@/components/landing/LiveProgrammes';
 import { motion } from 'framer-motion';
 
 type StoredCourse = {
@@ -61,11 +50,12 @@ function toCatalogCourse(course: StoredCourse): Course {
   };
 }
 
+// Client layout (Learning Programmes & Courses, Part B): four open category buttons, nothing else.
+const ALL = 'All Courses';
+const BASE_CATEGORIES = ['Accounting', 'Business', 'Digital Skills'];
+
 export default function CoursesCatalogPage() {
-  const [searchQuery, setSearchQuery] = useState('');
-  const [selectedCategory, setSelectedCategory] = useState('All');
-  const [priceFilter, setPriceFilter] = useState<'All' | 'Free' | 'Paid'>('All');
-  const [sortBy, setSortBy] = useState<'popular' | 'rating' | 'price-low' | 'price-high' | 'newest'>('popular');
+  const [selectedCategory, setSelectedCategory] = useState(ALL);
 
   // Checkout modal state
   const [selectedCourse, setSelectedCourse] = useState<CourseSchema | null>(null);
@@ -110,7 +100,8 @@ export default function CoursesCatalogPage() {
     allCourses.forEach((c) => {
       if (c.category) set.add(c.category);
     });
-    return ['All', ...Array.from(set)];
+    BASE_CATEGORIES.forEach((name) => set.delete(name));
+    return [ALL, ...BASE_CATEGORIES, ...Array.from(set)];
   }, [allCourses]);
 
   // Filtered & Sorted courses
@@ -118,32 +109,12 @@ export default function CoursesCatalogPage() {
     const catalog = allCourses.map((course) => applyCourseEdit(course, courseEdits[String(course.id)]));
     return catalog
       .filter((c) => {
-        const matchesSearch =
-          c.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
-          c.description.toLowerCase().includes(searchQuery.toLowerCase()) ||
-          c.instructor.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-          c.tags?.some((t) => t.toLowerCase().includes(searchQuery.toLowerCase()));
-
-        const matchesCat = selectedCategory === 'All' || c.category === selectedCategory;
-        const matchesPrice =
-          priceFilter === 'All'
-            ? true
-            : priceFilter === 'Free'
-            ? c.price === 0
-            : c.price > 0;
+        const matchesCat = selectedCategory === ALL || c.category === selectedCategory;
         const isVisible = !hiddenIds.includes(String(c.id));
 
-        return matchesSearch && matchesCat && matchesPrice && isVisible;
-      })
-      .sort((a, b) => {
-        if (sortBy === 'rating') return (b.rating || 0) - (a.rating || 0);
-        if (sortBy === 'popular') return (b.studentCount || 0) - (a.studentCount || 0);
-        if (sortBy === 'price-low') return a.price - b.price;
-        if (sortBy === 'price-high') return b.price - a.price;
-        if (sortBy === 'newest') return (b.isNew ? 1 : 0) - (a.isNew ? 1 : 0);
-        return 0;
+        return matchesCat && isVisible;
       });
-  }, [searchQuery, selectedCategory, priceFilter, sortBy, hiddenIds, courseEdits, allCourses]);
+  }, [selectedCategory, hiddenIds, courseEdits, allCourses]);
 
   const handleEnroll = useCallback((course: any) => {
     setSelectedCourse({
@@ -177,305 +148,132 @@ export default function CoursesCatalogPage() {
     <div className="min-h-screen bg-slate-50 text-[#111827] flex flex-col justify-between selection:bg-[#FACC15] selection:text-[#111827]">
       <FloatingNavbar />
 
-      {/* ── HERO BANNER (MATCHING HOMEPAGE HERO GRADIENT) ── */}
-      <section className="relative bg-gradient-to-b from-[#FACC15] via-[#FACC15] to-[#EAB308] pt-32 lg:pt-36 pb-16 px-4 sm:px-6 lg:px-8 overflow-hidden">
-        <div className="max-w-7xl mx-auto space-y-6 relative z-10">
-          {/* Welcome Pill Badge */}
+      {/* ── PART A: LIVE PROGRAMMES & ORIENTATION (client layout) ── */}
+      <div className="pt-20">
+        <LiveProgrammes />
+      </div>
+
+      {/* ── PART B: FEATURED COURSES (client layout: "» EXPLORE OUR COURSES") ── */}
+      <section className="relative bg-gradient-to-b from-[#FACC15] via-[#FACC15] to-[#EAB308] pt-14 pb-14 px-4 sm:px-6 lg:px-8 overflow-hidden">
+        <div className="max-w-3xl mx-auto space-y-5 text-center relative z-10">
           <div className="inline-flex items-center gap-2 bg-[#111827] text-white rounded-full px-3.5 py-1.5 border border-black/20 shadow-md">
             <div className="bg-[#FACC15] text-[#111827] p-1 rounded-full flex items-center justify-center">
               <ChevronsRight className="w-3.5 h-3.5" />
             </div>
-            <span className="text-xs font-semibold tracking-wide">Course Catalog</span>
+            <span className="text-xs font-bold tracking-wide">EXPLORE OUR COURSES</span>
           </div>
-
-          <div className="max-w-3xl space-y-4">
-            <h1 className="font-display font-extrabold text-3xl sm:text-5xl lg:text-6xl text-[#111827] leading-[1.08] tracking-tight">
-              Explore Structured Learning Programmes
-            </h1>
-
-            <p className="text-base sm:text-lg text-[#111827]/85 font-medium leading-relaxed max-w-2xl">
-              Build knowledge, develop practical skills, and support your learning goals with our comprehensive course catalogue.
-            </p>
-          </div>
-
-          {/* Quick Search Bar */}
-          <div className="pt-2 max-w-xl">
-            <div className="flex items-center bg-white border-2 border-black/10 rounded-2xl p-2 shadow-xl focus-within:border-[#111827] transition-all">
-              <Search className="w-5 h-5 text-slate-400 ml-3 flex-shrink-0" />
-              <input
-                type="text"
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-                placeholder="Search bookkeeping, accounting, digital skills..."
-                className="bg-transparent text-sm text-[#111827] placeholder-slate-400 px-3 py-2 w-full focus:outline-none font-medium"
-              />
-              {searchQuery && (
-                <button
-                  onClick={() => setSearchQuery('')}
-                  className="text-xs text-slate-500 hover:text-[#111827] px-2.5 py-1 bg-slate-100 rounded-lg mr-2 font-bold"
-                >
-                  Clear
-                </button>
-              )}
-            </div>
-          </div>
+          <h1 className="font-display font-extrabold text-3xl sm:text-5xl text-[#111827] leading-[1.1] tracking-tight">
+            Find the Right Course for Your Next Step
+          </h1>
+          <p className="text-sm sm:text-base text-[#111827]/80 font-medium leading-relaxed max-w-2xl mx-auto">
+            Explore structured learning programmes designed to build knowledge, develop practical skills, and support your learning goals.
+          </p>
         </div>
       </section>
 
-      {/* ── MAIN CONTENT AREA ── */}
-      <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12 w-full flex-1 space-y-8">
-        {/* ── FILTERS TOOLBAR (CLEAN WHITE CARD) ── */}
-        <div className="bg-white rounded-3xl border border-slate-200/80 p-5 sm:p-6 shadow-sm space-y-5">
-          {/* Category Filter Pills */}
-          <div>
-            <div className="text-[11px] font-bold text-slate-500 uppercase tracking-wider mb-2.5 flex items-center gap-1.5">
-              <Filter className="w-3.5 h-3.5 text-amber-500" />
-              <span>Program Categories</span>
+      <main className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-12 w-full flex-1 space-y-10">
+        {/* Category buttons, shown openly (no panel around them) */}
+        <div className="flex flex-wrap items-center justify-center gap-2" role="group" aria-label="Course categories">
+          {categoryNames.map((cat) => (
+            <button
+              key={cat}
+              type="button"
+              onClick={() => setSelectedCategory(cat)}
+              aria-pressed={selectedCategory === cat}
+              className={`px-5 py-2.5 rounded-full text-xs sm:text-sm font-bold transition-all whitespace-nowrap ${
+                selectedCategory === cat
+                  ? 'bg-[#111827] text-[#FACC15] shadow-lg'
+                  : 'bg-white hover:bg-slate-100 text-slate-700 border border-slate-200'
+              }`}
+            >
+              {cat}
+            </button>
+          ))}
+        </div>
+
+        {filteredCourses.length === 0 ? (
+          <div className="bg-white border border-slate-200 rounded-3xl p-16 text-center space-y-4 shadow-sm">
+            <div className="w-16 h-16 rounded-2xl bg-amber-50 text-amber-600 flex items-center justify-center mx-auto">
+              <BookOpen className="w-8 h-8" />
             </div>
-            <div className="flex items-center gap-2 overflow-x-auto pb-1 scrollbar-none">
-              {categoryNames.map((cat) => (
-                <button
-                  key={cat}
-                  onClick={() => setSelectedCategory(cat)}
-                  className={`px-4 py-2 rounded-full text-xs font-bold transition-all whitespace-nowrap ${
-                    selectedCategory === cat
-                      ? 'bg-[#FACC15] text-[#111827] shadow-md shadow-[#FACC15]/30'
-                      : 'bg-slate-100 hover:bg-slate-200 text-slate-700 border border-slate-200'
-                  }`}
+            <h3 className="font-display font-bold text-xl text-[#111827]">No Courses Found</h3>
+            <p className="text-slate-500 text-xs sm:text-sm max-w-md mx-auto">No course is in this category yet.</p>
+            <button
+              type="button"
+              onClick={() => setSelectedCategory(ALL)}
+              className="bg-[#FACC15] text-[#111827] font-extrabold text-xs px-6 py-2.5 rounded-xl shadow"
+            >
+              Show All Courses
+            </button>
+          </div>
+        ) : (
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 sm:gap-8">
+            {filteredCourses.map((course) => {
+              const discount = courseDiscount(String(course.id));
+              const price = Math.max(0, Math.round(course.price * (100 - discount) / 100));
+              return (
+                <motion.article
+                  key={course.id}
+                  initial={{ opacity: 0, y: 15 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ duration: 0.3 }}
+                  whileHover={{ y: -5 }}
+                  className="bg-white rounded-3xl border border-slate-200/80 hover:border-[#FACC15] overflow-hidden flex flex-col transition-all duration-300 shadow-sm hover:shadow-xl group"
                 >
-                  {cat}
-                </button>
-              ))}
-            </div>
-          </div>
+                  <div className="relative aspect-[16/10] bg-slate-100 overflow-hidden">
+                    <Image
+                      src={course.thumbnail}
+                      alt={course.title}
+                      fill
+                      unoptimized={!course.thumbnail.startsWith('https://images.unsplash.com/')}
+                      className="object-cover group-hover:scale-105 transition-transform duration-500"
+                    />
+                    <span className="absolute top-3.5 left-3.5 bg-[#111827]/90 text-[#FACC15] text-[10px] font-extrabold uppercase tracking-wide px-3 py-1 rounded-full backdrop-blur-md shadow">
+                      {course.category}
+                    </span>
+                  </div>
 
-          {/* Secondary Controls: Price, Sorting */}
-          <div className="flex flex-wrap items-center justify-between gap-4 pt-4 border-t border-slate-100">
-            <div className="flex flex-wrap items-center gap-3">
-              {/* Price Filter */}
-              <div className="flex items-center gap-2 bg-slate-100 border border-slate-200 rounded-xl px-3 py-1.5 text-xs text-slate-700">
-                <span className="text-slate-500 font-semibold">Pricing:</span>
-                <div className="flex items-center gap-1">
-                  {(['All', 'Paid', 'Free'] as const).map((p) => (
-                    <button
-                      key={p}
-                      onClick={() => setPriceFilter(p)}
-                      className={`px-2.5 py-0.5 rounded-lg text-xs font-bold transition-colors ${
-                        priceFilter === p ? 'bg-[#FACC15] text-[#111827]' : 'hover:text-[#111827]'
-                      }`}
-                    >
-                      {p}
-                    </button>
-                  ))}
-                </div>
-              </div>
-            </div>
-
-            {/* Sort Filter */}
-            <div className="flex items-center gap-2 bg-slate-100 border border-slate-200 rounded-xl px-3 py-1.5 text-xs text-slate-700">
-              <span className="text-slate-500 font-semibold">Sort By:</span>
-              <select
-                value={sortBy}
-                onChange={(e) => setSortBy(e.target.value as any)}
-                className="bg-transparent text-[#111827] focus:outline-none cursor-pointer font-bold"
-              >
-                <option value="popular">Most Popular</option>
-                <option value="price-low">Price: Low to High</option>
-                <option value="price-high">Price: High to Low</option>
-                <option value="newest">Newest Courses</option>
-              </select>
-            </div>
-          </div>
-        </div>
-
-        {/* ── COURSE CARDS GRID ── */}
-        <div className="space-y-6">
-          <div className="flex items-center justify-between">
-            <h2 className="font-display font-extrabold text-xl sm:text-2xl text-[#111827]">
-              Showing <span className="text-amber-600">{filteredCourses.length}</span> Courses
-            </h2>
-            {selectedCategory !== 'All' && (
-              <button
-                onClick={() => setSelectedCategory('All')}
-                className="text-xs font-bold text-amber-600 hover:underline"
-              >
-                Reset Category Filter
-              </button>
-            )}
-          </div>
-
-          {filteredCourses.length === 0 ? (
-            <div className="bg-white border border-slate-200 rounded-3xl p-16 text-center space-y-4 shadow-sm">
-              <div className="w-16 h-16 rounded-2xl bg-amber-50 text-amber-600 flex items-center justify-center mx-auto">
-                <BookOpen className="w-8 h-8" />
-              </div>
-              <h3 className="font-display font-bold text-xl text-[#111827]">No Courses Found</h3>
-              <p className="text-slate-500 text-xs sm:text-sm max-w-md mx-auto">
-                We could not find any courses matching your current search or filters. Try adjusting your query.
-              </p>
-              <button
-                onClick={() => {
-                  setSearchQuery('');
-                  setSelectedCategory('All');
-                  setPriceFilter('All');
-                }}
-                className="bg-[#FACC15] text-[#111827] font-extrabold text-xs px-6 py-2.5 rounded-xl shadow"
-              >
-                Reset All Filters
-              </button>
-            </div>
-          ) : (
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 sm:gap-8">
-              {filteredCourses.map((course) => {
-                return (
-                  <motion.div
-                    key={course.id}
-                    initial={{ opacity: 0, y: 15 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    transition={{ duration: 0.3 }}
-                    whileHover={{ y: -5 }}
-                    className="bg-white rounded-3xl border border-slate-200/80 hover:border-[#FACC15] overflow-hidden flex flex-col justify-between transition-all duration-300 shadow-sm hover:shadow-xl group"
-                  >
-                    {/* Course Thumbnail */}
-                    <div className="relative aspect-video bg-slate-100 overflow-hidden">
-                      <Image
-                        src={course.thumbnail}
-                        alt={course.title}
-                        fill
-                        unoptimized={!course.thumbnail.startsWith('https://images.unsplash.com/')}
-                        className="object-cover group-hover:scale-105 transition-transform duration-500"
-                      />
-                      <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent" />
-
-                      {/* Category Pill */}
-                      <span className="absolute top-3.5 left-3.5 bg-[#111827]/90 text-[#FACC15] text-[10px] font-extrabold px-3 py-1 rounded-full backdrop-blur-md shadow">
-                        {course.category}
+                  <div className="p-6 flex-1 flex flex-col gap-3">
+                    <div className="flex items-center justify-between text-xs text-slate-500 font-medium">
+                      <span className="flex items-center gap-1.5">
+                        {course.duration && (<><Clock className="w-3.5 h-3.5 text-amber-500" />{course.duration}</>)}
                       </span>
+                      {/* Every course runs with live classes (client layout: "20h 00m · Live"). */}
+                      <span className="flex items-center gap-1.5 rounded-full bg-[#FEF9C3] px-2 py-0.5 text-[10px] font-bold uppercase tracking-wide text-[#A16207]">
+                        <span className="h-1.5 w-1.5 rounded-full bg-rose-500" aria-hidden="true" /> Live
+                      </span>
+                    </div>
 
-                      {/* Bestseller Badge */}
-                      {course.isBestseller && (
-                        <span className="absolute bottom-3 left-3.5 bg-[#FACC15] text-[#111827] text-[10px] font-extrabold px-2.5 py-0.5 rounded-md shadow flex items-center gap-1">
-                          <Star className="w-3 h-3 fill-current" /> Bestseller
-                        </span>
+                    <Link href={`/courses/${course.id}`}>
+                      <h3 className="font-display font-bold text-[#111827] text-base sm:text-lg leading-snug line-clamp-2 group-hover:text-amber-600 transition-colors">
+                        {course.title}
+                      </h3>
+                    </Link>
+
+                    <p className="text-xs text-slate-600 line-clamp-3 leading-relaxed">{course.description}</p>
+
+                    <div className="mt-auto pt-4 border-t border-slate-100 flex items-center justify-between gap-3">
+                      {price === 0 ? (
+                        <span className="font-display font-extrabold text-2xl text-emerald-600">Free</span>
+                      ) : (
+                        <span className="font-display font-extrabold text-2xl text-[#111827]">{takaFromUsd(price)}</span>
                       )}
+                      <Link
+                        href={`/courses/${course.id}`}
+                        className="flex items-center gap-2 bg-[#FACC15] hover:bg-[#eab308] text-[#111827] rounded-full pl-4 pr-1 py-1.5 text-xs font-extrabold transition-all shadow-md shadow-[#FACC15]/20"
+                      >
+                        <span>View Course</span>
+                        <span className="w-6 h-6 rounded-full bg-[#111827] flex items-center justify-center">
+                          <ArrowRight className="w-3.5 h-3.5 text-[#FACC15]" />
+                        </span>
+                      </Link>
                     </div>
-
-                    {/* Details Content */}
-                    <div className="p-6 flex-1 flex flex-col justify-between space-y-5">
-                      <div className="space-y-2.5">
-                        {/* Rating & Students — only shown once real numbers exist */}
-                        {(course.reviewCount > 0 || course.studentCount > 0) && (
-                        <div className="flex items-center justify-between text-xs">
-                          {course.reviewCount > 0 && (
-                          <div className="flex items-center gap-1.5 text-amber-500 font-bold">
-                            <Star className="w-4 h-4 fill-current" />
-                            <span className="text-[#111827]">{course.rating}</span>
-                            <span className="text-slate-400 font-normal">
-                              ({course.reviewCount.toLocaleString()})
-                            </span>
-                          </div>
-                          )}
-
-                          {course.studentCount > 0 && (
-                          <div className="text-slate-500 text-[11px] flex items-center gap-1">
-                            <Users className="w-3.5 h-3.5 text-slate-400" />
-                            <span>{course.studentCount.toLocaleString()} learners</span>
-                          </div>
-                          )}
-                        </div>
-                        )}
-
-                        {/* Title */}
-                        <Link href={`/courses/${course.id}`}>
-                          <h3 className="font-display font-bold text-[#111827] text-base sm:text-lg leading-snug line-clamp-2 group-hover:text-amber-600 transition-colors">
-                            {course.title}
-                          </h3>
-                        </Link>
-
-                        {/* Description */}
-                        <p className="text-xs text-slate-600 line-clamp-2 leading-relaxed font-normal">
-                          {course.description}
-                        </p>
-
-                        {/* Instructor */}
-                        <div className="flex items-center gap-2.5 pt-1">
-                          <div className="w-7 h-7 rounded-full overflow-hidden relative border border-slate-200 flex-shrink-0 bg-[#111827] text-[#FACC15] flex items-center justify-center text-[10px] font-extrabold">
-                            {course.instructor.avatar ? (
-                              <Image
-                                src={course.instructor.avatar}
-                                alt={course.instructor.name}
-                                fill
-                                className="object-cover"
-                              />
-                            ) : (
-                              <span aria-hidden="true">{course.instructor.name.trim().split(/\s+/).slice(0, 2).map((word) => word.charAt(0)).join('').toUpperCase()}</span>
-                            )}
-                          </div>
-                          <span className="text-xs text-slate-700 font-medium truncate">
-                            {course.instructor.name}
-                          </span>
-                        </div>
-                      </div>
-
-                      {/* Meta Tags & Duration */}
-                      <div className="pt-3 border-t border-slate-100 space-y-4">
-                        <div className="flex items-center justify-between text-xs text-slate-500 font-medium">
-                          <span className="flex items-center gap-1.5">
-                            <Clock className="w-3.5 h-3.5 text-amber-500" />
-                            {course.duration}
-                          </span>
-                          <span className="flex items-center gap-1.5">
-                            <BookOpen className="w-3.5 h-3.5 text-amber-500" />
-                            {course.lessonCount} Lectures
-                          </span>
-                        </div>
-
-                        {/* Price & Actions */}
-                        <div className="flex items-center justify-between pt-1">
-                          <div>
-                            {course.price === 0 ? (
-                              <span className="font-display font-extrabold text-2xl text-emerald-600">
-                                FREE
-                              </span>
-                            ) : (
-                              <div className="flex items-baseline gap-2">
-                                <span className="font-display font-extrabold text-2xl text-[#111827]">
-                                  {takaFromUsd(Math.max(0, Math.round(course.price * (100 - courseDiscount(String(course.id))) / 100)))}
-                                </span>
-                                {(course.originalPrice || courseDiscount(String(course.id)) > 0) && (
-                                  <span className="text-xs text-slate-400 line-through">
-                                    {takaFromUsd(course.originalPrice || course.price)}
-                                  </span>
-                                )}
-                              </div>
-                            )}
-                          </div>
-
-                          <div className="flex items-center gap-2">
-                            <Link
-                              href={`/courses/${course.id}`}
-                              className="px-3.5 py-2.5 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-bold transition-colors"
-                            >
-                              Details
-                            </Link>
-
-                            <button
-                              onClick={() => handleEnroll(course)}
-                              className="px-4 py-2.5 rounded-xl bg-[#FACC15] hover:bg-[#eab308] text-[#111827] text-xs font-extrabold transition-all shadow-md shadow-[#FACC15]/20 flex items-center gap-1.5"
-                            >
-                              <span>Enroll Now</span>
-                              <ChevronRight className="w-3.5 h-3.5" />
-                            </button>
-                          </div>
-                        </div>
-                      </div>
-                    </div>
-                  </motion.div>
-                );
-              })}
-            </div>
-          )}
-        </div>
+                  </div>
+                </motion.article>
+              );
+            })}
+          </div>
+        )}
       </main>
 
       {/* ── ENROLLMENT / CHECKOUT MODAL ── */}

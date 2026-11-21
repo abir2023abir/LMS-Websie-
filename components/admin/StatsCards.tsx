@@ -12,13 +12,16 @@ interface StatsCardsProps {
     totalRevenue?: number;
     completionRate?: number;
     totalCourses?: number;
-    monthlyRevenue?: { month: string; revenue: number; sales: number; signups: number }[];
+    serviceRevenue?: number;
+    enrolledServices?: number;
+    monthlyRevenue?: { month: string; revenue: number; sales: number; services?: number; signups: number }[];
   };
 }
 
 export default function StatsCards({ stats }: StatsCardsProps) {
   const totalStudents = stats?.totalStudents ?? 0;
-  const totalRevenue = stats?.totalRevenue ?? 0;
+  const serviceRevenue = stats?.serviceRevenue ?? 0;
+  const enrolledServices = stats?.enrolledServices ?? 0;
   const completionRate = stats?.completionRate ?? 0;
   const totalCourses = stats?.totalCourses ?? 0;
 
@@ -26,7 +29,7 @@ export default function StatsCards({ stats }: StatsCardsProps) {
   const monthlyData = stats?.monthlyRevenue || [];
   const miniBarData = monthlyData.map((m) => ({ val: m.sales }));
 
-  const miniLineData = monthlyData.map((m) => ({ val: m.revenue }));
+  const miniLineData = monthlyData.map((m) => ({ val: m.services || 0 }));
 
   const gaugeData = [
     { name: 'Completed', value: completionRate, fill: '#FACC15' }
@@ -65,7 +68,7 @@ export default function StatsCards({ stats }: StatsCardsProps) {
         </div>
       </div>
 
-      {/* 2. Total Revenue Card */}
+      {/* 2. Enrolled service: income from service requests the team has taken on */}
       <div className="bg-white rounded-3xl p-6 shadow-sm border border-slate-100 flex flex-col justify-between space-y-4">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-3">
@@ -73,10 +76,11 @@ export default function StatsCards({ stats }: StatsCardsProps) {
               <Banknote className="w-5 h-5" />
             </div>
             <div>
-              <p className="text-xs font-semibold text-slate-500">Total Course Earnings</p>
+              <p className="text-xs font-semibold text-slate-500">Enrolled service</p>
               <h3 className="font-display font-extrabold text-2xl text-slate-900">
-                {totalRevenue > 0 ? taka(totalRevenue) : '৳0'}
+                {serviceRevenue > 0 ? taka(serviceRevenue) : '৳0'}
               </h3>
+              <p className="text-[11px] text-slate-500">{enrolledServices} active {enrolledServices === 1 ? 'service' : 'services'}</p>
             </div>
           </div>
         </div>

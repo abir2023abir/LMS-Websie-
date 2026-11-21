@@ -104,6 +104,11 @@ export async function findCertificate(email: string, courseId: string): Promise<
 /**
  * Queries the database for a certificate by its unique alphanumeric ID.
  */
+/** Every issued certificate (for the admin Overview's completion rate). */
+export async function listCertificateRecords(): Promise<CertificateRecord[]> {
+  return Object.values(await loadCertStore());
+}
+
 export async function revokeCertificateRecord(certificateId: string) {
   const store = await loadCertStore();
   const key = certificateId.trim().toUpperCase();

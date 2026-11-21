@@ -138,7 +138,8 @@ export default function OverviewFeed({ onOpenTab }: { onOpenTab?: (tab: string) 
     }
   };
 
-  if (failed && !feed) return null;
+  // The four panels are part of the client's Overview layout, so a failed load says so instead of vanishing.
+  if (failed && !feed) return <div className="rounded-3xl border border-rose-200 bg-rose-50 p-6 text-sm font-semibold text-rose-700 shadow-sm">Could not load the schedule, notifications, device alerts and new enrollments. Press Refresh to try again.</div>;
   if (!feed) return <div className="rounded-3xl border border-slate-100 bg-white p-6 text-sm text-slate-500 shadow-sm">Loading schedule and alerts…</div>;
 
   const { security } = feed;

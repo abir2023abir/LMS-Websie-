@@ -8,10 +8,12 @@ import useSWR from 'swr';
 import {
   Plus, LogOut, Shield, LayoutDashboard, BookOpen, Award, HelpCircle,
   Banknote, Users, FileText, Search, Trash2, RefreshCw, Eye,
-  Sparkles, Inbox, MessageSquare, Pencil, Globe, Menu, X, GraduationCap, Video, TrendingUp, AlertTriangle
+  Sparkles, Inbox, MessageSquare, Pencil, Globe, Menu, X, GraduationCap, Video, TrendingUp, AlertTriangle,
+  CalendarDays, CalendarClock, BarChart3, Newspaper, Settings
 } from 'lucide-react';
 import { applyCourseEdit, useCourseEdits } from '@/lib/course-edits-client';
 import TopCoursesList from './TopCoursesList';
+import OverviewWelcome from './OverviewWelcome';
 import InboxButton from '@/components/inbox/InboxButton';
 import MyPhoto from '@/components/admin/MyPhoto';
 import { takaFromUsd } from '@/lib/utils';
@@ -39,31 +41,72 @@ const CourseUploadModal = dynamic(() => import('./CourseUploadModal'), { loading
 const AdminAccounts = dynamic(() => import('./AdminAccounts'), { loading: TabLoading });
 const LandingPageCMS = dynamic(() => import('./LandingPageCMS'), { loading: TabLoading });
 const InstructorAccess = dynamic(() => import('./InstructorAccess'), { loading: TabLoading });
+const AdminSchedule = dynamic(() => import('./AdminSchedule'), { loading: TabLoading });
+const CmsSectionPage = dynamic(() => import('./LandingPageCMS').then((mod) => mod.CmsSectionPage), { loading: TabLoading });
 
+// The menu is exactly the client's admin layout. Students live inside Accounts and the website
+// content editor inside Settings; quizzes, exams, live classes and assignments inside each course.
+const SETTINGS_TAB = 'Settings (Role & Permissions)';
 const navTabs = [
   { name: 'Overview', icon: LayoutDashboard },
   { name: 'Courses', icon: BookOpen },
+  { name: 'Program', icon: CalendarDays },
+  { name: 'Bookkeeping', icon: BarChart3 },
+  { name: 'Blog', icon: Newspaper },
   { name: 'Certificate', icon: Award },
+  { name: 'Earnings', icon: Banknote },
+  { name: 'Accounts', icon: Shield },
+  { name: 'Requests', icon: Inbox },
+  { name: 'Schedule', icon: CalendarClock },
+  { name: 'Messages', icon: MessageSquare },
+  { name: 'Payments', icon: Banknote },
+  { name: 'Progress', icon: TrendingUp },
+  { name: SETTINGS_TAB, icon: Settings },
   { name: 'Quizzes', icon: HelpCircle },
   { name: 'Exams', icon: GraduationCap },
   { name: 'Live Classes', icon: Video },
-  { name: 'Progress', icon: TrendingUp },
-  { name: 'Earnings', icon: Banknote },
-  { name: 'Students', icon: Users },
-  { name: 'Accounts', icon: Shield },
-  { name: 'Requests', icon: Inbox },
-  { name: 'Messages', icon: MessageSquare },
   { name: 'Assignments', icon: FileText },
-  { name: 'Payments', icon: Banknote },
-  { name: 'Landing Page CMS', icon: Globe },
-  { name: 'Instructor Access', icon: Shield },
 ];
+
+// Website pages the Landing Page CMS permission covers; an instructor with that permission sees them too.
+const CMS_TABS = ['Program', 'Bookkeeping', 'Blog'];
+// Admin only: these read data across every course and account.
+const ADMIN_ONLY_TABS = ['Schedule'];
 
 // These are worked on inside each course (Courses → Manage), so they get no menu entry of their own
 // for anyone who can open the Courses tab.
 const IN_COURSE_TABS = ['Quizzes', 'Exams', 'Assignments', 'Live Classes'];
 
 const fetcher = (url: string) => fetch(url).then((res) => res.json());
+
+/** Two or more pages under one menu entry (Accounts → Students, Settings → Website content). */
+function SubTabs({ items }: { items: { name: string; show: boolean; view: React.ReactNode }[] }) {
+  const shown = items.filter((item) => item.show);
+  const [current, setCurrent] = useState(shown[0]?.name || '');
+  const active = shown.find((item) => item.name === current) || shown[0];
+  if (!active) return null;
+  return (
+    <div className="space-y-5">
+      {shown.length > 1 && (
+        <div role="tablist" className="flex flex-wrap gap-2">
+          {shown.map((item) => (
+            <button
+              key={item.name}
+              type="button"
+              role="tab"
+              aria-selected={item.name === active.name}
+              onClick={() => setCurrent(item.name)}
+              className={`rounded-full px-4 py-2 text-sm font-bold ${item.name === active.name ? 'bg-[#111827] text-[#FACC15]' : 'border border-slate-200 bg-white text-slate-600 hover:bg-slate-50'}`}
+            >
+              {item.name}
+            </button>
+          ))}
+        </div>
+      )}
+      {active.view}
+    </div>
+  );
+}
 
 export default function AdminDashboard({
   variant = 'admin',
@@ -99,8 +142,12 @@ export default function AdminDashboard({
   const hasCoursesTab = variant === 'admin' || (allowedTabs || []).includes('Courses');
   const visibleTabs = navTabs.filter((tab) => {
     if (hasCoursesTab && IN_COURSE_TABS.includes(tab.name)) return false;
-    if (tab.name === 'Instructor Access') return variant === 'admin';
     if (variant === 'admin') return true;
+    if (ADMIN_ONLY_TABS.includes(tab.name)) return false;
+    const allowed = allowedTabs || [];
+    if (CMS_TABS.includes(tab.name)) return allowed.includes('Landing Page CMS');
+    if (tab.name === 'Accounts') return allowed.includes('Accounts') || allowed.includes('Students');
+    if (tab.name === SETTINGS_TAB) return allowed.includes('Landing Page CMS');
     return (allowedTabs || []).includes(tab.name);
   });
 
@@ -181,7 +228,7 @@ export default function AdminDashboard({
           </button>
           <div className="min-w-0 flex-1">
             <p className="text-[10px] font-bold uppercase tracking-[0.18em] text-amber-700">{variant === 'instructor' ? 'Instructor panel' : 'Super admin'}</p>
-            <h1 className="truncate font-display text-xl font-extrabold tracking-tight text-slate-900 sm:text-2xl">{activeTab}</h1>
+            <h1 key={activeTab} className="truncate font-display text-xl font-extrabold tracking-tight text-slate-900 sm:text-2xl">{activeTab}</h1>
           </div>
           {activeTab === 'Courses' && (
             <div className="hidden w-full max-w-xs items-center gap-2 rounded-full border border-slate-200 bg-slate-50 px-4 py-2 text-xs md:flex">
@@ -221,6 +268,8 @@ export default function AdminDashboard({
           <div className="space-y-8">
             {isLoading && !data && <div className="rounded-2xl border border-slate-200 bg-white p-5 text-sm text-slate-500">Loading live dashboard data…</div>}
             {data?.stats?.dataAvailable === false && <div className="rounded-2xl border border-amber-200 bg-amber-50 p-4 text-sm text-amber-900">Live analytics are unavailable. Check the database connection; demo figures are hidden.</div>}
+            <OverviewWelcome name={data?.viewerName || ''} title={variant === 'instructor' ? 'Instructor · Your teaching tools' : 'Super Admin · Studio control room'} />
+
             {/* Dynamic Recharts KPI Cards */}
             <StatsCards stats={stats} />
 
@@ -234,8 +283,8 @@ export default function AdminDashboard({
               </div>
             </div>
 
-            {/* Real-time Category Distribution from Database */}
-            {categoryDistribution.length > 0 && (
+            {/* Real-time Category Distribution from Database (always shown: part of the client layout) */}
+            {(
               <div className="bg-white rounded-3xl p-6 shadow-sm border border-slate-100 space-y-4">
                 <div className="flex items-center justify-between">
                   <h3 className="font-display font-bold text-base text-slate-900 flex items-center gap-2">
@@ -247,6 +296,7 @@ export default function AdminDashboard({
                   </span>
                 </div>
 
+                {categoryDistribution.length === 0 && <div className="rounded-2xl bg-slate-50 p-6 text-center text-sm text-slate-500">No courses yet. Add one under Courses.</div>}
                 <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-4 pt-1">
                   {categoryDistribution.map((cat: any) => (
                     <div key={cat.name} className="bg-slate-50 border border-slate-100 rounded-2xl p-3.5 space-y-1">
@@ -355,8 +405,14 @@ export default function AdminDashboard({
         )}
 
         {/* ── TAB 3: STUDENTS DIRECTORY ── */}
-        {activeTab === 'Students' && <AdminStudents />}
-        {activeTab === 'Accounts' && <AdminAccounts />}
+        {activeTab === 'Accounts' && (
+          <SubTabs
+            items={[
+              { name: 'Accounts', show: variant === 'admin' || (allowedTabs || []).includes('Accounts'), view: <AdminAccounts /> },
+              { name: 'Students', show: variant === 'admin' || (allowedTabs || []).includes('Students'), view: <AdminStudents /> },
+            ]}
+          />
+        )}
 
         {/* ── TAB 4: EARNINGS & TRANSACTIONS ── */}
         {activeTab === 'Earnings' && <AdminEarnings />}
@@ -411,11 +467,21 @@ export default function AdminDashboard({
         {activeTab === 'Progress' && <AdminProgress />}
         {activeTab === 'Certificate' && <AdminCertificates />}
         {activeTab === 'Assignments' && <AdminAssignments />}
-        {activeTab === 'Landing Page CMS' && <LandingPageCMS />}
-        {activeTab === 'Instructor Access' && variant === 'admin' && <InstructorAccess />}
+        {activeTab === SETTINGS_TAB && (
+          <SubTabs
+            items={[
+              { name: 'Role & Permissions', show: variant === 'admin', view: <InstructorAccess /> },
+              { name: 'Website content', show: variant === 'admin' || (allowedTabs || []).includes('Landing Page CMS'), view: <LandingPageCMS /> },
+            ]}
+          />
+        )}
+        {activeTab === 'Schedule' && variant === 'admin' && <AdminSchedule />}
+        {activeTab === 'Program' && <CmsSectionPage section="program" />}
+        {activeTab === 'Bookkeeping' && <CmsSectionPage section="bookkeeping" />}
+        {activeTab === 'Blog' && <CmsSectionPage section="blog" />}
         {variant === 'instructor' && visibleTabs.length === 0 && (
           <div className="rounded-3xl border border-slate-200 bg-white p-8 text-sm text-slate-600">
-            No tools are open on this instructor account yet. An admin can turn them on under Instructor Access.
+            No tools are open on this instructor account yet. An admin can turn them on under Settings (Role &amp; Permissions).
           </div>
         )}
 

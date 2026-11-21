@@ -20,7 +20,7 @@ type Notice = { id: string; at: string; kind: 'deadline' | 'live' | 'lesson' | '
 const safe = <T,>(promise: Promise<T>, fallback: T) => promise.catch(() => fallback);
 
 // Admin → Overview: upcoming schedule, latest notifications, device alerts and new enrollments.
-export async function GET() {
+export async function GET(request: Request) {
   // Admin session only: it lists device alerts and payments.
   const denied = await requireAdmin();
   if (denied) return denied;
@@ -123,7 +123,8 @@ export async function GET() {
 
   return NextResponse.json({
     success: true,
-    schedule: schedule.slice(0, 8),
+    // The Schedule tab asks for every upcoming item (?schedule=all); the Overview shows the next eight.
+    schedule: schedule.slice(0, new URL(request.url).searchParams.get('schedule') === 'all' ? 300 : 8),
     notifications: notices.slice(0, 8),
     security: { enabled: devices.enabled, protectedCount: devices.protectedCount, alerts: devices.alerts.map((alert) => ({ ...alert, stillBlocked: Boolean(devices.devices[alert.studentId]) })) },
     enrollments,
