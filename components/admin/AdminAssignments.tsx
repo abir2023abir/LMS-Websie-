@@ -63,8 +63,9 @@ export default function AdminAssignments({ courseId, headless = false, command, 
   };
 
   const assignmentOf = (id: string) => assignments.find((item) => item.id === id);
-  const toReview = submissions.filter((item) => item.status === 'submitted').length;
   const visibleAssignments = assignments.filter((item) => courseFilter === 'all' || item.courseId === courseFilter);
+  // Counts follow the chosen course (inside a course workspace: only that course).
+  const toReview = submissions.filter((item) => item.status === 'submitted' && (courseFilter === 'all' || assignmentOf(item.assignmentId)?.courseId === courseFilter)).length;
   const grouped = useMemo(() => {
     const map = new Map<string, Assignment[]>();
     visibleAssignments.forEach((item) => map.set(item.courseTitle || item.courseId, [...(map.get(item.courseTitle || item.courseId) || []), item]));
@@ -99,7 +100,7 @@ export default function AdminAssignments({ courseId, headless = false, command, 
 
       <div className="flex flex-wrap items-center gap-2">
         <div className="flex rounded-xl bg-slate-100 p-1 text-sm font-bold">
-          <button type="button" onClick={() => setTab('assignments')} className={`rounded-lg px-3 py-1.5 ${tab === 'assignments' ? 'bg-white shadow-sm' : 'text-slate-500'}`}>Assignments ({assignments.length})</button>
+          <button type="button" onClick={() => setTab('assignments')} className={`rounded-lg px-3 py-1.5 ${tab === 'assignments' ? 'bg-white shadow-sm' : 'text-slate-500'}`}>Assignments ({visibleAssignments.length})</button>
           <button type="button" onClick={() => setTab('submissions')} className={`flex items-center gap-1.5 rounded-lg px-3 py-1.5 ${tab === 'submissions' ? 'bg-white shadow-sm' : 'text-slate-500'}`}>
             Submissions{toReview > 0 && <span className="rounded-full bg-[#FACC15] px-1.5 text-[11px] text-[#111827]">{toReview}</span>}
           </button>
@@ -162,7 +163,7 @@ export default function AdminAssignments({ courseId, headless = false, command, 
           {visibleSubmissions.map((item) => {
             const assignment = assignmentOf(item.assignmentId);
             return (
-              <button key={item.id} type="button" onClick={() => { setNote(''); setReviewing({ ...item }); }} className="flex w-full flex-wrap items-center gap-3 p-4 text-left hover:bg-slate-50">
+              <button key={item.id} type="button" onClick={() => { setNote(''); setReviewing({ ...item, status: item.status === 'submitted' ? 'graded' : item.status }); }} className="flex w-full flex-wrap items-center gap-3 p-4 text-left hover:bg-slate-50">
                 <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-[#111827] text-xs font-bold text-[#FACC15]">{item.studentName.charAt(0).toUpperCase()}</span>
                 <div className="min-w-0 flex-1">
                   <p className="truncate font-bold text-slate-900">{item.studentName}</p>

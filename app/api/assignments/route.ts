@@ -19,7 +19,7 @@ export async function GET(request: Request) {
     return NextResponse.json({ success: false, message: 'Enroll in this course to see its assignments.' }, { status: 403 });
   }
   if (courseId && lessonId && !(await stepOpen(profile.id, courseId, lessonId, 'assignment'))) {
-    return NextResponse.json({ success: true, locked: true, message: 'Not open yet — finish the earlier steps of this module (all lessons, then the quiz) first.', assignments: [] });
+    return NextResponse.json({ success: true, locked: true, message: "Not open yet. Pass this lesson's quiz first, then the assignment opens.", assignments: [] });
   }
   const [assignments, submissions] = await Promise.all([listAssignments(), listSubmissions()]);
   const visible = assignments.filter((item) => item.published

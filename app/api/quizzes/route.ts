@@ -13,8 +13,12 @@ export async function GET(request: Request) {
   const url = new URL(request.url);
   const courseId = url.searchParams.get('courseId') || '';
   const lessonId = url.searchParams.get('lessonId') || '';
-  const staff = await staffIdentity();
-  const profile = staff ? null : await currentProfile();
+  // A signed-in student (also the admin's demo student) always gets the student view with the lesson lock;
+  // the staff view without the lock is only for admins and instructors who are not signed in as a student.
+  const signedIn = await currentProfile();
+  const asStudent = Boolean(signedIn?.roles.includes('Student'));
+  const staff = asStudent ? null : await staffIdentity();
+  const profile = staff ? null : signedIn;
   if (!staff && !profile) return NextResponse.json({ success: false, message: 'Please sign in.' }, { status: 401 });
 
   const enrolled = profile ? await getEnrollments(profile.id) : [];

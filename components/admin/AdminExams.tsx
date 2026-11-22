@@ -21,7 +21,7 @@ const blankQuestion = (): Question => ({ prompt: '', choices: ['', '', '', ''], 
 const blankExam = (): Exam => ({
   courseId: '', courseTitle: '', moduleId: '', moduleTitle: '', lessonId: '', lessonTitle: '',
   title: '', description: '', durationMinutes: 30, opensAt: '', closesAt: '', passMark: 60, maxAttempts: 1,
-  shuffle: true, showAnswers: false, published: false, questions: [blankQuestion()],
+  shuffle: true, showAnswers: false, published: true, questions: [blankQuestion()],
 });
 const labelClass = 'mb-1 block text-xs font-bold uppercase tracking-wide text-slate-500';
 

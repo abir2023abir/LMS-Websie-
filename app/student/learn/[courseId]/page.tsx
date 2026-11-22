@@ -684,7 +684,10 @@ export default function StudentLearnPage() {
                 {activeTab === 'resources' && (
                   <div className="space-y-4 text-xs font-medium leading-relaxed text-slate-700 sm:text-sm">
                     <h3 className="font-display text-base font-bold text-[#111827]">Notes and resources</h3>
-                    {currentLesson?.notes ? (
+                    {currentLesson?.notes && currentPath?.steps.find((step) => step.key === 'notes')?.state === 'locked' ? (
+                      // Locked until the quiz is passed: show why, not the notes themselves.
+                      <p className="rounded-2xl border border-dashed border-slate-200 py-6 text-center text-sm text-slate-500">{currentPath?.steps.find((step) => step.key === 'notes')?.detail || 'Opens after the quiz is passed.'}</p>
+                    ) : currentLesson?.notes ? (
                       <>
                         <p className="whitespace-pre-line break-words">
                           {currentLesson.notes.split(/(https?:\/\/[^\s]+)/g).map((part, index) => (
