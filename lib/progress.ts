@@ -362,18 +362,31 @@ export async function getEnrolledCoursesWithProgress(
       const res = await fetch('/api/student/enrollments', { cache: 'no-store' });
       if (res.ok) {
         const data = (await res.json()) as { courseIds?: string[] };
-        enrolledIds = Array.from(new Set([...enrolledIds.map(String), ...(data.courseIds || []).map(String)]));
+        // The server decides: a course whose access was removed disappears here too.
+        enrolledIds = Array.from(new Set((data.courseIds || []).map(String)));
         localStorage.setItem(`${LOCAL_ENROLLMENTS_KEY}_${userId}`, JSON.stringify(enrolledIds));
       }
     } catch {}
   }
 
-  // Map to course data
+  // Map to the real course (title, picture and lessons as saved in the panel, with admin edits).
   const result: EnrolledCourseWithProgress[] = [];
+  let realCourses: CourseSchema[] = [];
+  let edits: Record<string, { title?: string; price?: number; thumbnail?: string; modules?: ModuleSchema[] }> = {};
+  if (typeof window !== 'undefined') {
+    try {
+      const [coursesRes, { loadCourseEdits }] = await Promise.all([fetch('/api/courses', { cache: 'no-store' }), import('@/lib/course-edits-client')]);
+      if (coursesRes.ok) realCourses = ((await coursesRes.json()) as { courses?: CourseSchema[] }).courses || [];
+      edits = await loadCourseEdits();
+    } catch {}
+  }
 
   for (const courseId of enrolledIds) {
-    const course = getFallbackCourseData(courseId);
-    if (!course) continue;
+    const found = realCourses.find((item) => String(item.id) === courseId);
+    const base = found && found.modules?.length ? found : getFallbackCourseData(courseId);
+    if (!base) continue;
+    const { applyCourseEdit } = await import('@/lib/course-edits-client');
+    const course = applyCourseEdit({ ...base, ...(found && !found.modules?.length ? { title: found.title, description: found.description, thumbnail: found.thumbnail, category: found.category } : {}) }, edits[courseId] as never) as CourseSchema;
 
     const storeKey = `${userId}_${courseId}`;
     let progress = localStore[storeKey];

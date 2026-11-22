@@ -23,7 +23,8 @@ import LessonQuiz from '@/components/student/LessonQuiz';
 import LessonAssignment from '@/components/student/LessonAssignment';
 import LessonSteps, { type CourseTimeline, type LessonProgress, type LiveSession } from '@/components/student/LessonSteps';
 import CourseReviewForm from '@/components/student/CourseReviewForm';
-import LearningSettings, { useLearningPrefs } from '@/components/student/LearningSettings';
+import { useLearningPrefs } from '@/components/student/LearningSettings';
+import LessonExams from '@/components/student/LessonExams';
 import CampusMessageForm from '@/components/messages/CampusMessageForm';
 import { lessonNote, lessonVideo, recordWatch, saveLessonNote, watchPercent } from '@/lib/workspace';
 import type { CourseSchema, ModuleSchema, LessonSchema } from '@/types/course';
@@ -78,13 +79,19 @@ export default function StudentLearnPage() {
   });
 
   // Active tab beneath the video player
-  // Classroom tabs (client layout): Overview, Modules, Discussion, Reviews, Relevant Questions, Classroom, Message, Settings.
-  type ClassTab = 'overview' | 'modules' | 'discussion' | 'reviews' | 'questions' | 'classroom' | 'message' | 'settings';
+  // Client layout: classroom tabs under the video (Overview, Modules, Classroom, Message), and the
+  // lesson's own tabs further down (Overview & Study Notes, Video, Quiz, Assignment, Ask Instructor, Exams, Resources).
+  type TopTab = 'overview' | 'modules' | 'classroom' | 'message';
+  type ClassTab = 'overview' | 'video' | 'quiz' | 'assignment' | 'ask-instructor' | 'exams' | 'resources';
+  const [topTab, setTopTab] = useState<TopTab>('overview');
   const [activeTab, setActiveTab] = useState<ClassTab>('overview');
+  // Lessons whose video the student started (until then the cover picture shows).
+  const [started, setStarted] = useState<Record<string, boolean>>({});
+  const [noteSaved, setNoteSaved] = useState(false);
   const [prefs, setPrefs] = useLearningPrefs();
   // The lesson path's buttons open the tab that holds that part.
   const openPart = (part: 'overview' | 'quiz' | 'assignment' | 'resources') => {
-    setActiveTab(part === 'quiz' ? 'questions' : part === 'assignment' ? 'classroom' : 'overview');
+    setActiveTab(part === 'quiz' ? 'quiz' : part === 'assignment' ? 'assignment' : part === 'resources' ? 'resources' : 'overview');
     document.getElementById('classroom-panel')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
   };
 
@@ -164,6 +171,7 @@ export default function StudentLearnPage() {
 
   useEffect(() => {
     if (currentLesson) setNoteText(lessonNote(currentLesson.id));
+    setNoteSaved(false);
   }, [currentLesson?.id]);
 
   const lessonIsOpen = (mIdx: number, lIdx: number) => {
@@ -240,6 +248,7 @@ export default function StudentLearnPage() {
         ...(currentLesson.moreVideos || []).filter((video) => video.url).map((video, index) => ({ id: video.id, title: video.title || `Part ${index + 2}`, url: video.url })),
       ]
     : [];
+  const actionSteps = (currentLesson?.actionSteps || '').split(/\r?\n/).map((step) => step.trim()).filter(Boolean);
   const currentVideo = lessonVideos.find((video) => video.id === videoChoice[currentLesson?.id || '']) || lessonVideos[0] || { id: 'main', title: '', url: '' };
 
   // Video finished: tell the server. The lesson is only complete once every later step is done too.
@@ -252,6 +261,7 @@ export default function StudentLearnPage() {
       const next = flattenedLessons[currentFlatIndex + 1];
       setActiveModuleIndex(next.moduleIndex);
       setActiveLessonIndex(next.lessonIndex);
+      setStarted((prev) => ({ ...prev, [next.lesson.id]: true }));
     }
   };
 
@@ -260,6 +270,7 @@ export default function StudentLearnPage() {
       const prev = flattenedLessons[currentFlatIndex - 1];
       setActiveModuleIndex(prev.moduleIndex);
       setActiveLessonIndex(prev.lessonIndex);
+      setStarted((state) => ({ ...state, [prev.lesson.id]: true }));
     }
   };
 
@@ -371,62 +382,66 @@ export default function StudentLearnPage() {
               LEFT COLUMN (68% width): Video Player & Interactive Tabs
              ═════════════════════════════════════════════════════════ */}
           <div className="lg:col-span-8 space-y-6">
-            {/* Secure Video Player */}
+            {/* Lesson video (client layout): the cover picture shows first; the video runs once the
+                student presses play or picks a lesson. */}
             <div className="w-full">
-              <SecureVideoPlayer
-                videoUrl={currentLesson ? currentVideo.url || undefined : undefined}
-                poster={course.thumbnail}
-                title={lessonVideos.length > 1 ? `${currentLesson?.title} · ${currentVideo.title}` : currentLesson?.title || course.title}
-                studentName={userProfile?.name || user?.displayName || 'Student Learner'}
-                studentEmail={user?.email || 'student@example.com'}
-                onEnded={handleVideoEnded}
-                onProgress={(percent) => {
-                  if (!currentLesson) return;
-                  recordWatch(watchKey(currentLesson.id, currentVideo.id), percent);
-                  reportWatch(currentLesson.id, percent, currentVideo.id);
-                  setWatchTick(percent);
-                }}
-                onNextLesson={hasNextLesson ? handleNextLesson : undefined}
-                onPrevLesson={hasPrevLesson ? handlePrevLesson : undefined}
-                autoPlayNext={prefs.autoPlayNext}
-                defaultSpeed={prefs.speed}
-              />
+              {currentLesson && !started[currentLesson.id] ? (
+                <button
+                  type="button"
+                  onClick={() => setStarted((prev) => ({ ...prev, [currentLesson.id]: true }))}
+                  className="group relative block aspect-video w-full overflow-hidden rounded-3xl border border-white/10 bg-[#111827] shadow-2xl"
+                  aria-label={`Play ${currentLesson.title}`}
+                >
+                  {course.thumbnail && (
+                    // eslint-disable-next-line @next/next/no-img-element
+                    <img src={course.thumbnail} alt="" className="absolute inset-0 h-full w-full object-cover opacity-80 transition duration-500 group-hover:scale-105" />
+                  )}
+                  <span className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/20 to-transparent" aria-hidden="true" />
+                  <span className="absolute left-1/2 top-1/2 flex h-20 w-20 -translate-x-1/2 -translate-y-1/2 items-center justify-center rounded-full bg-[#FACC15] text-[#111827] shadow-2xl transition group-hover:scale-110">
+                    <PlayCircle className="h-10 w-10" />
+                  </span>
+                  <span className="absolute inset-x-0 bottom-0 p-5 text-left">
+                    <span className="block text-[11px] font-bold uppercase tracking-wide text-[#FACC15]">{currentModule?.title}</span>
+                    <span className="mt-1 block font-display text-lg font-extrabold text-white sm:text-xl">{currentLesson.title}</span>
+                  </span>
+                </button>
+              ) : (
+                <SecureVideoPlayer
+                  videoUrl={currentLesson ? currentVideo.url || undefined : undefined}
+                  poster={course.thumbnail}
+                  title={lessonVideos.length > 1 ? `${currentLesson?.title} · ${currentVideo.title}` : currentLesson?.title || course.title}
+                  studentName={userProfile?.name || user?.displayName || 'Student Learner'}
+                  studentEmail={user?.email || 'student@example.com'}
+                  onEnded={handleVideoEnded}
+                  onProgress={(percent) => {
+                    if (!currentLesson) return;
+                    recordWatch(watchKey(currentLesson.id, currentVideo.id), percent);
+                    reportWatch(currentLesson.id, percent, currentVideo.id);
+                    setWatchTick(percent);
+                  }}
+                  onNextLesson={hasNextLesson ? handleNextLesson : undefined}
+                  onPrevLesson={hasPrevLesson ? handlePrevLesson : undefined}
+                  autoPlayNext={prefs.autoPlayNext}
+                  defaultSpeed={prefs.speed}
+                  autoStart
+                />
+              )}
             </div>
 
-            {currentLesson && lessonVideos.length > 1 && (
-              <div className="flex gap-2 overflow-x-auto rounded-2xl border border-slate-200/80 bg-white p-2 shadow-sm scrollbar-none" role="tablist" aria-label="Lesson videos">
-                {lessonVideos.map((video, index) => {
-                  const watched = watchPercent(watchKey(currentLesson.id, video.id));
-                  const on = video.id === currentVideo.id;
-                  return (
-                    <button key={video.id} type="button" role="tab" aria-selected={on} onClick={() => setVideoChoice((prev) => ({ ...prev, [currentLesson.id]: video.id }))}
-                      className={`flex min-h-11 shrink-0 items-center gap-2 rounded-xl px-3.5 text-left text-xs font-bold transition ${on ? 'bg-[#111827] text-white' : 'text-slate-600 hover:bg-slate-100'}`}>
-                      <span className={`flex h-6 w-6 shrink-0 items-center justify-center rounded-full text-[11px] ${watched >= 80 ? 'bg-emerald-500 text-white' : on ? 'bg-[#FACC15] text-[#111827]' : 'bg-slate-200 text-slate-600'}`}>{watched >= 80 ? '✓' : index + 1}</span>
-                      <span className="max-w-[12rem] truncate">{index === 0 ? 'Video 1' : video.title}</span>
-                    </button>
-                  );
-                })}
-              </div>
-            )}
-
-            {/* ── CLASSROOM TABS (right under the video, as in the client layout) ── */}
+            {/* ── CLASSROOM TABS (client layout): Overview · Modules · Classroom · Message ── */}
             <nav aria-label="Classroom" className="flex gap-2 overflow-x-auto rounded-2xl border border-slate-200/80 bg-white p-2 shadow-sm scrollbar-none">
               {([
                 { key: 'overview', label: 'Overview', icon: FileText },
                 { key: 'modules', label: 'Modules', icon: Layers },
-                { key: 'discussion', label: 'Discussion', icon: MessageSquare },
-                { key: 'reviews', label: 'Reviews', icon: Star },
-                { key: 'questions', label: 'Relevant Questions', icon: HelpCircle },
                 { key: 'classroom', label: 'Classroom', icon: ClipboardList },
                 { key: 'message', label: 'Message', icon: Mail },
-                { key: 'settings', label: 'Settings', icon: Settings },
-              ] as { key: ClassTab; label: string; icon: typeof FileText }[]).map(({ key, label, icon: Icon }) => (
+              ] as { key: TopTab; label: string; icon: typeof FileText }[]).map(({ key, label, icon: Icon }) => (
                 <button
                   key={key}
                   type="button"
-                  onClick={() => setActiveTab(key)}
-                  aria-current={activeTab === key ? 'page' : undefined}
-                  className={`flex min-h-10 shrink-0 items-center gap-2 rounded-xl px-3.5 text-xs font-bold transition-all whitespace-nowrap ${activeTab === key ? 'bg-[#FACC15] text-[#111827] shadow-sm' : 'text-slate-600 hover:bg-slate-100 hover:text-[#111827]'}`}
+                  onClick={() => setTopTab(key)}
+                  aria-current={topTab === key ? 'page' : undefined}
+                  className={`flex min-h-10 shrink-0 items-center gap-2 rounded-xl px-3.5 text-xs font-bold transition-all whitespace-nowrap ${topTab === key ? 'bg-[#FACC15] text-[#111827] shadow-sm' : 'text-slate-600 hover:bg-slate-100 hover:text-[#111827]'}`}
                 >
                   <Icon className="h-4 w-4" />
                   <span>{label}</span>
@@ -434,26 +449,73 @@ export default function StudentLearnPage() {
               ))}
             </nav>
 
-            {currentLesson && (
-              <div className="bg-white rounded-3xl border border-slate-200 p-5 shadow-sm space-y-3">
-                <p className="text-xs font-bold uppercase text-slate-500">
-                  {lessonVideos.length > 1 ? `Video ${lessonVideos.findIndex((video) => video.id === currentVideo.id) + 1} of ${lessonVideos.length}: watched ${watchPercent(watchKey(currentLesson.id, currentVideo.id))}%. Watch 80% of every video to finish this step.` : `Watched ${watchPercent(currentLesson.id)}%. Watch 80% to finish this step.`}
-                </p>
-                <label className="block text-xs font-bold text-slate-500">Lesson notes</label>
-                <textarea
-                  value={noteText}
-                  onChange={(e) => setNoteText(e.target.value)}
-                  className="w-full border border-slate-200 rounded-xl px-3 py-2 text-sm min-h-20"
+            <div className="rounded-3xl border border-slate-200 bg-white p-5 shadow-sm">
+              {topTab === 'overview' && currentLesson && (
+                <div className="space-y-3">
+                  <p className="text-xs font-bold uppercase text-slate-500">
+                    {lessonVideos.length > 1 ? `Video ${lessonVideos.findIndex((video) => video.id === currentVideo.id) + 1} of ${lessonVideos.length}: watched ${watchPercent(watchKey(currentLesson.id, currentVideo.id))}%. Watch 80% of every video to finish this step.` : `Watched ${watchPercent(currentLesson.id)}%. Watch 80% to finish this step.`}
+                  </p>
+                  <label htmlFor="lesson-notes" className="block text-xs font-bold text-slate-500">Lesson notes</label>
+                  <textarea
+                    id="lesson-notes"
+                    value={noteText}
+                    onChange={(e) => { setNoteText(e.target.value); setNoteSaved(false); }}
+                    className="w-full border border-slate-200 rounded-xl px-3 py-2 text-sm min-h-20"
+                    placeholder="Write your own notes for this lesson. Only you can see them."
+                  />
+                  <div className="flex items-center gap-3">
+                    <button
+                      type="button"
+                      className="text-xs font-bold px-3 py-2 rounded-full bg-slate-100 hover:bg-slate-200"
+                      onClick={() => { saveLessonNote(currentLesson.id, noteText); setNoteSaved(true); }}
+                    >
+                      Save notes
+                    </button>
+                    {noteSaved && <span className="text-xs font-semibold text-emerald-700">Saved ✓</span>}
+                  </div>
+                </div>
+              )}
+
+              {topTab === 'modules' && (currentPath && path ? (
+                <LessonSteps
+                  section="steps"
+                  courseId={courseId}
+                  lesson={currentPath}
+                  lives={path.lives}
+                  timeline={path.timeline}
+                  rank={path.rank}
+                  rankTotal={path.rankTotal}
+                  onOpenTab={openPart}
+                  onChanged={() => loadPath(currentLesson?.id)}
                 />
-                <button
-                  type="button"
-                  className="text-xs font-bold px-3 py-2 rounded-full bg-slate-100"
-                  onClick={() => saveLessonNote(currentLesson.id, noteText)}
-                >
-                  Save notes
-                </button>
-              </div>
-            )}
+              ) : <p className="text-sm text-slate-500">Loading the lesson path…</p>)}
+
+              {topTab === 'classroom' && (currentPath && path ? (
+                <LessonSteps
+                  section="lives"
+                  courseId={courseId}
+                  lesson={currentPath}
+                  lives={path.lives}
+                  timeline={path.timeline}
+                  rank={path.rank}
+                  rankTotal={path.rankTotal}
+                  onOpenTab={openPart}
+                  onChanged={() => loadPath(currentLesson?.id)}
+                />
+              ) : <p className="text-sm text-slate-500">Loading live classes…</p>)}
+
+              {topTab === 'message' && (
+                <div className="max-w-xl">
+                  <CampusMessageForm
+                    kind="student"
+                    lockedKind
+                    defaultName={userProfile?.name || user?.displayName || ''}
+                    defaultEmail={user?.email || ''}
+                    context={{ courseId, courseTitle: course.title, moduleTitle: currentModule?.title || '', lessonId: currentLesson?.id || '', lessonTitle: currentLesson?.title || '' }}
+                  />
+                </div>
+              )}
+            </div>
 
             {path?.examsPaused && (
               <div className="rounded-2xl border border-rose-200 bg-rose-50 p-4 text-sm font-semibold text-rose-800">Exams are paused for you in this course. Please contact your instructor.</div>
@@ -514,90 +576,131 @@ export default function StudentLearnPage() {
             </div>
 
 
-            {/* ── TAB CONTENT ── */}
-            <div id="classroom-panel" className="scroll-mt-24 space-y-6 rounded-3xl border border-slate-200/80 bg-white p-6 shadow-sm sm:p-7">
-              {activeTab === 'overview' && (
-                <div className="space-y-6 text-xs font-medium leading-relaxed text-slate-700 sm:text-sm">
-                  {currentLesson?.overview ? (
-                    <div className="space-y-4">
-                      <h3 className="font-display text-base font-bold text-[#111827]">Lesson overview</h3>
-                      <p className="whitespace-pre-line">{currentLesson.overview}</p>
-                      {partButton('overview')}
-                    </div>
-                  ) : (
-                    <div className="rounded-2xl border border-dashed border-slate-200 py-8 text-center text-sm text-slate-500">No overview for this lesson. Watch the video to continue.</div>
-                  )}
-                  {currentLesson?.notes && (
-                    <div className="space-y-4 border-t border-slate-100 pt-6">
-                      <h3 className="font-display text-base font-bold text-[#111827]">Notes and resources</h3>
-                      <p className="whitespace-pre-line break-words">{currentLesson.notes}</p>
-                      {partButton('notes')}
-                    </div>
-                  )}
-                </div>
-              )}
+            {/* ── LESSON TABS (client layout): Overview & Study Notes · video · Quiz · Assignment · Ask Instructor · Exams · Resources ── */}
+            <div id="classroom-panel" className="scroll-mt-24 overflow-hidden rounded-3xl border border-slate-200/80 bg-white shadow-sm">
+              <nav aria-label="Lesson" className="flex gap-1.5 overflow-x-auto border-b border-slate-100 p-2 scrollbar-none">
+                {([
+                  { key: 'overview', label: 'Overview & Study Notes', icon: FileText },
+                  { key: 'video', label: 'Video', icon: PlayCircle },
+                  { key: 'quiz', label: 'Quiz', icon: HelpCircle },
+                  { key: 'assignment', label: 'Assignment', icon: FileCheck },
+                  { key: 'ask-instructor', label: 'Ask Instructor', icon: MessageSquare },
+                  { key: 'exams', label: 'Exams', icon: Award },
+                  { key: 'resources', label: 'Resources', icon: Download },
+                ] as { key: ClassTab; label: string; icon: typeof FileText }[]).map(({ key, label, icon: Icon }) => (
+                  <button
+                    key={key}
+                    type="button"
+                    onClick={() => setActiveTab(key)}
+                    aria-current={activeTab === key ? 'page' : undefined}
+                    className={`flex min-h-10 shrink-0 items-center gap-2 rounded-xl px-3.5 text-xs font-bold transition-all whitespace-nowrap ${activeTab === key ? 'bg-[#111827] text-[#FACC15]' : 'text-slate-600 hover:bg-slate-100 hover:text-[#111827]'}`}
+                  >
+                    <Icon className="h-4 w-4" />
+                    <span>{label}</span>
+                  </button>
+                ))}
+              </nav>
 
-              {activeTab === 'modules' && (currentPath && path ? (
-                <LessonSteps
-                  section="steps"
-                  courseId={courseId}
-                  lesson={currentPath}
-                  lives={path.lives}
-                  timeline={path.timeline}
-                  rank={path.rank}
-                  rankTotal={path.rankTotal}
-                  onOpenTab={openPart}
-                  onChanged={() => loadPath(currentLesson?.id)}
-                />
-              ) : <p className="text-sm text-slate-500">Loading the lesson path…</p>)}
+              <div className="space-y-6 p-6 sm:p-7">
+                {activeTab === 'overview' && (
+                  <div className="space-y-6 text-xs font-medium leading-relaxed text-slate-700 sm:text-sm">
+                    <h3 className="font-display text-base font-bold text-[#111827]">Lecture Core Takeaways &amp; Drill Focus</h3>
+                    {currentLesson?.overview ? (
+                      <div className="space-y-4">
+                        <p className="whitespace-pre-line">{currentLesson.overview}</p>
+                        {partButton('overview')}
+                      </div>
+                    ) : (
+                      <p className="rounded-2xl border border-dashed border-slate-200 py-6 text-center text-sm text-slate-500">No overview for this lesson yet. Watch the video to continue.</p>
+                    )}
+                    {actionSteps.length > 0 && (
+                      <div className="rounded-2xl border border-[#FACC15]/50 bg-[#FEF9C3]/60 p-5">
+                        <p className="flex items-center gap-2 font-display text-sm font-extrabold text-[#111827]"><Sparkles className="h-4 w-4 text-[#A16207]" />Action Step For This Lesson:</p>
+                        <ul className="mt-3 list-disc space-y-2 pl-5">
+                          {actionSteps.map((step, index) => <li key={index}>{step}</li>)}
+                        </ul>
+                      </div>
+                    )}
+                  </div>
+                )}
 
-              {activeTab === 'discussion' && currentLesson && (
-                <LessonQuestions
-                  courseId={courseId}
-                  courseTitle={course?.title || 'This course'}
-                  moduleTitle={currentModule?.title || ''}
-                  lessonId={currentLesson.id}
-                  lessonTitle={currentLesson.title}
-                  studentName={userProfile?.name || user?.displayName || 'Student'}
-                  studentEmail={user?.email || ''}
-                  rank={standing.rank}
-                  rankTotal={standing.total}
-                  progress={standing.progress}
-                />
-              )}
+                {activeTab === 'video' && currentLesson && (
+                  <div className="space-y-3">
+                    <p className="text-sm text-slate-600">Watch at least 80% of {lessonVideos.length > 1 ? 'every video' : 'the video'} to finish this step.</p>
+                    <ul className="space-y-2">
+                      {lessonVideos.map((video, index) => {
+                        const watched = watchPercent(watchKey(currentLesson.id, video.id));
+                        const on = video.id === currentVideo.id && started[currentLesson.id];
+                        return (
+                          <li key={video.id}>
+                            <button
+                              type="button"
+                              onClick={() => {
+                                setVideoChoice((prev) => ({ ...prev, [currentLesson.id]: video.id }));
+                                setStarted((prev) => ({ ...prev, [currentLesson.id]: true }));
+                                window.scrollTo({ top: 0, behavior: 'smooth' });
+                              }}
+                              className={`flex w-full items-center gap-3 rounded-2xl border p-3 text-left text-sm transition ${on ? 'border-[#FACC15] bg-[#FEF9C3]/60' : 'border-slate-200 hover:bg-slate-50'}`}
+                            >
+                              <span className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-full text-xs font-bold ${watched >= 80 ? 'bg-emerald-500 text-white' : 'bg-[#111827] text-[#FACC15]'}`}>{watched >= 80 ? '✓' : index + 1}</span>
+                              <span className="min-w-0 flex-1">
+                                <span className="block truncate font-bold text-[#111827]">{index === 0 ? currentLesson.title : video.title}</span>
+                                <span className="text-xs text-slate-500">{video.url ? `Watched ${watched}%` : 'Video will be added soon'}</span>
+                              </span>
+                              <PlayCircle className="h-5 w-5 shrink-0 text-[#A16207]" />
+                            </button>
+                          </li>
+                        );
+                      })}
+                    </ul>
+                  </div>
+                )}
 
-              {activeTab === 'reviews' && <CourseReviewForm courseId={courseId} courseTitle={course?.title || 'this course'} />}
+                {activeTab === 'quiz' && currentLesson && (
+                  <LessonQuiz courseId={courseId} lessonId={currentLesson.id} onChanged={() => loadPath(currentLesson.id)} />
+                )}
 
-              {activeTab === 'questions' && currentLesson && (
-                <LessonQuiz courseId={courseId} lessonId={currentLesson.id} onChanged={() => loadPath(currentLesson.id)} />
-              )}
-
-              {activeTab === 'classroom' && currentLesson && (
-                <div className="space-y-6">
-                  {currentPath && path && (
-                    <LessonSteps
-                      section="lives"
-                      courseId={courseId}
-                      lesson={currentPath}
-                      lives={path.lives}
-                      timeline={path.timeline}
-                      rank={path.rank}
-                      rankTotal={path.rankTotal}
-                      onOpenTab={openPart}
-                      onChanged={() => loadPath(currentLesson.id)}
-                    />
-                  )}
+                {activeTab === 'assignment' && currentLesson && (
                   <LessonAssignment courseId={courseId} lessonId={currentLesson.id} onChanged={() => loadPath(currentLesson.id)} />
-                </div>
-              )}
+                )}
 
-              {activeTab === 'message' && (
-                <div className="max-w-xl">
-                  <CampusMessageForm kind="student" lockedKind defaultName={userProfile?.name || user?.displayName || ''} defaultEmail={user?.email || ''} />
-                </div>
-              )}
+                {activeTab === 'ask-instructor' && currentLesson && (
+                  <LessonQuestions
+                    courseId={courseId}
+                    courseTitle={course?.title || 'This course'}
+                    moduleTitle={currentModule?.title || ''}
+                    lessonId={currentLesson.id}
+                    lessonTitle={currentLesson.title}
+                    studentName={userProfile?.name || user?.displayName || 'Student'}
+                    studentEmail={user?.email || ''}
+                    rank={standing.rank}
+                    rankTotal={standing.total}
+                    progress={standing.progress}
+                  />
+                )}
 
-              {activeTab === 'settings' && <LearningSettings prefs={prefs} onChange={setPrefs} />}
+                {activeTab === 'exams' && <LessonExams courseId={courseId} />}
+
+                {activeTab === 'resources' && (
+                  <div className="space-y-4 text-xs font-medium leading-relaxed text-slate-700 sm:text-sm">
+                    <h3 className="font-display text-base font-bold text-[#111827]">Notes and resources</h3>
+                    {currentLesson?.notes ? (
+                      <>
+                        <p className="whitespace-pre-line break-words">
+                          {currentLesson.notes.split(/(https?:\/\/[^\s]+)/g).map((part, index) => (
+                            /^https?:\/\//.test(part)
+                              ? <a key={index} href={part} target="_blank" rel="noopener noreferrer" className="font-semibold text-sky-700 underline break-all">{part}</a>
+                              : <span key={index}>{part}</span>
+                          ))}
+                        </p>
+                        {partButton('notes')}
+                      </>
+                    ) : (
+                      <p className="rounded-2xl border border-dashed border-slate-200 py-6 text-center text-sm text-slate-500">No resources for this lesson yet.</p>
+                    )}
+                  </div>
+                )}
+              </div>
             </div>
           </div>
 
@@ -676,6 +779,9 @@ export default function StudentLearnPage() {
                                 if (!lessonIsOpen(mIdx, lIdx)) return;
                                 setActiveModuleIndex(mIdx);
                                 setActiveLessonIndex(lIdx);
+                                // Picking a lesson runs its video (client layout).
+                                setStarted((prev) => ({ ...prev, [les.id]: true }));
+                                window.scrollTo({ top: 0, behavior: 'smooth' });
                               }}
                               className={`p-3 flex items-center justify-between gap-3 text-xs transition-colors cursor-pointer ${
                                 isPlaying
@@ -737,6 +843,12 @@ export default function StudentLearnPage() {
                   </p>
                 </div>
               )}
+            </div>
+
+            {/* Reviews (client layout: right column, under the diploma) */}
+            <div className="border-t border-slate-100 pt-4">
+              <h3 className="mb-3 flex items-center gap-2 font-display text-sm font-extrabold text-[#111827]"><Star className="h-4 w-4 text-amber-500" />Reviews</h3>
+              <CourseReviewForm courseId={courseId} courseTitle={course?.title || 'this course'} />
             </div>
           </div>
         </main>

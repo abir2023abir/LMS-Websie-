@@ -314,6 +314,13 @@ export default function AdminCourseEditor({
                     placeholder="Notes and resource links (optional). Opens after the quiz is passed."
                     className={fieldClass}
                   />
+                  <textarea
+                    value={lesson.actionSteps || ''}
+                    onChange={(e) => setModules((prev) => prev.map((item) => item.id === mod.id ? { ...item, lessons: item.lessons.map((row) => row.id === lesson.id ? { ...row, actionSteps: e.target.value } : row) } : item))}
+                    rows={2}
+                    placeholder="Action steps for this lesson (optional), one per line. Students see them under the overview."
+                    className={fieldClass}
+                  />
                   {(lesson.moreVideos?.length || 0) > 0 && <p className="text-[11px] font-bold uppercase tracking-wide text-slate-500">Video 1</p>}
                   <LessonVideoField
                     courseId={courseId}

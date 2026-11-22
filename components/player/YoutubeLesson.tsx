@@ -27,10 +27,13 @@ export default function YoutubeLesson({
   id,
   title,
   onProgress,
+  autoStart = false,
 }: {
   id: string;
   title?: string;
   onProgress?: (percent: number) => void;
+  /** Start playing as soon as the player is ready (the student already pressed play on the cover). */
+  autoStart?: boolean;
 }) {
   const host = useRef<HTMLDivElement>(null);
 
@@ -43,7 +46,7 @@ export default function YoutubeLesson({
       if (cancelled || !host.current || !(window as any).YT?.Player) return;
       player = new (window as any).YT.Player(host.current, {
         videoId: id,
-        playerVars: { rel: 0, modestbranding: 1 },
+        playerVars: { rel: 0, modestbranding: 1, autoplay: autoStart ? 1 : 0 },
         events: {
           onStateChange: (event: { data: number }) => {
             window.clearInterval(timer);
@@ -80,7 +83,7 @@ export default function YoutubeLesson({
       window.clearInterval(timer);
       player?.destroy?.();
     };
-  }, [id, onProgress]);
+  }, [id, onProgress]); // eslint-disable-line react-hooks/exhaustive-deps
 
   return <div ref={host} className="w-full h-full" title={title || 'Lesson video'} />;
 }

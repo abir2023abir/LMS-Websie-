@@ -22,7 +22,6 @@ import {
   GraduationCap,
   Award,
   LogOut,
-  CheckCircle,
   PlayCircle,
   Sparkles,
   Search,
@@ -105,11 +104,6 @@ function StudentDashboard() {
   const completedCount = enrolledCourses.filter((c) => c.progress.progressPercentage >= 100).length;
   const inProgressCount = enrolledCourses.filter((c) => c.progress.progressPercentage < 100).length;
 
-  // Most recent in-progress course for the quick resume banner
-  const resumeCourse =
-    enrolledCourses.find((c) => c.progress.progressPercentage > 0 && c.progress.progressPercentage < 100) ||
-    enrolledCourses[0];
-
   const handleOpenCertificate = (item: EnrolledCourseWithProgress) => {
     setSelectedCertCourse(item);
     setIsCertModalOpen(true);
@@ -140,70 +134,6 @@ function StudentDashboard() {
           <>
             <StudentOverview name={name} subtitle={subtitle} />
             <GuardianRequests />
-          <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
-            {[
-              { label: 'Active courses', value: enrolledCourses.length, icon: BookOpen, href: '/student?tab=courses' },
-              { label: 'Completed courses', value: completedCount, icon: CheckCircle, href: '/student?tab=courses' },
-              { label: 'Certificates', value: completedCount, icon: Award, href: '/student?tab=certificates' },
-            ].map(({ label, value, icon: Icon, href }) => (
-              <Link key={label} href={href} className="flex items-center gap-4 rounded-3xl border border-slate-200/80 bg-white p-5 shadow-sm transition hover:-translate-y-0.5 hover:border-[#FACC15]">
-                <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl bg-[#111827] text-[#FACC15]"><Icon className="h-5 w-5" /></span>
-                <span>
-                  <span className="block font-display text-2xl font-extrabold text-[#111827]">{value}</span>
-                  <span className="text-xs font-semibold text-slate-500">{label}</span>
-                </span>
-              </Link>
-            ))}
-          </div>
-          {/* ── QUICK RESUME HERO CARD ── */}
-          {resumeCourse && (
-            <div className="bg-white rounded-3xl border border-slate-200/80 p-6 sm:p-8 shadow-sm space-y-4">
-              <div className="flex flex-col lg:flex-row items-start lg:items-center justify-between gap-6">
-                <div className="flex items-start gap-4">
-                  <div className="relative w-24 h-16 rounded-2xl overflow-hidden bg-slate-100 flex-shrink-0 border border-slate-200">
-                    <Image
-                      src={resumeCourse.course.thumbnail || 'https://images.unsplash.com/photo-1522202176988-66273c2fd55f?w=600&h=340&fit=crop'}
-                      alt={resumeCourse.course.title}
-                      fill
-                      className="object-cover"
-                    />
-                  </div>
-
-                  <div className="space-y-1">
-                    <div className="text-[10px] font-bold uppercase tracking-wider text-amber-600 bg-amber-50 px-2.5 py-0.5 rounded-full inline-block">
-                      Jump Back In • Ready to Learn
-                    </div>
-                    <h3 className="font-display font-bold text-lg sm:text-xl text-[#111827]">
-                      {resumeCourse.course.title}
-                    </h3>
-                    <p className="text-xs text-slate-500">
-                      {resumeCourse.completedLessonsCount} of {resumeCourse.totalLessons} Lectures Completed ({resumeCourse.progress.progressPercentage}%)
-                    </p>
-                  </div>
-                </div>
-
-                <div className="w-full lg:w-auto flex items-center gap-3">
-                  <Link
-                    href={`/student/learn/${resumeCourse.course.id}`}
-                    className="w-full lg:w-auto bg-[#FACC15] hover:bg-[#eab308] text-[#111827] font-extrabold text-xs sm:text-sm px-6 py-3.5 rounded-2xl transition-all shadow-md shadow-[#FACC15]/20 flex items-center justify-center gap-2"
-                  >
-                    <PlayCircle className="w-4 h-4 fill-current" />
-                    <span>Continue Classroom</span>
-                  </Link>
-                </div>
-              </div>
-
-              {/* Progress Bar */}
-              <div className="space-y-1.5 pt-2">
-                <div className="h-2.5 w-full bg-slate-100 rounded-full overflow-hidden">
-                  <div
-                    className="h-full bg-gradient-to-r from-amber-400 to-[#FACC15] rounded-full transition-all duration-500"
-                    style={{ width: `${resumeCourse.progress.progressPercentage}%` }}
-                  />
-                </div>
-              </div>
-            </div>
-          )}
           </>
         )}
 
@@ -352,7 +282,7 @@ function StudentDashboard() {
         {part.key === 'progress' && <MyProgressPanel />}
         {part.key === 'messages' && (
           <section className="max-w-xl rounded-3xl border border-slate-200 bg-white p-6">
-            <CampusMessageForm kind="student" lockedKind defaultName={name} defaultEmail={user?.email || ''} />
+            <CampusMessageForm kind="student" lockedKind defaultName={name} defaultEmail={user?.email || ''} courses={enrolledCourses.map((item) => ({ id: String(item.course.id), title: item.course.title }))} />
           </section>
         )}
 

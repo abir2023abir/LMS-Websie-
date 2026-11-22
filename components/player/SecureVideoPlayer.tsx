@@ -38,6 +38,8 @@ interface SecureVideoPlayerProps {
   isCompleted?: boolean;
   onToggleComplete?: () => void;
   onProgress?: (percent: number) => void;
+  /** Start playing right away (the student already pressed play on the lesson cover). */
+  autoStart?: boolean;
 }
 
 export default function SecureVideoPlayer({
@@ -56,6 +58,7 @@ export default function SecureVideoPlayer({
   isCompleted = false,
   onToggleComplete,
   onProgress,
+  autoStart = false,
 }: SecureVideoPlayerProps) {
   const videoRef = useRef<HTMLVideoElement>(null);
   const containerRef = useRef<HTMLDivElement>(null);
@@ -81,6 +84,11 @@ export default function SecureVideoPlayer({
   const [watermarkPos, setWatermarkPos] = useState({ top: '15%', left: '20%' });
 
   const src = directVideoSrc(videoUrl);
+
+  // Play as soon as a video is shown when the student started it from the cover.
+  useEffect(() => {
+    if (autoStart && src) videoRef.current?.play().catch(() => {});
+  }, [autoStart, src]);
 
   // Watermark drifting position timer to discourage screen recording
   useEffect(() => {
@@ -265,7 +273,7 @@ export default function SecureVideoPlayer({
   if (yt) {
     return (
       <div className="relative w-full aspect-video rounded-3xl overflow-hidden bg-black border border-white/10 shadow-2xl">
-        <YoutubeLesson id={yt} title={title} onProgress={onProgress} />
+        <YoutubeLesson id={yt} title={title} onProgress={onProgress} autoStart={autoStart} />
         <div
           className="absolute pointer-events-none z-10 select-none opacity-25"
           style={{ top: watermarkPos.top, left: watermarkPos.left }}

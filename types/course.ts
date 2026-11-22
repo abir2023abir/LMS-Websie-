@@ -9,6 +9,8 @@ export interface LessonSchema {
   overview?: string;
   /** Notes and resources for the lesson. Empty means the part is skipped. */
   notes?: string;
+  /** "Action Step For This Lesson": one step per line, shown under the overview. */
+  actionSteps?: string;
   /** Video 2, 3, … of the lesson (videoUrl is video 1). Each must be watched to finish the video step. */
   moreVideos?: LessonVideo[];
 }

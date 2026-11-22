@@ -3,6 +3,7 @@
 import { useCallback, useEffect, useState } from 'react';
 import { CalendarDays, GraduationCap, Megaphone, RefreshCw } from 'lucide-react';
 import { NoticeList, Panel, ScheduleList, type Notice, type ScheduleItem } from '@/components/dashboard/feed-ui';
+import SiteMenuBar from '@/components/dashboard/SiteMenuBar';
 
 /** "Good morning / afternoon / evening" by the time in Bangladesh. */
 function greeting() {
@@ -10,7 +11,7 @@ function greeting() {
   return hour < 12 ? 'Good morning' : hour < 17 ? 'Good afternoon' : 'Good evening';
 }
 
-/** Student → Overview (client layout): greeting card, then Upcoming Schedule and Notifications. */
+/** Student → Overview (client layout): website menu, greeting card, Upcoming Schedule, Notifications. */
 export default function StudentOverview({ name, subtitle }: { name: string; subtitle: string }) {
   const [feed, setFeed] = useState<{ schedule: ScheduleItem[]; notifications: Notice[] } | null>(null);
   const [failed, setFailed] = useState(false);
@@ -32,6 +33,8 @@ export default function StudentOverview({ name, subtitle }: { name: string; subt
 
   return (
     <div className="space-y-8">
+      <SiteMenuBar dashboardHref="/student" />
+
       <section className="flex flex-col gap-5 rounded-3xl border border-[#EAB308] bg-gradient-to-br from-[#FACC15] to-[#EAB308] p-5 text-[#111827] shadow-[0_18px_40px_-22px_rgba(234,179,8,0.95)] sm:flex-row sm:items-center sm:p-6">
         <span className="flex h-16 w-16 shrink-0 items-center justify-center rounded-2xl bg-[#111827] text-[#FACC15] shadow-xl shadow-black/20 sm:h-20 sm:w-20" aria-hidden="true">
           <GraduationCap className="h-9 w-9 sm:h-10 sm:w-10" />
@@ -42,8 +45,9 @@ export default function StudentOverview({ name, subtitle }: { name: string; subt
         </div>
       </section>
 
+      {/* Client layout: the schedule, then the notifications under it. */}
       <div className="grid grid-cols-1 gap-8 lg:grid-cols-12">
-        <div className="lg:col-span-7">
+        <div className="lg:col-span-8">
           <Panel
             icon={CalendarDays}
             title="Upcoming Schedule"
@@ -54,7 +58,7 @@ export default function StudentOverview({ name, subtitle }: { name: string; subt
               : <ScheduleList items={feed.schedule} empty="Nothing is scheduled yet. Live classes, assignment deadlines and exam dates of your courses appear here." />}
           </Panel>
         </div>
-        <div className="lg:col-span-5">
+        <div className="lg:col-span-8">
           <Panel icon={Megaphone} title="Notifications" hint="Latest alerts">
             {!feed ? <p className="text-sm text-slate-500">{failed ? 'Could not load notifications.' : 'Loading…'}</p>
               : <NoticeList items={feed.notifications} empty="No alerts right now. Replies from your mentor, marked assignments and new lessons appear here." />}
