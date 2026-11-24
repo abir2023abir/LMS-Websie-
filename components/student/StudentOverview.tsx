@@ -33,7 +33,7 @@ export default function StudentOverview({ name, subtitle }: { name: string; subt
 
   return (
     <div className="space-y-8">
-      <SiteMenuBar dashboardHref="/student" />
+      <SiteMenuBar />
 
       <section className="flex flex-col gap-5 rounded-3xl border border-[#EAB308] bg-gradient-to-br from-[#FACC15] to-[#EAB308] p-5 text-[#111827] shadow-[0_18px_40px_-22px_rgba(234,179,8,0.95)] sm:flex-row sm:items-center sm:p-6">
         <span className="flex h-16 w-16 shrink-0 items-center justify-center rounded-2xl bg-[#111827] text-[#FACC15] shadow-xl shadow-black/20 sm:h-20 sm:w-20" aria-hidden="true">

@@ -2,18 +2,14 @@
 
 import { useState } from 'react';
 import Link from 'next/link';
-import { ArrowRight, Menu, X, LayoutDashboard } from 'lucide-react';
+import { ArrowRight, Menu, X } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useAuth } from '@/context/AuthContext';
-import { homeForRole } from '@/lib/roles';
-import { isDemoEmail } from '@/lib/demo-shared';
 import BrandLogo from '@/components/brand/BrandLogo';
 
 export default function Navbar() {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
-  const { user, role, userProfile } = useAuth();
-  const previewUser = isDemoEmail(userProfile?.email || user?.email);
-  const showDashboard = Boolean(user && !previewUser);
+  const { user } = useAuth();
 
   const navItems = [
     { name: 'Home', href: '/' },
@@ -41,19 +37,8 @@ export default function Navbar() {
           ))}
         </nav>
 
-        {/* ── Right: Dashboard after login, then Login Button ── */}
-        <div className="hidden sm:flex items-center gap-3">
-          {showDashboard ? (
-            <Link
-              href={homeForRole(role)}
-              className="group flex items-center rounded-full border-2 border-[#D4AF37] bg-[#FACC15] py-1 pl-4 pr-1 text-xs font-bold text-[#111827] transition hover:bg-[#EAB308]"
-            >
-              <span>Dashboard</span>
-              <div className="ml-2 flex h-6 w-6 items-center justify-center rounded-full bg-[#111827]">
-                <LayoutDashboard className="h-3.5 w-3.5 text-[#FACC15]" />
-              </div>
-            </Link>
-          ) : (
+        {/* Account dashboards stay inside the relevant private workspace. */}
+        {!user && <div className="hidden sm:flex items-center gap-3">
             <Link
               href="/login"
               className="group flex items-center rounded-full border-2 border-[#D4AF37] bg-[#FACC15] py-1 pl-4 pr-1 text-xs font-bold text-[#111827] transition hover:bg-[#EAB308]"
@@ -63,8 +48,7 @@ export default function Navbar() {
                 <ArrowRight className="h-3.5 w-3.5 text-[#FACC15]" />
               </div>
             </Link>
-          )}
-        </div>
+        </div>}
 
         {/* ── Mobile Hamburger Toggle ── */}
         <button
@@ -100,16 +84,13 @@ export default function Navbar() {
               </Link>
             ))}
             <div className="flex flex-col gap-2 border-t border-[#D4AF37]/40 pt-2">
-              <Link
-                href={showDashboard ? homeForRole(role) : '/login'}
-                onClick={() => setMobileMenuOpen(false)}
-              >
+              {!user && <Link href="/login" onClick={() => setMobileMenuOpen(false)}>
                 <div className="w-full min-h-11 flex items-center justify-between bg-[#FACC15] text-[#111827] font-bold text-xs py-2.5 px-4 rounded-full">
-                  <span>{showDashboard ? 'My Dashboard' : 'Log In'}</span>
+                  <span>Log In</span>
                   <ArrowRight className="w-4 h-4" />
                 </div>
-              </Link>
-              {!showDashboard && (
+              </Link>}
+              {!user && (
                 <Link href="/signup" onClick={() => setMobileMenuOpen(false)}>
                   <div className="flex min-h-11 w-full items-center justify-between rounded-full border-2 border-[#D4AF37] bg-white px-4 py-2.5 text-xs font-bold text-[#111827]">
                     <span>Sign Up Free</span>

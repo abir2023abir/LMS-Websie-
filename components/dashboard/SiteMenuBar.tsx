@@ -12,9 +12,9 @@ const SITE_LINKS = [
 
 /**
  * The website menu at the top of a dashboard (client layout):
- * CAREER BRIDGE.STUDIO · Home · All Courses · Bookkeeping · Contact · Dashboard.
+ * CAREER BRIDGE.STUDIO · Home · All Courses · Bookkeeping · Contact.
  */
-export default function SiteMenuBar({ dashboardHref }: { dashboardHref: string }) {
+export default function SiteMenuBar() {
   return (
     <nav aria-label="Website" className="flex flex-wrap items-center justify-between gap-3 rounded-3xl border border-slate-100 bg-white px-5 py-3 shadow-sm">
       <Link href="/" aria-label="Career Bridge.Studio home"><BrandLogo className="h-9 w-auto" /></Link>
@@ -24,7 +24,6 @@ export default function SiteMenuBar({ dashboardHref }: { dashboardHref: string }
             <Link href={link.href} className="rounded-full px-3 py-1.5 text-slate-600 hover:bg-slate-100 hover:text-slate-900">{link.label}</Link>
           </li>
         ))}
-        <li><Link href={dashboardHref} aria-current="page" className="rounded-full bg-[#111827] px-3 py-1.5 text-[#FACC15]">Dashboard</Link></li>
       </ul>
     </nav>
   );
