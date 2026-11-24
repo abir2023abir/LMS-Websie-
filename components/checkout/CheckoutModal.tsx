@@ -35,6 +35,8 @@ export default function CheckoutModal({ course, isOpen, onClose, onSuccess }: Ch
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const [submitted, setSubmitted] = useState(false);
+  const [freeEnrolled, setFreeEnrolled] = useState(false);
+  const [freeEnrolling, setFreeEnrolling] = useState(false);
   const [copied, setCopied] = useState(false);
 
   useEffect(() => {
@@ -68,6 +70,25 @@ export default function CheckoutModal({ course, isOpen, onClose, onSuccess }: Ch
     }
   };
 
+  const enrollFree = async () => {
+    setError('');
+    setFreeEnrolling(true);
+    try {
+      const res = await fetch('/api/student/enrollments/free', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ courseId: course.id }),
+      });
+      const data = await res.json();
+      if (!res.ok || !data.success) throw new Error(data.message || 'Could not enroll in this course.');
+      setFreeEnrolled(true);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Could not enroll in this course.');
+    } finally {
+      setFreeEnrolling(false);
+    }
+  };
+
   const submitManual = async () => {
     if (!manual) return;
     setError('');
@@ -97,8 +118,8 @@ export default function CheckoutModal({ course, isOpen, onClose, onSuccess }: Ch
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-start sm:items-center justify-center p-2 sm:p-4 bg-black/80 backdrop-blur-md overflow-y-auto overscroll-contain">
-      <div className="glass rounded-2xl sm:rounded-3xl border border-white/10 w-full max-w-xl my-2 sm:my-8 p-4 sm:p-8 shadow-2xl relative">
+      <div className="fixed inset-0 z-50 flex items-start sm:items-center justify-center p-2 sm:p-4 bg-black/80 backdrop-blur-md overflow-y-auto overscroll-contain">
+      <div role="dialog" aria-modal="true" aria-labelledby="checkout-modal-title" className="glass rounded-2xl sm:rounded-3xl border border-white/10 w-full max-w-xl my-2 sm:my-8 p-4 sm:p-8 shadow-2xl relative">
         <button
           onClick={onClose}
           className="absolute top-3 right-3 sm:top-5 sm:right-5 min-h-11 min-w-11 flex items-center justify-center p-2 text-slate-400 hover:text-white rounded-xl hover:bg-white/10 transition-colors"
@@ -112,12 +133,21 @@ export default function CheckoutModal({ course, isOpen, onClose, onSuccess }: Ch
             <ShieldCheck className="w-5 h-5" />
           </div>
           <div>
-            <h2 className="font-display font-bold text-2xl text-white">Checkout & Enroll</h2>
+            <h2 id="checkout-modal-title" className="font-display font-bold text-2xl text-white">Checkout & Enroll</h2>
             <p className="text-xs text-slate-400">Secure payment · Course opens after payment is confirmed</p>
           </div>
         </div>
 
-        {submitted ? (
+        {freeEnrolled ? (
+          <div className="py-8 text-center space-y-4">
+            <div className="w-16 h-16 rounded-full bg-emerald-400/20 text-emerald-300 border border-emerald-400/30 flex items-center justify-center mx-auto">
+              <CheckCircle className="w-8 h-8" />
+            </div>
+            <h3 className="font-display font-bold text-2xl text-white">You’re enrolled</h3>
+            <p className="text-sm text-slate-300">Your free course is ready in your student classroom.</p>
+            <Button variant="primary" size="lg" onClick={() => router.push(`/student/learn/${encodeURIComponent(String(course.id || ''))}`)}>Go to classroom</Button>
+          </div>
+        ) : submitted ? (
           <div className="py-8 text-center space-y-4">
             <div className="w-16 h-16 rounded-full bg-amber-400/20 text-amber-300 border border-amber-400/30 flex items-center justify-center mx-auto">
               <Clock className="w-8 h-8" />
@@ -129,8 +159,8 @@ export default function CheckoutModal({ course, isOpen, onClose, onSuccess }: Ch
           </div>
         ) : !user || role !== 'Student' ? (
           <div className="space-y-4 rounded-2xl border border-[#FACC15]/30 bg-[#FACC15]/10 p-5 text-center">
-            <p className="font-semibold text-white">Create or sign in to a student account before enrolling.</p>
-            <p className="text-xs leading-relaxed text-slate-300">Your full name, email, and phone number are required for student registration.</p>
+            <p className="font-semibold text-white">{methods?.price?.amount === 0 ? 'Create or sign in to a student account to enroll in this free course.' : 'Create or sign in to a student account before enrolling.'}</p>
+            <p className="text-xs leading-relaxed text-slate-300">{methods?.price?.amount === 0 ? 'No payment is required. Sign in or create an account to add the course to your classroom.' : 'Your full name, email, and phone number are required for student registration.'}</p>
             <Link
               href={`/signup?next=${encodeURIComponent(`/checkout/${course.id || ''}`)}`}
               className="inline-flex min-h-11 items-center justify-center rounded-xl bg-[#FACC15] px-5 py-2.5 text-sm font-extrabold text-[#111827] hover:bg-[#eab308]"
@@ -166,6 +196,14 @@ export default function CheckoutModal({ course, isOpen, onClose, onSuccess }: Ch
               <p className="text-center text-sm text-slate-400">Loading payment options…</p>
             ) : !methods.price ? (
               <p className="rounded-xl border border-white/10 bg-white/5 px-4 py-3 text-sm text-slate-300">This course isn&apos;t open for enrollment right now.</p>
+            ) : methods.price.amount === 0 ? (
+              <>
+                <p className="rounded-xl border border-emerald-300/20 bg-emerald-300/10 px-4 py-3 text-sm text-emerald-100">This course is free. No payment is required.</p>
+                {error && <p role="alert" className="text-sm text-rose-300">{error}</p>}
+                <Button variant="primary" size="xl" fullWidth isLoading={freeEnrolling} onClick={enrollFree} leftIcon={<CheckCircle className="w-4 h-4" />}>
+                  Enroll for free
+                </Button>
+              </>
             ) : noMethods ? (
               <p className="rounded-xl border border-amber-300/20 bg-amber-300/10 px-4 py-3 text-sm text-amber-100">Online enrollment opens soon. Please contact us to enroll in this course.</p>
             ) : (

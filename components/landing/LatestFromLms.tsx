@@ -1,14 +1,11 @@
 import Link from 'next/link';
-import { getBlogArticles } from '@/lib/cms-db';
+import { getHomepageBlogArticles } from '@/lib/cms-db';
 
 // "Latest from LMS": the two newest articles written in Admin → Landing Page CMS → Blog.
 export default async function LatestFromLms() {
-  const articles = (await getBlogArticles())
-    .filter((article) => article.title && article.slug)
+  const articles = (await getHomepageBlogArticles())
     .sort((a, b) => String(b.publishedAt || '').localeCompare(String(a.publishedAt || '')))
     .slice(0, 2);
-  if (articles.length === 0) return null;
-
   return (
     <section id="latest" className="bg-white py-16 text-[#111827] sm:py-24">
       <div className="mx-auto max-w-6xl space-y-10 px-4 sm:px-6 lg:px-8">
@@ -17,7 +14,12 @@ export default async function LatestFromLms() {
           <p className="max-w-2xl text-sm text-slate-600 sm:text-base">AI, technology, career ও learning বিষয়ে নিয়মিত নতুন content!</p>
         </div>
 
-        <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
+        {articles.length === 0 ? (
+          <div className="rounded-3xl border border-dashed border-slate-300 bg-slate-50 px-6 py-12 text-center">
+            <p className="font-display text-lg font-extrabold text-[#111827]">New updates are on the way</p>
+            <p className="mx-auto mt-2 max-w-xl text-sm leading-relaxed text-slate-600">Articles about AI, technology, careers, and learning will appear here when published.</p>
+          </div>
+        ) : <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
           {articles.map((article) => (
             <Link
               key={article.slug}
@@ -38,7 +40,7 @@ export default async function LatestFromLms() {
               </div>
             </Link>
           ))}
-        </div>
+        </div>}
       </div>
     </section>
   );

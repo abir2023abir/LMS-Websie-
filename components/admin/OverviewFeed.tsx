@@ -1,6 +1,6 @@
 'use client';
 
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import { AlertTriangle, Bell, BellRing, CalendarDays, FileText, GraduationCap, Megaphone, RefreshCw, Shield, ShieldCheck, Video, type LucideIcon } from 'lucide-react';
 import { toast } from 'sonner';
 
@@ -109,6 +109,8 @@ export default function OverviewFeed({ onOpenTab }: { onOpenTab?: (tab: string) 
   const [feed, setFeed] = useState<Feed | null>(null);
   const [failed, setFailed] = useState(false);
   const [busy, setBusy] = useState('');
+  const [started, setStarted] = useState(false);
+  const containerRef = useRef<HTMLDivElement>(null);
 
   const load = useCallback(() => {
     fetch('/api/admin/overview-feed', { cache: 'no-store' })
@@ -118,10 +120,25 @@ export default function OverviewFeed({ onOpenTab }: { onOpenTab?: (tab: string) 
   }, []);
 
   useEffect(() => {
+    const node = containerRef.current;
+    if (!node) return;
+    if (!('IntersectionObserver' in window)) { setStarted(true); return; }
+    const observer = new IntersectionObserver((entries) => {
+      if (entries.some((entry) => entry.isIntersecting)) {
+        setStarted(true);
+        observer.disconnect();
+      }
+    }, { rootMargin: '600px 0px' });
+    observer.observe(node);
+    return () => observer.disconnect();
+  }, []);
+
+  useEffect(() => {
+    if (!started) return;
     load();
     const timer = setInterval(load, 60000);
     return () => clearInterval(timer);
-  }, [load]);
+  }, [load, started]);
 
   const act = async (body: Record<string, unknown>, key: string, done: string) => {
     setBusy(key);
@@ -139,13 +156,13 @@ export default function OverviewFeed({ onOpenTab }: { onOpenTab?: (tab: string) 
   };
 
   // The four panels are part of the client's Overview layout, so a failed load says so instead of vanishing.
-  if (failed && !feed) return <div className="rounded-3xl border border-rose-200 bg-rose-50 p-6 text-sm font-semibold text-rose-700 shadow-sm">Could not load the schedule, notifications, device alerts and new enrollments. Press Refresh to try again.</div>;
-  if (!feed) return <div className="rounded-3xl border border-slate-100 bg-white p-6 text-sm text-slate-500 shadow-sm">Loading schedule and alerts…</div>;
+  if (failed && !feed) return <div ref={containerRef} className="rounded-3xl border border-rose-200 bg-rose-50 p-6 text-sm font-semibold text-rose-700 shadow-sm">Could not load the schedule, notifications, device alerts and new enrollments. Press Refresh to try again.</div>;
+  if (!feed) return <div ref={containerRef} className="rounded-3xl border border-slate-100 bg-white p-6 text-sm text-slate-500 shadow-sm">{started ? 'Loading schedule and alerts…' : 'Schedule and alerts will load as you reach them.'}</div>;
 
   const { security } = feed;
 
   return (
-    <div className="space-y-8">
+    <div ref={containerRef} className="space-y-8">
       <div className="grid grid-cols-1 gap-8 lg:grid-cols-12">
         {/* ── Upcoming schedule ── */}
         <div className="lg:col-span-7">

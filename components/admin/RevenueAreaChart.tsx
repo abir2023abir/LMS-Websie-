@@ -9,7 +9,6 @@ interface ChartDataItem {
   month: string;
   revenue: number;
   sales: number;
-  services?: number;
   signups: number;
 }
 
@@ -29,7 +28,7 @@ function CustomTooltip({ active, payload, label }: { active?: boolean; payload?:
             <span className="text-slate-300 font-medium">{item.name}</span>
           </span>
           <span className="font-bold text-white">
-            {item.dataKey === 'revenue' || item.dataKey === 'services' ? taka(item.value || 0) : item.value}
+            {item.dataKey === 'revenue' ? taka(item.value || 0) : item.value}
           </span>
         </div>
       ))}
@@ -48,18 +47,18 @@ export default function RevenueAreaChart({ data }: RevenueAreaChartProps) {
             Real-Time Revenue & Enrollment Analytics
           </h3>
           <p className="text-xs text-slate-500 mt-0.5">
-            Live totals from registered learners and successful payment records
+            Live totals from course enrollments, learner signups, and confirmed payments
           </p>
         </div>
         <div className="flex items-center gap-4 text-xs font-semibold">
           <span className="flex items-center gap-1.5 text-purple-600">
-            <span className="w-3 h-1 rounded-full bg-purple-500 inline-block" /> Enrolled Course (৳)
+            <span className="w-3 h-1 rounded-full bg-purple-500 inline-block" /> Paid course revenue (৳)
           </span>
           <span className="flex items-center gap-1.5 text-amber-600">
-            <span className="w-3 h-1 rounded-full bg-amber-400 inline-block" /> Enrolled service
+            <span className="w-3 h-1 rounded-full bg-amber-400 inline-block" /> Paid enrollments
           </span>
           <span className="flex items-center gap-1.5 text-emerald-600">
-            <span className="w-3 h-1 rounded-full bg-emerald-400 inline-block" /> Signups
+            <span className="w-3 h-1 rounded-full bg-emerald-400 inline-block" /> Learner signups
           </span>
         </div>
       </div>
@@ -92,7 +91,7 @@ export default function RevenueAreaChart({ data }: RevenueAreaChartProps) {
           <Area
             type="monotone"
             dataKey="revenue"
-            name="Enrolled Course (৳)"
+            name="Paid course revenue (৳)"
             stroke="#7c3aed"
             strokeWidth={2.5}
             fill="url(#colorRevenue)"
@@ -101,8 +100,8 @@ export default function RevenueAreaChart({ data }: RevenueAreaChartProps) {
           />
           <Area
             type="monotone"
-            dataKey="services"
-            name="Enrolled service (৳)"
+            dataKey="sales"
+            name="Paid enrollments"
             stroke="#FACC15"
             strokeWidth={2.5}
             fill="url(#colorSales)"
@@ -112,7 +111,7 @@ export default function RevenueAreaChart({ data }: RevenueAreaChartProps) {
           <Area
             type="monotone"
             dataKey="signups"
-            name="Signups"
+            name="Learner signups"
             stroke="#10b981"
             strokeWidth={2.5}
             fill="url(#colorSignups)"

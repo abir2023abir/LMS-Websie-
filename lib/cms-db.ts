@@ -199,12 +199,46 @@ export type BlogArticle = {
   updatedAt?: any;
 };
 
+// Homepage reference stories supplied in the client layout. These remain available
+// when the CMS only contains its editable preview rows.
+const HOMEPAGE_REFERENCE_ARTICLES: BlogArticle[] = [
+  {
+    id: 'homepage-gpt-6-astra',
+    slug: 'gpt-6-astra',
+    title: 'GPT-6 Astra কী? নতুন AI',
+    excerpt: 'GPT-6 Astra কী? GPT-5.6 Sol-এর তুলনায় নতুন AI কতটা এগিয়ে?',
+    content: 'AI, computer use, coding, research ও professional workflow নিয়ে সহজ আলোচনা।',
+    coverImage: '', category: 'AI & Technology',
+    author: { name: '', avatar: '', role: '' }, tags: ['AI'], readTime: '', isFeatured: false, publishedAt: '',
+  },
+  {
+    id: 'homepage-facebook-verification',
+    slug: 'facebook-verification',
+    title: 'Facebook Verification',
+    excerpt: 'Facebook-এর নতুন Verified ব্যাজ: ভিডিও সেলফি দিয়েই হবে ভেরিফিকেশন।',
+    content: 'সামাজিক মাধ্যম ও digital platform-এর নতুন পরিবর্তন সম্পর্কে জানুন।',
+    coverImage: '', category: 'Digital Platforms',
+    author: { name: '', avatar: '', role: '' }, tags: ['Facebook'], readTime: '', isFeatured: false, publishedAt: '',
+  },
+];
+
+const isHomepagePreviewArticle = (article: BlogArticle) =>
+  /(?:^sample-|\[sample\]|layout preview sample)/i.test(`${article.slug} ${article.title} ${article.excerpt} ${article.content}`);
+
 export async function getBlogArticles(): Promise<BlogArticle[]> {
   return localList<BlogArticle>('blog', []);
 }
 
 export async function getBlogArticleBySlug(slug: string): Promise<BlogArticle | null> {
-  return (await localList<BlogArticle>('blog', [])).find((post) => post.slug === slug) || null;
+  return (await localList<BlogArticle>('blog', [])).find((post) => post.slug === slug)
+    || HOMEPAGE_REFERENCE_ARTICLES.find((post) => post.slug === slug)
+    || null;
+}
+
+export async function getHomepageBlogArticles(): Promise<BlogArticle[]> {
+  const published = (await getBlogArticles()).filter((article) => article.title && article.slug && !isHomepagePreviewArticle(article));
+  if (published.length) return published;
+  return HOMEPAGE_REFERENCE_ARTICLES;
 }
 
 export async function createBlogArticle(data: Omit<BlogArticle, 'id' | 'updatedAt'>): Promise<string> {

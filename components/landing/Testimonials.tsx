@@ -26,7 +26,10 @@ export default function Testimonials() {
     fetch('/api/landing/reviews', { cache: 'no-store' })
       .then((response) => (response.ok ? response.json() : Promise.reject(new Error('Could not load reviews'))))
       .then((data) => {
-        if (active) setReviews(Array.isArray(data.reviews) ? data.reviews : []);
+        if (active) setReviews(Array.isArray(data.reviews) ? data.reviews.filter((review: LearnerReview) => {
+          const previewText = `${review.name} ${review.role} ${review.title} ${review.text}`;
+          return !/\[sample\]|layout preview sample|sample learner/i.test(previewText);
+        }) : []);
       })
       .catch(() => {
         if (active) setReviews([]);
@@ -44,9 +47,6 @@ export default function Testimonials() {
   const move = (direction: -1 | 1) => {
     if (reviews.length > 1) setCurrentIndex((index) => (index + direction + reviews.length) % reviews.length);
   };
-
-  // Hide the whole section until at least one verified review is published.
-  if (loading || reviews.length === 0) return null;
 
   return (
     <section id="testimonials" className="relative overflow-hidden border-t border-white/10 bg-[#111827] py-16 text-white sm:py-20">

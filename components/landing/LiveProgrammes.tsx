@@ -117,7 +117,7 @@ export default function LiveProgrammes() {
                       {programme.event_time && <span className="flex items-center gap-1.5 font-bold text-[#111827]"><Clock className="h-4 w-4 shrink-0 text-[#A16207]" />{programme.event_time}</span>}
                     </div>
                     <h3 className="font-display text-xl font-extrabold leading-snug text-[#111827]">{programme.title}</h3>
-                    <p className="text-sm leading-relaxed text-slate-600">{programme.description}</p>
+                    <p className="text-sm leading-relaxed text-slate-600">{programme.description.replace(/\s*\[sample\]\s*/gi, '').trim()}</p>
                     <div className="mt-auto flex flex-wrap items-center gap-x-4 gap-y-1 pt-1 text-xs text-slate-500">
                       <span className="flex items-center gap-1.5"><CalendarDays className="h-4 w-4 shrink-0 text-[#A16207]" />{date.toLocaleDateString('en-BD', { day: 'numeric', month: 'long', year: 'numeric', timeZone: 'Asia/Dhaka' })}</span>
                       {programme.duration && <span className="flex items-center gap-1.5"><Timer className="h-4 w-4 shrink-0 text-[#A16207]" />{programme.duration}</span>}

@@ -89,6 +89,7 @@ export default function CoursesSection() {
                 <button
                   key={cat}
                   onClick={() => setActiveCategory(cat)}
+                  aria-pressed={isActive}
                   className={`px-4 py-2 rounded-full text-xs font-bold transition-all ${
                     isActive
                       ? 'bg-[#FACC15] text-[#111827] shadow-lg shadow-[#FACC15]/20'

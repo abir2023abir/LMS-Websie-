@@ -243,15 +243,20 @@ export async function revokeEnrollment(studentId: string, courseId: string) {
 export async function allEnrollments(): Promise<Record<string, string[]>> {
   const map: Record<string, string[]> = { ...(await legacyEnrollments()) };
   const courses = await kvGet<string[]>('enroll-course-ids', []);
-  for (const courseId of courses) {
-    const count = await kvGet<number>(`enroll-count:${courseId}`, 0);
+  // Course rosters are independent keys. Fetch them concurrently so the
+  // dashboard does not wait on one remote storage round-trip per roster.
+  const rosters = await Promise.all(courses.map(async (courseId) => {
+    const count = await enrollmentCount(courseId);
     const batches = Math.ceil(count / ROSTER_BATCH);
-    for (let index = 0; index < batches; index += 1) {
-      const roster = await kvGet<string[]>(`enroll-roster:${courseId}:${index}`, []);
-      for (const studentId of roster) {
-        const list = map[studentId] || [];
-        if (!list.includes(courseId)) map[studentId] = [...list, courseId];
-      }
+    const studentBatches = await Promise.all(Array.from({ length: batches }, (_, index) =>
+      kvGet<string[]>(`enroll-roster:${courseId}:${index}`, [])
+    ));
+    return { courseId, students: studentBatches.flat() };
+  }));
+  for (const { courseId, students } of rosters) {
+    for (const studentId of students) {
+      const list = map[studentId] || [];
+      if (!list.includes(courseId)) map[studentId] = [...list, courseId];
     }
   }
   return map;

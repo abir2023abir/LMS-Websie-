@@ -126,9 +126,10 @@ export default function AdminDashboard({
   const courseEdits = useCourseEdits(editsVersion);
 
   const { data, mutate, isLoading } = useSWR('/api/admin/stats', fetcher, {
-    refreshInterval: 60000,
+    refreshInterval: activeTab === 'Overview' ? 15000 : 0,
     revalidateOnFocus: true,
     dedupingInterval: 10000,
+    isPaused: () => activeTab !== 'Overview',
   });
   // Warns when Supabase is not set up, so nobody thinks unsaved data was kept.
   const { data: storage } = useSWR('/api/admin/storage-status', fetcher, { revalidateOnFocus: false });
@@ -206,7 +207,7 @@ export default function AdminDashboard({
           {visibleTabs.map((tab) => {
             const isActive = activeTab === tab.name;
             const Icon = tab.icon;
-            return <button key={tab.name} onClick={() => { setActiveTab(tab.name); setMenuOpen(false); }} aria-current={isActive ? 'page' : undefined} className={`flex min-h-11 w-full items-center gap-3 rounded-2xl px-3 py-2.5 text-left text-sm font-semibold transition ${isActive ? 'bg-white text-[#111827] shadow-lg shadow-black/20' : 'text-slate-300 hover:bg-white/10 hover:text-white'}`}>
+            return <button key={tab.name} onClick={() => { setActiveTab(tab.name); setMenuOpen(false); if (tab.name === 'Overview') void mutate(); }} aria-current={isActive ? 'page' : undefined} className={`flex min-h-11 w-full items-center gap-3 rounded-2xl px-3 py-2.5 text-left text-sm font-semibold transition ${isActive ? 'bg-white text-[#111827] shadow-lg shadow-black/20' : 'text-slate-300 hover:bg-white/10 hover:text-white'}`}>
               <span className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-xl ${isActive ? 'bg-[#FACC15] text-[#111827]' : 'bg-white/10 text-slate-300'}`}><Icon className="h-4 w-4" /></span>
               <span className="min-w-0 flex-1">{tab.name}</span>
               {tab.name === 'Requests' && serviceRequests.length > 0 && <span className={`inline-flex h-5 min-w-5 items-center justify-center rounded-full px-1 text-[10px] font-extrabold ${isActive ? 'bg-[#111827] text-[#FACC15]' : 'bg-[#FACC15] text-[#111827]'}`}>{serviceRequests.length}</span>}
