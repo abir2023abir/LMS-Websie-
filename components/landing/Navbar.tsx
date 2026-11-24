@@ -6,11 +6,14 @@ import { ArrowRight, Menu, X, LayoutDashboard } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useAuth } from '@/context/AuthContext';
 import { homeForRole } from '@/lib/roles';
+import { isDemoEmail } from '@/lib/demo-shared';
 import BrandLogo from '@/components/brand/BrandLogo';
 
 export default function Navbar() {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
-  const { user, role } = useAuth();
+  const { user, role, userProfile } = useAuth();
+  const previewUser = isDemoEmail(userProfile?.email || user?.email);
+  const showDashboard = Boolean(user && !previewUser);
 
   const navItems = [
     { name: 'Home', href: '/' },
@@ -40,7 +43,7 @@ export default function Navbar() {
 
         {/* ── Right: Dashboard after login, then Login Button ── */}
         <div className="hidden sm:flex items-center gap-3">
-          {user ? (
+          {showDashboard ? (
             <Link
               href={homeForRole(role)}
               className="group flex items-center rounded-full border-2 border-[#D4AF37] bg-[#FACC15] py-1 pl-4 pr-1 text-xs font-bold text-[#111827] transition hover:bg-[#EAB308]"
@@ -98,15 +101,15 @@ export default function Navbar() {
             ))}
             <div className="flex flex-col gap-2 border-t border-[#D4AF37]/40 pt-2">
               <Link
-                href={user ? homeForRole(role) : '/login'}
+                href={showDashboard ? homeForRole(role) : '/login'}
                 onClick={() => setMobileMenuOpen(false)}
               >
                 <div className="w-full min-h-11 flex items-center justify-between bg-[#FACC15] text-[#111827] font-bold text-xs py-2.5 px-4 rounded-full">
-                  <span>{user ? 'My Dashboard' : 'Log In'}</span>
+                  <span>{showDashboard ? 'My Dashboard' : 'Log In'}</span>
                   <ArrowRight className="w-4 h-4" />
                 </div>
               </Link>
-              {!user && (
+              {!showDashboard && (
                 <Link href="/signup" onClick={() => setMobileMenuOpen(false)}>
                   <div className="flex min-h-11 w-full items-center justify-between rounded-full border-2 border-[#D4AF37] bg-white px-4 py-2.5 text-xs font-bold text-[#111827]">
                     <span>Sign Up Free</span>
