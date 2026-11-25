@@ -264,7 +264,7 @@ export default function CourseAnalytics() {
                   <tbody>
                     {rows.map((row) => (
                       <Fragment key={row.studentId}>
-                      <tr className="cursor-pointer border-b border-slate-50 hover:bg-slate-50" onClick={() => setOpenId(openId === row.studentId ? '' : row.studentId)}>
+                      <tr tabIndex={0} aria-expanded={openId === row.studentId} className="cursor-pointer border-b border-slate-50 hover:bg-slate-50" onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); setOpenId(openId === row.studentId ? '' : row.studentId); } }} onClick={() => setOpenId(openId === row.studentId ? '' : row.studentId)}>
                         <td className="py-3 font-display font-extrabold">{row.rank <= 3 ? <Medal className={`h-5 w-5 ${medal[row.rank - 1]}`} /> : `#${row.rank}`}</td>
                         <td>
                           <p className="flex items-center gap-1.5 font-semibold">{row.name}{row.atRisk && <span className="rounded-full bg-rose-50 px-1.5 py-0.5 text-[10px] font-bold text-rose-700">At risk</span>}</p>

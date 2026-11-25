@@ -363,7 +363,7 @@ export default function BlogCatalogPage() {
                   required
                   value={emailInput}
                   onChange={(e) => setEmailInput(e.target.value)}
-                  placeholder="Enter your email address..."
+                  placeholder="Enter your email address…"
                   className="flex-1 bg-white/10 border border-white/20 rounded-2xl px-4 py-3 text-xs sm:text-sm text-white placeholder-slate-400 focus:outline-none focus:border-[#FACC15] font-medium"
                 />
                 <button

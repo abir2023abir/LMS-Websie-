@@ -44,7 +44,7 @@ export default function HeroSectionManagement() {
   if (isLoading) {
     return (
       <div className="flex items-center justify-center py-12">
-        <div className="text-slate-500">Loading...</div>
+        <div className="text-slate-500">Loading…</div>
       </div>
     );
   }
@@ -197,7 +197,7 @@ export default function HeroSectionManagement() {
                   disabled={isSaving}
                   className="px-4 py-2 bg-[#111827] text-white rounded-lg text-sm font-medium hover:bg-slate-800 transition-colors disabled:opacity-50"
                 >
-                  {isSaving ? 'Saving...' : 'Save Changes'}
+                  {isSaving ? 'Saving…' : 'Save Changes'}
                 </button>
               </div>
             </div>

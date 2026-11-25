@@ -144,7 +144,7 @@ export default function BlogEditor() {
   };
 
   if (loading) {
-    return <div className="text-center py-12 text-slate-500">Loading...</div>;
+    return <div className="text-center py-12 text-slate-500">Loading…</div>;
   }
 
   return (
@@ -304,7 +304,7 @@ export default function BlogEditor() {
               <RichTextEditor
                 content={formData.content}
                 onChange={(content) => setFormData({ ...formData, content })}
-                placeholder="Enter article content..."
+                placeholder="Enter article content…"
                 minHeight="200px"
               />
             </div>

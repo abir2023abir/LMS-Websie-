@@ -283,7 +283,7 @@ export default function StudentLearnPage() {
       <div className="min-h-screen bg-slate-50 text-[#111827] flex items-center justify-center p-4">
         <div className="flex items-center gap-3 bg-white border border-slate-200 px-6 py-4 rounded-2xl shadow-xl">
           <div className="w-5 h-5 border-2 border-[#111827] border-t-transparent rounded-full animate-spin" />
-          <span className="font-semibold text-[#111827]">Preparing your classroom...</span>
+          <span className="font-semibold text-[#111827]">Preparing your classroom…</span>
         </div>
       </div>
     );
@@ -324,6 +324,7 @@ export default function StudentLearnPage() {
           <div className="flex items-center gap-4">
             <Link
               href="/student"
+              aria-label="Back to Dashboard"
               className="p-2 text-slate-600 hover:text-[#111827] rounded-xl hover:bg-slate-100 transition-colors flex items-center gap-2 text-xs font-bold"
             >
               <ArrowLeft className="w-4 h-4" />

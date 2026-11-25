@@ -162,7 +162,7 @@ function VerifyCertificateContent() {
         {loading && (
           <div className="bg-white rounded-3xl border border-slate-200 p-12 text-center space-y-3 shadow-sm">
             <div className="w-8 h-8 border-3 border-[#111827] border-t-transparent rounded-full animate-spin mx-auto" />
-            <p className="font-bold text-sm text-[#111827]">Querying Public Credential Registry...</p>
+            <p className="font-bold text-sm text-[#111827]">Querying Public Credential Registry…</p>
           </div>
         )}
 
@@ -223,7 +223,7 @@ function VerifyCertificateContent() {
                   className="bg-[#111827] hover:bg-slate-800 text-white font-extrabold text-xs px-5 py-2.5 rounded-xl transition-all shadow flex items-center gap-1.5 disabled:opacity-50"
                 >
                   <Download className="w-3.5 h-3.5 text-[#FACC15]" />
-                  <span>{isDownloading ? 'Generating PDF...' : 'Download PDF'}</span>
+                  <span>{isDownloading ? 'Generating PDF…' : 'Download PDF'}</span>
                 </button>
 
                 <button

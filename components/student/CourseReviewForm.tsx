@@ -50,7 +50,7 @@ export default function CourseReviewForm({ courseId, courseTitle }: { courseId: 
           </button>
         ))}
       </div>
-      <textarea value={text} onChange={(e) => setText(e.target.value)} rows={4} maxLength={1200} placeholder="What did you learn? What could be better?" className="w-full rounded-xl border border-slate-200 px-3 py-2 text-sm focus:border-[#111827] focus:outline-none" />
+      <textarea aria-label="Your review" name="review" value={text} onChange={(e) => setText(e.target.value)} rows={4} maxLength={1200} placeholder="What did you learn? What could be better?" className="w-full rounded-xl border border-slate-200 px-3 py-2 text-sm focus:border-[#111827] focus:outline-none" />
       <label className="flex items-start gap-2 text-sm text-slate-600">
         <input type="checkbox" checked={permission} onChange={(e) => setPermission(e.target.checked)} className="mt-0.5 h-4 w-4 accent-amber-500" />
         The team may show my name and review on the website after checking it.

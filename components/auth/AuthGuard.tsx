@@ -59,7 +59,7 @@ export default function AuthGuard({ children, allowedRole, allowAdmin, loginNext
           <Loader2 className="w-10 h-10 text-primary-400 animate-spin" />
           <div>
             <h3 className="font-display font-semibold text-lg text-white">Verifying Session</h3>
-            <p className="text-xs text-slate-400 mt-1">Authenticating and loading your dashboard...</p>
+            <p className="text-xs text-slate-400 mt-1">Authenticating and loading your dashboard…</p>
           </div>
         </div>
       </div>

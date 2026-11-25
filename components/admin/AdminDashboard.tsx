@@ -234,7 +234,7 @@ export default function AdminDashboard({
           {activeTab === 'Courses' && (
             <div className="hidden w-full max-w-xs items-center gap-2 rounded-full border border-slate-200 bg-slate-50 px-4 py-2 text-xs md:flex">
               <Search className="h-4 w-4 text-slate-400" />
-              <input type="text" value={searchTerm} onChange={(e) => setSearchTerm(e.target.value)} placeholder="Search courses..." className="w-full bg-transparent text-slate-900 placeholder-slate-400 focus:outline-none" />
+              <input type="text" value={searchTerm} onChange={(e) => setSearchTerm(e.target.value)} placeholder="Search courses…" className="w-full bg-transparent text-slate-900 placeholder-slate-400 focus:outline-none" />
             </div>
           )}
           <button onClick={() => mutate()} className="flex items-center gap-1.5 rounded-xl border border-slate-200 p-2 text-xs font-semibold text-slate-600 transition-colors hover:bg-slate-100 hover:text-slate-900" title="Refresh data">

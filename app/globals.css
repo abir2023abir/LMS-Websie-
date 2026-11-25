@@ -114,3 +114,50 @@ textarea {
 .animate-rotate {
   animation: rotate 4s ease-in-out infinite;
 }
+
+/* ─── Accessibility (Web Interface Guidelines) ─── */
+/* A visible focus ring for keyboard users on every control, even where a field turns its outline off. */
+a:focus-visible,
+button:focus-visible,
+input:focus-visible,
+select:focus-visible,
+textarea:focus-visible,
+summary:focus-visible,
+[role="button"]:focus-visible,
+[tabindex]:not([tabindex="-1"]):focus-visible {
+  outline: 2px solid #CA8A04 !important;
+  outline-offset: 2px;
+}
+
+/* No double-tap zoom delay on controls. */
+a, button, input, select, textarea, label, [role="button"] {
+  touch-action: manipulation;
+}
+
+/* People who ask their device for less motion get almost none. */
+@media (prefers-reduced-motion: reduce) {
+  html { scroll-behavior: auto; }
+  *, *::before, *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}
+
+/* "Skip to main content" link: hidden until it gets keyboard focus. */
+.skip-link {
+  position: fixed;
+  left: 12px;
+  top: -60px;
+  z-index: 100;
+  border-radius: 9999px;
+  background: #111827;
+  color: #FACC15;
+  padding: 10px 18px;
+  font-weight: 800;
+  font-size: 14px;
+}
+.skip-link:focus {
+  top: 12px;
+}

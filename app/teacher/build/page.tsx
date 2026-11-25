@@ -589,7 +589,7 @@ export default function TeacherPanelPage() {
                           setThumbnailUrl(e.target.value);
                           setThumbnailPreview(e.target.value);
                         }}
-                        placeholder="Or paste Image URL..."
+                        placeholder="Or paste Image URL…"
                         className="flex-1 bg-slate-50 border border-slate-200 rounded-xl px-3 py-2.5 text-xs text-[#111827] placeholder-slate-400 focus:outline-none focus:border-[#111827] transition-colors"
                       />
                     </div>
@@ -614,7 +614,7 @@ export default function TeacherPanelPage() {
                       rows={3}
                       value={description}
                       onChange={(e) => setDescription(e.target.value)}
-                      placeholder="Write a compelling overview of what students will learn in this course..."
+                      placeholder="Write a compelling overview of what students will learn in this course…"
                       className="w-full bg-slate-50 border border-slate-200 rounded-xl p-4 text-sm text-[#111827] placeholder-slate-400 focus:outline-none focus:border-[#111827] transition-colors resize-none"
                     />
                   </div>

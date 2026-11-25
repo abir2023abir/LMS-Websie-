@@ -84,7 +84,7 @@ export default function AboutEditor() {
   };
 
   if (loading) {
-    return <div className="text-center py-12 text-slate-500">Loading...</div>;
+    return <div className="text-center py-12 text-slate-500">Loading…</div>;
   }
 
   return (
@@ -206,7 +206,7 @@ export default function AboutEditor() {
           disabled={saving}
           className="px-6 py-2 bg-[#111827] text-white rounded-lg text-sm font-medium hover:bg-slate-800 transition-colors disabled:opacity-50"
         >
-          {saving ? 'Saving...' : 'Save Changes'}
+          {saving ? 'Saving…' : 'Save Changes'}
         </button>
       </div>
     </div>

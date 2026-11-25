@@ -119,7 +119,7 @@ export default function SuccessStoriesEditor() {
   };
 
   if (loading) {
-    return <div className="text-center py-12 text-slate-500">Loading...</div>;
+    return <div className="text-center py-12 text-slate-500">Loading…</div>;
   }
 
   return (

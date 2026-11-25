@@ -32,7 +32,7 @@ interface RichTextEditorProps {
 export default function RichTextEditor({
   content = '',
   onChange,
-  placeholder = 'Start typing...',
+  placeholder = 'Start typing…',
   minHeight = '200px',
   readOnly = false,
   showToolbar = true,

@@ -187,7 +187,7 @@ export default function AdminStudents() {
               <thead><tr className="border-b border-slate-100 text-xs uppercase tracking-wide text-slate-400"><th className="py-2.5">Student</th><th>Contact</th><th>Courses</th><th>Status</th><th>Paid</th><th>Joined</th><th /></tr></thead>
               <tbody>
                 {visible.map((student) => (
-                  <tr key={student.id} onClick={() => { setOpenId(student.id); setTab('overview'); loadRecord(student.id); }} className="cursor-pointer border-b border-slate-50 hover:bg-slate-50">
+                  <tr key={student.id} tabIndex={0} aria-label={`Open ${student.name}`} onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); setOpenId(student.id); setTab('overview'); loadRecord(student.id); } }} onClick={() => { setOpenId(student.id); setTab('overview'); loadRecord(student.id); }} className="cursor-pointer border-b border-slate-50 hover:bg-slate-50">
                     <td className="py-3">
                       <div className="flex items-center gap-3">
                         <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-[#111827] text-xs font-bold text-[#FACC15]">{initials(student.name)}</span>

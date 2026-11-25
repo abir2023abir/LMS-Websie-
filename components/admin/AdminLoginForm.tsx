@@ -135,7 +135,7 @@ export default function AdminLoginForm() {
               {isLoading ? (
                 <>
                   <div className="w-4 h-4 border-2 border-[#1A0B2E]/30 border-t-[#1A0B2E] rounded-full animate-spin" />
-                  <span>Authenticating...</span>
+                  <span>Authenticating…</span>
                 </>
               ) : (
                 <>

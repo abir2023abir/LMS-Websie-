@@ -1,6 +1,7 @@
 import type { Metadata } from 'next';
 import { Inter, Noto_Sans_Bengali, Space_Grotesk } from 'next/font/google';
 import { AuthProvider } from '@/context/AuthContext';
+import { MotionPrefs, SkipLink } from '@/components/a11y/Accessibility';
 import { LanguageProvider } from '@/components/i18n/LanguageProvider';
 import { STALE_BUILD_RELOAD } from '@/lib/stale-build-reload';
 import './globals.css';
@@ -55,8 +56,9 @@ export default function RootLayout({
         <script dangerouslySetInnerHTML={{ __html: STALE_BUILD_RELOAD }} />
       </head>
       <body className="min-h-screen bg-white text-[#111827] antialiased">
+        <SkipLink />
         <AuthProvider>
-          <LanguageProvider>{children}</LanguageProvider>
+          <LanguageProvider><MotionPrefs>{children}</MotionPrefs></LanguageProvider>
         </AuthProvider>
       </body>
     </html>

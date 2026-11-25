@@ -105,6 +105,8 @@ export default function CertificateModal({ isOpen, onClose, courseId }: Certific
       <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-md">
         <div className="relative w-full max-w-md bg-[#111827] border border-white/15 rounded-3xl p-8 text-center space-y-4">
           <button
+            type="button"
+            aria-label="Close"
             onClick={onClose}
             className="absolute top-4 right-4 p-2 rounded-xl bg-white/5 hover:bg-white/10 text-slate-400 hover:text-white transition-colors"
           >
@@ -112,7 +114,7 @@ export default function CertificateModal({ isOpen, onClose, courseId }: Certific
           </button>
           <Award className="w-10 h-10 text-[#FACC15] mx-auto" />
           <p className="text-white font-semibold text-sm">
-            {error || 'Preparing your certificate...'}
+            {error || 'Preparing your certificate…'}
           </p>
           {error && (
             <button
@@ -183,6 +185,8 @@ export default function CertificateModal({ isOpen, onClose, courseId }: Certific
           </div>
 
           <button
+            type="button"
+            aria-label="Close"
             onClick={onClose}
             className="p-2 rounded-xl bg-white/5 hover:bg-white/10 text-slate-400 hover:text-white transition-colors"
           >
@@ -342,7 +346,7 @@ export default function CertificateModal({ isOpen, onClose, courseId }: Certific
               {isDownloading ? (
                 <>
                   <div className="w-3.5 h-3.5 border-2 border-[#111827] border-t-transparent rounded-full animate-spin" />
-                  <span>Generating Vector PDF...</span>
+                  <span>Generating Vector PDF…</span>
                 </>
               ) : (
                 <>
