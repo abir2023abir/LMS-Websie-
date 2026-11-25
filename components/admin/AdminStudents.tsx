@@ -6,6 +6,7 @@ import {
 } from 'lucide-react';
 import { toast } from 'sonner';
 import AdminModal, { fieldClass } from './AdminModal';
+import AdminEnrollmentForms from './AdminEnrollmentForms';
 import { useCourseOutline } from './CoursePlacePicker';
 import { taka } from '@/lib/utils';
 
@@ -210,6 +211,8 @@ export default function AdminStudents() {
           </div>
         )}
       </section>
+
+      <AdminEnrollmentForms />
 
       {/* ── Student profile drawer ── */}
       {open && (

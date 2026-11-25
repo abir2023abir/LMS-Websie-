@@ -4,6 +4,7 @@ import FloatingNavbar from '@/components/english/FloatingNavbar';
 import EnglishFooter from '@/components/english/EnglishFooter';
 import { contactInfo, hasContactDetails, socialLinks } from '@/lib/contact';
 import ConsultationBookingForm from '@/components/messages/ConsultationBookingForm';
+import Testimonials from '@/components/landing/Testimonials';
 import { getContactBookingContent } from '@/lib/contact-booking-content';
 
 export const dynamic = 'force-dynamic';
@@ -138,6 +139,9 @@ export default function ContactPage({ searchParams }: { searchParams?: Record<st
       )}
 
       <ConsultationBookingForm initialService={initialService} initialBilling={initialBilling} content={getContactBookingContent()} />
+
+      {/* Shows once a review is published for the contact page (Landing Page CMS, Reviews). */}
+      <Testimonials page="contact" />
 
       <EnglishFooter />
     </div>

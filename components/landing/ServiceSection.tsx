@@ -31,14 +31,14 @@ export default function ServiceSection() {
             <p className="text-sm leading-relaxed text-slate-600 sm:text-base">
               Get professional consultancy services — in one place. Simplify your business finances with expert guidance and reliable solutions.
             </p>
-            <div className="flex lg:justify-end">
+            <div className="flex pt-1">
               <Link
                 href="/bookkeeping"
-                className="group inline-flex items-center rounded-full bg-[#FACC15] py-2.5 pl-6 pr-1.5 text-sm font-bold text-[#111827] shadow-lg shadow-[#FACC15]/20 transition-all hover:bg-[#eab308]"
+                className="group inline-flex min-h-12 items-center gap-4 rounded-full bg-[#FACC15] py-1.5 pl-7 pr-1.5 text-base font-extrabold text-[#111827] shadow-lg shadow-[#FACC15]/30 transition-colors hover:bg-[#EAB308] focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-[#111827]/30"
               >
                 <span>Explore</span>
-                <span className="ml-3 flex h-8 w-8 items-center justify-center rounded-full bg-[#111827]">
-                  <ArrowRight className="h-4 w-4 text-[#FACC15]" />
+                <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-[#111827]" aria-hidden="true">
+                  <ArrowRight className="h-5 w-5 text-[#FACC15] transition-transform group-hover:translate-x-0.5" />
                 </span>
               </Link>
             </div>

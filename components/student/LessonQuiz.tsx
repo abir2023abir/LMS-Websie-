@@ -1,12 +1,21 @@
 'use client';
 
-import { useEffect, useState } from 'react';
-import { Award, Check, HelpCircle, RotateCcw, X } from 'lucide-react';
+import { useEffect, useRef, useState } from 'react';
+import { Award, Check, Clock, HelpCircle, Lock, RotateCcw, X } from 'lucide-react';
 
 type Question = { id: string; prompt: string; choices: string[] };
-type Quiz = { id: string; title: string; passMark: number; questions: Question[]; best: number | null; passed: boolean; attempts: number; maxAttempts?: number };
+type Quiz = {
+  id: string; title: string; passMark: number; questions: Question[]; best: number | null; passed: boolean; attempts: number; maxAttempts?: number;
+  number?: string; questionCount?: number; marksPerQuestion?: number; negativeMarks?: number; timeLimitMinutes?: number; availableFrom?: string;
+  /** A running timed attempt ends at this moment (server time). */
+  endsAt?: string;
+  /** The server clock minus this device's clock. */
+  offset?: number;
+};
 type Result = { id: string; chosen: number; correctIndex: number; correct: boolean; explanation: string };
-type Outcome = { correct: number; total: number; percent: number; passed: boolean; passMark: number; results: Result[] };
+type Outcome = { correct: number; total: number; percent: number; passed: boolean; passMark: number; score?: number; maxScore?: number; late?: boolean; results: Result[] };
+
+const clockOf = (ms: number) => `${Math.floor(ms / 60000)}:${String(Math.floor((ms % 60000) / 1000)).padStart(2, '0')}`;
 
 /** The quizzes attached to one lesson: answer, submit, and see the marked result. */
 export default function LessonQuiz({ courseId, lessonId, onChanged }: { courseId: string; lessonId: string; onChanged?: () => void }) {
@@ -23,7 +32,7 @@ export default function LessonQuiz({ courseId, lessonId, onChanged }: { courseId
         const data = await res.json();
         if (!res.ok || data.locked) { setMessage(data.message || 'Could not load quizzes.'); setQuizzes([]); return; }
         setMessage('');
-        setQuizzes(data.quizzes || []);
+        setQuizzes((data.quizzes || []).map((quiz: Quiz & { now?: string }) => ({ ...quiz, offset: quiz.now ? Date.parse(quiz.now) - Date.now() : 0 })));
       })
       .catch(() => setMessage('Could not load quizzes.'))
       .finally(() => setLoading(false));
@@ -34,6 +43,42 @@ export default function LessonQuiz({ courseId, lessonId, onChanged }: { courseId
   const choose = (quizId: string, questionId: string, index: number) => {
     if (outcomes[quizId]) return;
     setAnswers((prev) => ({ ...prev, [quizId]: { ...prev[quizId], [questionId]: index } }));
+  };
+
+  // Timed quizzes: tick every half second and hand in the answers when the time is up.
+  const [, setTick] = useState(0);
+  const autoSent = useRef(new Set<string>());
+  const timeLeft = (quiz: Quiz) => (quiz.endsAt ? Math.max(0, Date.parse(quiz.endsAt) - (Date.now() + (quiz.offset || 0))) : 0);
+  const ticking = quizzes.some((quiz) => quiz.endsAt && !outcomes[quiz.id]);
+  useEffect(() => {
+    if (!ticking) return;
+    const timer = setInterval(() => setTick((value) => value + 1), 500);
+    return () => clearInterval(timer);
+  }, [ticking]);
+  useEffect(() => {
+    quizzes.forEach((quiz) => {
+      const key = `${quiz.id}:${quiz.endsAt}`;
+      if (quiz.endsAt && !outcomes[quiz.id] && timeLeft(quiz) === 0 && !autoSent.current.has(key)) {
+        autoSent.current.add(key);
+        void submit(quiz);
+      }
+    });
+  });
+
+  const start = async (quiz: Quiz) => {
+    setSubmitting(quiz.id);
+    setMessage('');
+    try {
+      const res = await fetch('/api/quizzes/start', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ id: quiz.id }) });
+      const data = await res.json();
+      if (!res.ok || !data.success) throw new Error(data.message || 'Could not start the quiz.');
+      setAnswers((prev) => ({ ...prev, [quiz.id]: {} }));
+      setQuizzes((prev) => prev.map((item) => (item.id === quiz.id ? { ...item, questions: data.questions, endsAt: data.endsAt, offset: Date.parse(data.now) - Date.now() } : item)));
+    } catch (error) {
+      setMessage(error instanceof Error ? error.message : 'Could not start the quiz.');
+    } finally {
+      setSubmitting('');
+    }
   };
 
   const submit = async (quiz: Quiz) => {
@@ -55,6 +100,8 @@ export default function LessonQuiz({ courseId, lessonId, onChanged }: { courseId
   const retake = (quizId: string) => {
     setOutcomes((prev) => { const next = { ...prev }; delete next[quizId]; return next; });
     setAnswers((prev) => ({ ...prev, [quizId]: {} }));
+    // A timed quiz starts again from its Start button.
+    setQuizzes((prev) => prev.map((item) => (item.id === quizId && item.timeLimitMinutes ? { ...item, questions: [], endsAt: '' } : item)));
   };
 
   if (loading) return <p className="py-8 text-center text-sm text-slate-500">Loading quiz…</p>;
@@ -74,13 +121,22 @@ export default function LessonQuiz({ courseId, lessonId, onChanged }: { courseId
         const outcome = outcomes[quiz.id];
         const picked = answers[quiz.id] || {};
         const answeredAll = quiz.questions.every((question) => Number.isInteger(picked[question.id]));
+        const count = quiz.questionCount ?? quiz.questions.length;
+        // With negative marking or a clock, a question may be left unanswered.
+        const mayskip = Boolean(quiz.negativeMarks || quiz.timeLimitMinutes);
+        const usedUp = Boolean(quiz.maxAttempts && quiz.attempts >= quiz.maxAttempts);
+        const waitingToStart = Boolean(quiz.timeLimitMinutes) && !outcome && !quiz.availableFrom && quiz.questions.length === 0;
         return (
           <div key={quiz.id} className="space-y-4">
             <div className="flex flex-wrap items-center justify-between gap-2 rounded-2xl bg-[#111827] p-4 text-white">
               <div>
                 <p className="font-display font-bold">{quiz.title}</p>
-                <p className="text-xs text-slate-300">{quiz.questions.length} question{quiz.questions.length === 1 ? '' : 's'} · pass mark {quiz.passMark}%{quiz.maxAttempts ? ` · ${Math.max(0, quiz.maxAttempts - quiz.attempts)} of ${quiz.maxAttempts} attempts left` : ''}</p>
+                <p className="text-xs text-slate-300">{quiz.number ? `${quiz.number} · ` : ''}{count} question{count === 1 ? '' : 's'} · {count * (quiz.marksPerQuestion || 1)} marks · pass mark {quiz.passMark}%{quiz.timeLimitMinutes ? ` · ${quiz.timeLimitMinutes} minutes` : ''}{quiz.maxAttempts ? ` · ${Math.max(0, quiz.maxAttempts - quiz.attempts)} of ${quiz.maxAttempts} attempts left` : ''}</p>
+                {Boolean(quiz.negativeMarks) && <p className="mt-0.5 text-xs text-[#FACC15]">A wrong answer takes away {quiz.negativeMarks} mark{quiz.negativeMarks === 1 ? '' : 's'}. An unanswered question costs nothing.</p>}
               </div>
+              {quiz.endsAt && !outcome && (
+                <span role="timer" className={`flex items-center gap-1.5 rounded-full px-3.5 py-1.5 font-display text-base font-extrabold tabular-nums ${timeLeft(quiz) < 60000 ? 'bg-rose-500 text-white' : 'bg-[#FACC15] text-[#111827]'}`}><Clock className="h-4 w-4" />{clockOf(timeLeft(quiz))}</span>
+              )}
               {quiz.best !== null && (
                 <span className={`flex items-center gap-1 rounded-full px-3 py-1 text-xs font-bold ${quiz.passed ? 'bg-emerald-500/20 text-emerald-300' : 'bg-white/10 text-slate-200'}`}>
                   <Award className="h-3.5 w-3.5" />Best {quiz.best}%{quiz.passed ? ' · Passed' : ''}
@@ -92,7 +148,9 @@ export default function LessonQuiz({ courseId, lessonId, onChanged }: { courseId
               <div className={`rounded-2xl border p-5 text-center ${outcome.passed ? 'border-emerald-200 bg-emerald-50 text-emerald-800' : 'border-amber-200 bg-amber-50 text-amber-900'}`}>
                 <Award className={`mx-auto h-9 w-9 ${outcome.passed ? 'text-emerald-600' : 'text-amber-600'}`} />
                 <p className="mt-2 font-display text-3xl font-extrabold">{outcome.percent}%</p>
-                <p className="text-xs font-semibold opacity-80">{outcome.correct} of {outcome.total} correct · pass mark {outcome.passMark}%</p>
+                <p className="text-xs font-semibold opacity-80">{outcome.correct} of {outcome.total} correct{typeof outcome.score === 'number' ? ` · ${outcome.score} of ${outcome.maxScore} marks` : ''} · pass mark {outcome.passMark}%</p>
+                {outcome.late && <p className="mt-1 text-xs font-bold">The time was over before the answers arrived, so they were not marked.</p>}
+                {outcome.results.length === 0 && <p className="mt-1 text-xs font-semibold opacity-80">Right answers are not shown for this quiz.</p>}
                 <p className="mt-2 text-base font-bold">
                   {outcome.passed
                     ? `Congratulations! You passed — the pass mark was ${outcome.passMark}% and you scored ${outcome.percent}%.`
@@ -101,6 +159,20 @@ export default function LessonQuiz({ courseId, lessonId, onChanged }: { courseId
                 {outcome.passed && <p className="mt-1 text-xs font-semibold opacity-80">Your next step is now open in the lesson path.</p>}
               </div>
             )}
+
+            {quiz.availableFrom && (
+              <p className="flex items-center gap-2 rounded-2xl bg-slate-50 p-4 text-sm font-semibold text-slate-700"><Lock className="h-4 w-4 shrink-0 text-slate-400" />This quiz opens on {new Date(quiz.availableFrom).toLocaleString('en-GB', { day: 'numeric', month: 'long', year: 'numeric', hour: 'numeric', minute: '2-digit' })}.</p>
+            )}
+            {waitingToStart && (usedUp ? (
+              <p className="rounded-xl bg-amber-50 px-4 py-3 text-sm font-semibold text-amber-900">You have used all {quiz.maxAttempts} attempts. Your instructor will review your progress and can give you more attempts.</p>
+            ) : (
+              <div className="space-y-3 rounded-2xl border border-slate-200 bg-slate-50 p-5 text-center">
+                <Clock className="mx-auto h-7 w-7 text-slate-400" />
+                <p className="text-sm text-slate-600">You have {quiz.timeLimitMinutes} minutes. The clock starts when you press Start and keeps running if you leave this page.</p>
+                <button type="button" onClick={() => start(quiz)} disabled={submitting === quiz.id} className="rounded-xl bg-[#FACC15] px-6 py-3 text-sm font-extrabold text-[#111827] hover:bg-[#EAB308] disabled:opacity-50">{submitting === quiz.id ? 'Starting…' : 'Start quiz'}</button>
+              </div>
+            ))}
+            {message && <p role="alert" className="text-sm font-semibold text-rose-600">{message}</p>}
 
             {quiz.questions.map((question, qIndex) => {
               const result = outcome?.results.find((item) => item.id === question.id);
@@ -130,13 +202,13 @@ export default function LessonQuiz({ courseId, lessonId, onChanged }: { courseId
               );
             })}
 
-            {outcome && !quiz.passed && quiz.maxAttempts && quiz.attempts >= quiz.maxAttempts ? (
+            {quiz.questions.length === 0 && !outcome ? null : outcome && !quiz.passed && quiz.maxAttempts && quiz.attempts >= quiz.maxAttempts ? (
               <p className="rounded-xl bg-amber-50 px-4 py-3 text-sm font-semibold text-amber-900">You have used all {quiz.maxAttempts} attempts. Your instructor will review your progress and can give you more attempts.</p>
             ) : outcome ? (
               <button type="button" onClick={() => retake(quiz.id)} className="inline-flex items-center gap-1.5 rounded-xl border border-slate-200 bg-white px-5 py-2.5 text-sm font-bold text-[#111827] hover:bg-slate-50"><RotateCcw className="h-4 w-4" />Try again</button>
             ) : (
-              <button type="button" onClick={() => submit(quiz)} disabled={!answeredAll || submitting === quiz.id} className="rounded-xl bg-[#FACC15] px-6 py-3 text-sm font-extrabold text-[#111827] hover:bg-[#EAB308] disabled:opacity-50">
-                {submitting === quiz.id ? 'Checking…' : answeredAll ? 'Submit answers' : 'Answer every question to submit'}
+              <button type="button" onClick={() => submit(quiz)} disabled={(!answeredAll && !mayskip) || submitting === quiz.id} className="rounded-xl bg-[#FACC15] px-6 py-3 text-sm font-extrabold text-[#111827] hover:bg-[#EAB308] disabled:opacity-50">
+                {submitting === quiz.id ? 'Checking…' : answeredAll || mayskip ? 'Submit answers' : 'Answer every question to submit'}
               </button>
             )}
           </div>

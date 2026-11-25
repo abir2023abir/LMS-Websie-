@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server';
 import { currentProfile, staffIdentity } from '@/lib/user-session';
 import { getEnrollments } from '@/lib/payments';
-import { listAttempts, quizzesForCourses, quizzesForLesson, studentView } from '@/lib/quizzes';
+import { closeExpiredStart, endsAt, listAttempts, quizzesForCourses, quizzesForLesson, startedAt, studentView } from '@/lib/quizzes';
 import { stepOpen } from '@/lib/progression';
 import { attemptLimit } from '@/lib/assessment-risk';
 
@@ -29,6 +29,12 @@ export async function GET(request: Request) {
     return NextResponse.json({ success: true, locked: true, message: 'Not open yet. Finish the overview and the video of this lesson first, then the quiz opens.', quizzes: [] });
   }
   const quizzes = courseId && lessonId ? await quizzesForLesson(courseId, lessonId) : await quizzesForCourses(courseId ? [courseId] : enrolled);
+  // Timed quizzes: close an attempt whose time ran out, and find the ones still running.
+  const running: number[] = [];
+  for (const quiz of quizzes) {
+    if (profile && quiz.timeLimitMinutes) await closeExpiredStart(quiz, profile.id);
+    running.push(profile && quiz.timeLimitMinutes ? await startedAt(profile.id, quiz.id) : 0);
+  }
   const attempts = profile ? await listAttempts(profile.id) : [];
   const limits = await Promise.all(quizzes.map((quiz) => (profile ? attemptLimit(profile.id, 'quiz', quiz.id, quiz.maxAttempts || 0) : Promise.resolve(quiz.maxAttempts || 0))));
   return NextResponse.json({
@@ -36,7 +42,10 @@ export async function GET(request: Request) {
     quizzes: quizzes.map((quiz, index) => {
       const mine = attempts.filter((attempt) => attempt.quizId === quiz.id);
       return {
-        ...studentView(quiz),
+        // Staff previewing a timed quiz see its questions without starting a clock.
+        ...studentView(quiz, !profile || running[index] > 0),
+        endsAt: running[index] ? new Date(endsAt(quiz, running[index])).toISOString() : '',
+        now: new Date().toISOString(),
         courseId: quiz.courseId,
         courseTitle: quiz.courseTitle,
         moduleTitle: quiz.moduleTitle,

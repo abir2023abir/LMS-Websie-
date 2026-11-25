@@ -211,6 +211,28 @@ export async function replyDeskThread(id: string, text: string, from: 'admin' | 
   return next;
 }
 
+/** A message the team starts to one student (for example "Direct Message" on a review). */
+export async function messageStudent(input: { name: string; email: string; text: string; from?: 'admin' | 'instructor'; courseId?: string; courseTitle?: string; topic?: string }) {
+  const text = input.text.trim().slice(0, 2000);
+  const email = input.email.trim();
+  if (!email || !text) throw new Error('Write a message first.');
+  const now = new Date().toISOString();
+  const thread = asThread({
+    id: `msg-${Date.now().toString(36)}`,
+    kind: 'student',
+    name: input.name.trim() || email,
+    email,
+    status: 'replied',
+    createdAt: now,
+    messages: [{ id: `note-${Date.now().toString(36)}`, from: input.from || 'admin', text, at: now }],
+    courseId: input.courseId || '',
+    courseTitle: input.courseTitle || '',
+    topic: input.topic || '',
+  });
+  await write([thread, ...(await read())]);
+  return thread;
+}
+
 export async function continueDeskThread(id: string, email: string, text: string) {
   const clean = text.trim();
   if (!clean) throw new Error('Write a message first.');

@@ -12,20 +12,37 @@ export type LearnerReview = {
   verified: boolean;
   permission: boolean;
   published: boolean;
-  /** Where it is shown: the home page ("Student Reviews") or the bookkeeping page ("Client Experiences"). */
-  page: 'home' | 'bookkeeping';
+  /** The first page it is shown on (older reviews have only this). */
+  page: ReviewPage;
+  /** Every place it is shown: home ("Student Reviews"), the course page, bookkeeping ("Client Experiences"), contact. */
+  pages?: ReviewPage[];
+  /** Set when it is about one course; student reviews sent from the classroom always have it. */
+  courseId?: string;
+  courseTitle?: string;
+  /** Who sent it from the classroom, for "Direct Message". Never part of a public response. */
+  studentEmail?: string;
+  /** The team's heart on the review. */
+  liked?: boolean;
   createdAt: string;
 };
 
 const KEY = 'cms-reviews';
+
+export const REVIEW_PAGES = ['home', 'course', 'bookkeeping', 'contact'] as const;
+export type ReviewPage = (typeof REVIEW_PAGES)[number];
+
+export const pagesOf = (review: Partial<LearnerReview>): ReviewPage[] => (Array.isArray(review.pages) ? review.pages : [review.page || 'home']);
 
 export async function listReviews(): Promise<LearnerReview[]> {
   const list = await kvGet<LearnerReview[]>(KEY, []);
   return Array.isArray(list) ? list : [];
 }
 
-export async function publishedReviews(page: 'home' | 'bookkeeping' = 'home') {
-  return (await listReviews()).filter((review) => review.published && review.verified && review.permission && (review.page || 'home') === page);
+/** Reviews visitors may see on one page; the course page also needs the course. */
+export async function publishedReviews(page: ReviewPage = 'home', courseId = '') {
+  return (await listReviews()).filter((review) => review.published && review.verified && review.permission
+    && pagesOf(review).includes(page)
+    && (page !== 'course' || review.courseId === courseId));
 }
 
 export async function saveReview(input: Partial<LearnerReview>): Promise<LearnerReview> {
@@ -35,6 +52,10 @@ export async function saveReview(input: Partial<LearnerReview>): Promise<Learner
   const list = await listReviews();
   const existing = input.id ? list.find((item) => item.id === input.id) : undefined;
   const rating = Number(input.rating);
+  const wanted: string[] = Array.isArray(input.pages) ? input.pages : input.page ? [input.page] : existing ? pagesOf(existing) : ['home'];
+  const pages = REVIEW_PAGES.filter((page) => wanted.includes(page));
+  const courseId = String(input.courseId ?? existing?.courseId ?? '').trim().slice(0, 80);
+  if (pages.includes('course') && !courseId) throw new Error('Choose the course for a review shown on a course page.');
   const review: LearnerReview = {
     id: existing?.id || `review-${Date.now().toString(36)}${Math.random().toString(36).slice(2, 6)}`,
     name: name.slice(0, 80),
@@ -45,7 +66,12 @@ export async function saveReview(input: Partial<LearnerReview>): Promise<Learner
     verified: Boolean(input.verified),
     permission: Boolean(input.permission),
     published: Boolean(input.published) && Boolean(input.verified) && Boolean(input.permission),
-    page: input.page === 'bookkeeping' ? 'bookkeeping' : 'home',
+    page: pages[0] || 'home',
+    pages,
+    courseId,
+    courseTitle: String(input.courseTitle ?? existing?.courseTitle ?? '').trim().slice(0, 200),
+    studentEmail: String(input.studentEmail ?? existing?.studentEmail ?? '').trim().slice(0, 200),
+    liked: Boolean(input.liked ?? existing?.liked),
     createdAt: existing?.createdAt || new Date().toISOString(),
   };
   await kvSet(KEY, existing ? list.map((item) => (item.id === review.id ? review : item)) : [review, ...list]);

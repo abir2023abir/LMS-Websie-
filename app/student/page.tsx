@@ -12,6 +12,7 @@ import StudentOverview from '@/components/student/StudentOverview';
 import CertificateModal from '@/components/student/CertificateModal';
 import DashboardCalendar from '@/components/dashboard/DashboardCalendar';
 import CampusMessageForm from '@/components/messages/CampusMessageForm';
+import MyMessages from '@/components/student/MyMessages';
 import GuardianRequests from '@/components/student/GuardianRequests';
 import {
   getEnrolledCoursesWithProgress,
@@ -65,6 +66,7 @@ function StudentDashboard() {
   // Selected Certificate Modal State
   const [selectedCertCourse, setSelectedCertCourse] = useState<EnrolledCourseWithProgress | null>(null);
   const [isCertModalOpen, setIsCertModalOpen] = useState(false);
+  const [sentCount, setSentCount] = useState(0);
 
   useEffect(() => {
     async function loadStudentData() {
@@ -281,9 +283,12 @@ function StudentDashboard() {
         {part.key === 'calendar' && <DashboardCalendar />}
         {part.key === 'progress' && <MyProgressPanel />}
         {part.key === 'messages' && (
-          <section className="max-w-xl rounded-3xl border border-slate-200 bg-white p-6">
-            <CampusMessageForm kind="student" lockedKind defaultName={name} defaultEmail={user?.email || ''} courses={enrolledCourses.map((item) => ({ id: String(item.course.id), title: item.course.title }))} />
-          </section>
+          <div className="max-w-xl space-y-6">
+            <section className="rounded-3xl border border-slate-200 bg-white p-6">
+              <CampusMessageForm kind="student" lockedKind defaultName={name} defaultEmail={user?.email || ''} courses={enrolledCourses.map((item) => ({ id: String(item.course.id), title: item.course.title }))} onSent={() => setSentCount((count) => count + 1)} />
+            </section>
+            <MyMessages email={user?.email || ''} refresh={sentCount} />
+          </div>
         )}
 
         {/* ── CERTIFICATE MODAL ── */}

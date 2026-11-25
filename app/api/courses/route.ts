@@ -2,7 +2,7 @@ import { NextResponse } from 'next/server';
 import { getAllCourses, createCourse } from '@/lib/db';
 import { requireAdminWrite } from '@/lib/admin-guard';
 import { staffDenied, staffIdentity } from '@/lib/user-session';
-import type { CourseSchema, ModuleSchema } from '@/types/course';
+import { COURSE_TYPES, type CourseSchema, type ModuleSchema } from '@/types/course';
 
 /**
  * GET /api/courses
@@ -50,6 +50,7 @@ export async function POST(request: Request) {
       originalPrice,
       thumbnail,
       category,
+      type,
       level,
       duration,
       modules,
@@ -105,6 +106,7 @@ export async function POST(request: Request) {
       ...(originalPrice && !isNaN(Number(originalPrice)) ? { originalPrice: Number(originalPrice) } : {}),
       thumbnail: thumbnail && typeof thumbnail === 'string' ? thumbnail.trim() : 'https://images.unsplash.com/photo-1517694712202-14dd9538aa97?w=600&h=340&fit=crop',
       category: category && typeof category === 'string' ? category.slice(0, 50) : 'Accounting',
+      type: COURSE_TYPES.includes(type) ? type : 'Live',
       level: level && ['Beginner', 'Intermediate', 'Advanced'].includes(level) ? level : 'Beginner',
       duration: duration && typeof duration === 'string' ? duration.slice(0, 30) : '',
       lessonCount: computedLessonCount,

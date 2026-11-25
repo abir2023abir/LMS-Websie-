@@ -9,6 +9,7 @@ export default function CampusMessageForm({
   defaultEmail = '',
   context,
   courses,
+  onSent,
 }: {
   kind?: 'student' | 'service';
   lockedKind?: boolean;
@@ -18,6 +19,8 @@ export default function CampusMessageForm({
   context?: { courseId: string; courseTitle?: string; moduleTitle?: string; lessonId?: string; lessonTitle?: string };
   /** A student's courses to choose from when there is no classroom context (Student → Messages). */
   courses?: { id: string; title: string }[];
+  /** Called after a message is saved, so a list of messages can reload. */
+  onSent?: () => void;
 }) {
   const [name, setName] = useState(defaultName);
   const [email, setEmail] = useState(defaultEmail);
@@ -49,6 +52,7 @@ export default function CampusMessageForm({
         return;
       }
       setText('');
+      onSent?.();
       setNote((lockedKind ? kind : channel) === 'student' ? 'Sent to your instructor and the admin. The reply appears in your inbox.' : 'Sent to the admin inbox. A reply stays there until someone answers in the panel.');
     } catch {
       setNote('Could not send.');

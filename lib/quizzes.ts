@@ -22,6 +22,18 @@ export type LessonQuiz = {
   maxAttempts: number; // 0 = unlimited
   published: boolean;
   questions: QuizQuestion[];
+  /** Given automatically: QZ-00001, QZ-00002, … */
+  number?: string;
+  /** Marks for one correct answer (older quizzes: 1). */
+  marksPerQuestion?: number;
+  /** Marks taken away for one wrong answer; unanswered questions cost nothing. */
+  negativeMarks?: number;
+  /** Show the right answers and explanations after submitting (older quizzes: yes). */
+  showAnswers?: boolean;
+  /** Minutes for one attempt; 0 = no time limit. */
+  timeLimitMinutes?: number;
+  /** Students cannot take it before this time ('' = as soon as it is published). */
+  availableFrom?: string;
   createdAt: string;
   updatedAt: string;
 };
@@ -36,6 +48,9 @@ export type QuizAttempt = {
   total: number;
   percent: number;
   passed: boolean;
+  /** Marks earned out of maxScore (negative marking included). */
+  score?: number;
+  maxScore?: number;
   at: string;
 };
 
@@ -43,10 +58,24 @@ const QUIZZES_KEY = 'lesson-quizzes';
 const ATTEMPTS_KEY = 'quiz-attempts';
 const uid = (prefix: string) => `${prefix}-${Date.now().toString(36)}${Math.random().toString(36).slice(2, 6)}`;
 
+const numberOf = (quiz: LessonQuiz) => Number((quiz.number || '').replace(/\D/g, '')) || 0;
+const asNumber = (value: number) => `QZ-${String(value).padStart(5, '0')}`;
+
 export async function listQuizzes(): Promise<LessonQuiz[]> {
   const list = await kvGet<LessonQuiz[]>(QUIZZES_KEY, []);
-  return Array.isArray(list) ? list : [];
+  if (!Array.isArray(list)) return [];
+  // Quizzes made before numbering get the next numbers, oldest first; they are kept on the next save.
+  let last = list.reduce((max, quiz) => Math.max(max, numberOf(quiz)), 0);
+  const added = new Map([...list].filter((quiz) => !quiz.number)
+    .sort((a, b) => String(a.createdAt).localeCompare(String(b.createdAt)))
+    .map((quiz) => [quiz.id, asNumber(++last)]));
+  return list.map((quiz) => (quiz.number ? quiz : { ...quiz, number: added.get(quiz.id) }));
 }
+
+const within = (value: unknown, min: number, max: number, fallback: number) => {
+  const found = Number(value ?? fallback);
+  return Number.isFinite(found) ? Math.min(max, Math.max(min, found)) : fallback;
+};
 
 export async function quizzesForLesson(courseId: string, lessonId: string) {
   return (await listQuizzes()).filter((quiz) => quiz.published && quiz.courseId === courseId && quiz.lessonId === lessonId);
@@ -91,6 +120,12 @@ export async function saveQuiz(input: Partial<LessonQuiz>): Promise<LessonQuiz> 
     maxAttempts: Math.min(50, Math.max(0, Math.round(Number(input.maxAttempts ?? 0)))),
     published: Boolean(input.published),
     questions,
+    number: existing?.number || asNumber(list.reduce((max, item) => Math.max(max, numberOf(item)), 0) + 1),
+    marksPerQuestion: within(input.marksPerQuestion, 0.25, 100, 1),
+    negativeMarks: within(input.negativeMarks, 0, 100, 0),
+    showAnswers: input.showAnswers !== false,
+    timeLimitMinutes: Math.round(within(input.timeLimitMinutes, 0, 600, 0)),
+    availableFrom: Number.isFinite(Date.parse(String(input.availableFrom || ''))) ? new Date(String(input.availableFrom)).toISOString() : '',
     createdAt: existing?.createdAt || now,
     updatedAt: now,
   };
@@ -102,15 +137,58 @@ export async function deleteQuiz(id: string) {
   await kvSet(QUIZZES_KEY, (await listQuizzes()).filter((quiz) => quiz.id !== id));
 }
 
-/** Questions without the answers, for students taking the quiz. */
-export function studentView(quiz: LessonQuiz) {
+export const notYetAvailable = (quiz: LessonQuiz, now = Date.now()) => Boolean(quiz.availableFrom) && Date.parse(quiz.availableFrom!) > now;
+
+export const questionsForStudent = (quiz: LessonQuiz) => quiz.questions.map((question) => ({ id: question.id, prompt: question.prompt, choices: question.choices }));
+
+/**
+ * Questions without the answers, for students taking the quiz. A timed quiz sends its questions
+ * only while an attempt is running (`running`), and no quiz sends them before its opening time.
+ */
+export function studentView(quiz: LessonQuiz, running = false) {
+  const hidden = notYetAvailable(quiz) || (Boolean(quiz.timeLimitMinutes) && !running);
   return {
     id: quiz.id,
+    number: quiz.number || '',
     title: quiz.title,
     passMark: quiz.passMark,
     lessonId: quiz.lessonId,
-    questions: quiz.questions.map((question) => ({ id: question.id, prompt: question.prompt, choices: question.choices })),
+    marksPerQuestion: quiz.marksPerQuestion || 1,
+    negativeMarks: quiz.negativeMarks || 0,
+    timeLimitMinutes: quiz.timeLimitMinutes || 0,
+    availableFrom: notYetAvailable(quiz) ? quiz.availableFrom! : '',
+    questionCount: quiz.questions.length,
+    questions: hidden ? [] : questionsForStudent(quiz),
   };
+}
+
+/* ── timed attempts: the server keeps the start time ── */
+const STARTS_KEY = 'quiz-starts'; // "studentId:quizId" → ISO start of the running attempt
+/** Allowance for the time the answers take to arrive. */
+export const SUBMIT_GRACE_MS = 30000;
+
+const startKey = (studentId: string, quizId: string) => `${studentId}:${quizId}`;
+const readStarts = async () => (await kvGet<Record<string, string>>(STARTS_KEY, {})) || {};
+
+export async function startedAt(studentId: string, quizId: string) {
+  return Date.parse((await readStarts())[startKey(studentId, quizId)] || '') || 0;
+}
+
+export async function setStart(studentId: string, quizId: string, at: number | null) {
+  const all = await readStarts();
+  if (at === null) delete all[startKey(studentId, quizId)];
+  else all[startKey(studentId, quizId)] = new Date(at).toISOString();
+  await kvSet(STARTS_KEY, all);
+}
+
+export const endsAt = (quiz: LessonQuiz, start: number) => start + (quiz.timeLimitMinutes || 0) * 60000;
+
+/** An attempt whose time ran out without answers arriving still counts as one attempt. */
+export async function closeExpiredStart(quiz: LessonQuiz, studentId: string) {
+  const start = await startedAt(studentId, quiz.id);
+  if (!start || !quiz.timeLimitMinutes || Date.now() <= endsAt(quiz, start) + SUBMIT_GRACE_MS) return;
+  await gradeQuiz(quiz, studentId, {});
+  await setStart(studentId, quiz.id, null);
 }
 
 export async function listAttempts(studentId?: string): Promise<QuizAttempt[]> {
@@ -126,11 +204,15 @@ export async function gradeQuiz(quiz: LessonQuiz, studentId: string, answers: Re
     return { id: question.id, chosen, correctIndex: question.correctIndex, correct: chosen === question.correctIndex, explanation: question.explanation };
   });
   const correct = results.filter((result) => result.correct).length;
+  const wrong = results.filter((result) => !result.correct && result.chosen >= 0).length;
   const total = quiz.questions.length;
-  const percent = total ? Math.round((correct / total) * 100) : 0;
+  const marks = quiz.marksPerQuestion || 1;
+  const maxScore = total * marks;
+  const score = Math.max(0, Math.round((correct * marks - wrong * (quiz.negativeMarks || 0)) * 100) / 100);
+  const percent = maxScore ? Math.round((score / maxScore) * 100) : 0;
   const attempt: QuizAttempt = {
     id: uid('attempt'), quizId: quiz.id, courseId: quiz.courseId, lessonId: quiz.lessonId, studentId,
-    correct, total, percent, passed: percent >= quiz.passMark, at: new Date().toISOString(),
+    correct, total, percent, passed: percent >= quiz.passMark, score, maxScore, at: new Date().toISOString(),
   };
   await kvSet(ATTEMPTS_KEY, [attempt, ...(await listAttempts())].slice(0, 5000));
   return { attempt, results };

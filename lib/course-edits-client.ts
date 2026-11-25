@@ -2,6 +2,9 @@
 
 import { useEffect, useState } from 'react';
 import type { CourseEdit } from '@/lib/course-edits';
+import { applyCourseEdit } from '@/lib/apply-course-edit';
+
+export { applyCourseEdit };
 
 let cache: Record<string, CourseEdit> | null = null;
 let pending: Promise<Record<string, CourseEdit>> | null = null;
@@ -29,24 +32,6 @@ export function useCourseEdits(version = 0) {
     };
   }, [version]);
   return edits;
-}
-
-export function applyCourseEdit<T extends { title?: string; price?: number; thumbnail?: string }>(
-  course: T,
-  edit?: CourseEdit,
-): T {
-  if (!edit) return course;
-  return {
-    ...course,
-    title: edit.title || course.title,
-    price: typeof edit.price === 'number' ? edit.price : course.price,
-    ...(typeof edit.originalPrice === 'number' ? { originalPrice: edit.originalPrice } : {}),
-    ...(edit.category ? { category: edit.category } : {}),
-    ...(edit.level ? { level: edit.level } : {}),
-    ...(edit.description ? { description: edit.description } : {}),
-    thumbnail: edit.thumbnail || course.thumbnail,
-    ...(Array.isArray(edit.modules) ? { modules: edit.modules } : {}),
-  };
 }
 
 /** Resize an uploaded picture in the browser so it stays small enough to store. */

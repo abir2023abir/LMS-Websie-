@@ -63,6 +63,9 @@ export async function clearTimeline(courseId: string) {
 
 /** A message when new students cannot enroll right now, '' when enrollment is open (or no timeline is set). */
 export async function enrollmentClosedReason(courseId: string, now = Date.now()): Promise<string> {
+  // A course the team has not published (or has hidden / archived) takes no new students.
+  const { courseSettings } = await import('@/lib/accounts');
+  if ((await courseSettings(courseId)).visibility !== 'published') return 'This course is not open for enrollment.';
   if (await getDayPlan(courseId)) return '';
   const timeline = await getTimeline(courseId);
   if (!timeline) return '';

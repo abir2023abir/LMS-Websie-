@@ -1,17 +1,15 @@
 import { NextResponse } from 'next/server';
 import { bookedTimesOn, continueDeskThread, getDeskThread, listDeskThreads, openDeskThread, replyDeskThread, studentThreads, type DeskKind } from '@/lib/desk-messages';
 import { currentProfile, staffDenied, staffIdentity } from '@/lib/user-session';
-import { getCourseById, getCoursesByInstructor } from '@/lib/db';
-import { listCourseSettings } from '@/lib/accounts';
+import { getCourseById } from '@/lib/db';
+import { inScope, mentorCourseScope } from '@/lib/mentor-scope';
 import { rateLimited, TOO_MANY } from '@/lib/rate-limit';
 
 async function visibleThreadsFor(staff: NonNullable<Awaited<ReturnType<typeof staffIdentity>>>) {
   const threads = await listDeskThreads();
   if (staff.admin) return threads;
-  const [courses, settings] = await Promise.all([getCoursesByInstructor(staff.profile.id), listCourseSettings()]);
-  const assigned = settings.filter((row) => String(row.mentor_email || '').toLowerCase() === staff.profile.email.toLowerCase()).map((row) => row.course_id);
-  const courseIds = new Set([...courses.map((course) => course.id || ''), ...assigned]);
-  return threads.filter((item) => item.instructorId === staff.profile.id || item.instructorId.toLowerCase() === staff.profile.email.toLowerCase() || courseIds.has(item.courseId));
+  const courseIds = await mentorCourseScope();
+  return threads.filter((item) => item.instructorId === staff.profile.id || item.instructorId.toLowerCase() === staff.profile.email.toLowerCase() || inScope(courseIds, item.courseId));
 }
 
 export async function GET(request: Request) {
@@ -53,9 +51,7 @@ export async function POST(request: Request) {
       const existing = await getDeskThread(id);
       if (!existing) return NextResponse.json({ success: false, message: 'Message not found.' }, { status: 404 });
       if (!staff.admin && existing.instructorId !== staff.profile.id && existing.instructorId.toLowerCase() !== staff.profile.email.toLowerCase()) {
-        const [courses, settings] = await Promise.all([getCoursesByInstructor(staff.profile.id), listCourseSettings()]);
-        const assigned = settings.some((row) => row.course_id === existing.courseId && String(row.mentor_email || '').toLowerCase() === staff.profile.email.toLowerCase());
-        if (!assigned && !courses.some((course) => course.id === existing.courseId)) return staffDenied();
+        if (!inScope(await mentorCourseScope(), existing.courseId)) return staffDenied();
       }
       const thread = await replyDeskThread(id, String(body.text || ''), staff.admin ? 'admin' : 'instructor');
       return NextResponse.json({ success: true, thread, threads: await visibleThreadsFor(staff) });

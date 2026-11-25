@@ -27,6 +27,10 @@ export interface ModuleSchema {
   lessons: LessonSchema[];
 }
 
+/** How a course is delivered ("Upload New Course" in the client layout). */
+export const COURSE_TYPES = ['Recorded', 'Live', 'Programme online', 'Workshop'] as const;
+export type CourseType = (typeof COURSE_TYPES)[number];
+
 export interface CourseSchema {
   id?: string;
   title: string;
@@ -37,6 +41,13 @@ export interface CourseSchema {
   originalPrice?: number;
   thumbnail: string;
   category?: string;
+  /** Empty on older courses, which are shown as Live. */
+  type?: CourseType;
+  /** Course page texts, set in the course builder. The three lists have one point per line. */
+  outcomes?: string;
+  prerequisites?: string;
+  audience?: string;
+  certification?: string;
   level?: 'Beginner' | 'Intermediate' | 'Advanced';
   rating?: number;
   reviewCount?: number;

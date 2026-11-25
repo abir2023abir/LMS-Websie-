@@ -6,49 +6,14 @@ import Image from 'next/image';
 import FloatingNavbar from '@/components/english/FloatingNavbar';
 import EnglishFooter from '@/components/english/EnglishFooter';
 import CheckoutModal from '@/components/checkout/CheckoutModal';
-import { featuredCourses, type Course } from '@/lib/data';
-import { applyCourseEdit, useCourseEdits } from '@/lib/course-edits-client';
+import { applyCourseEdit } from '@/lib/course-edits-client';
+import { useCatalog } from '@/lib/catalog-client';
 import { useAuth } from '@/context/AuthContext';
 import { takaFromUsd } from '@/lib/utils';
 import type { CourseSchema } from '@/types/course';
 import { ArrowRight, BookOpen, ChevronsRight, Clock } from 'lucide-react';
 import LiveProgrammes from '@/components/landing/LiveProgrammes';
 import { motion } from 'framer-motion';
-
-type StoredCourse = {
-  id: string; title: string; description?: string; price?: number; originalPrice?: number; thumbnail?: string;
-  category?: string; duration?: string; instructorName?: string; studentCount?: number; createdAt?: string;
-  modules?: { lessons?: unknown[] }[];
-};
-
-const FALLBACK_THUMB = 'https://images.unsplash.com/photo-1522202176988-66273c2fd55f?w=600&h=340&fit=crop';
-
-/** A course made in the admin or instructor panel, shaped like the built-in catalog entries. */
-function toCatalogCourse(course: StoredCourse): Course {
-  const lessons = (course.modules || []).reduce((sum, mod) => sum + (mod.lessons?.length || 0), 0);
-  return {
-    id: String(course.id),
-    slug: String(course.id),
-    title: course.title || 'Course',
-    description: course.description || '',
-    instructor: { name: course.instructorName || 'Career Bridge Team', avatar: '', title: '' },
-    thumbnail: course.thumbnail || FALLBACK_THUMB,
-    category: course.category || 'Accounting',
-    categoryColor: '',
-    price: Number(course.price) || 0,
-    originalPrice: Number(course.originalPrice) || 0,
-    rating: 0,
-    reviewCount: 0,
-    studentCount: Number(course.studentCount) || 0,
-    duration: course.duration || '',
-    lessonCount: lessons,
-    level: 'Beginner',
-    tags: [],
-    isFeatured: false,
-    isNew: true,
-    isBestseller: false,
-  };
-}
 
 // Client layout (Learning Programmes & Courses, Part B): four open category buttons, nothing else.
 const ALL = 'All Courses';
@@ -61,38 +26,14 @@ export default function CoursesCatalogPage() {
   const [selectedCourse, setSelectedCourse] = useState<CourseSchema | null>(null);
   const [showCheckout, setShowCheckout] = useState(false);
 
-  // Honor deep links like /courses?category=Accounting from nav/footer
-  const [hiddenIds, setHiddenIds] = useState<string[]>([]);
-  const [discounts, setDiscounts] = useState<Record<string, number>>({});
-  const courseEdits = useCourseEdits();
-  // Courses made in the admin / instructor panel (the built-in three are already in featuredCourses).
-  const [storedCourses, setStoredCourses] = useState<Course[]>([]);
-  useEffect(() => {
-    fetch('/api/courses', { cache: 'no-store' })
-      .then((res) => (res.ok ? res.json() : null))
-      .then((data) => {
-        const builtIn = new Set(featuredCourses.map((course) => String(course.id)));
-        const list = (Array.isArray(data?.courses) ? data.courses : []) as StoredCourse[];
-        setStoredCourses(list.filter((course) => course.id && !builtIn.has(String(course.id))).map(toCatalogCourse));
-      })
-      .catch(() => setStoredCourses([]));
-  }, []);
-  const allCourses = useMemo(() => [...featuredCourses, ...storedCourses], [storedCourses]);
+  const { all: allCourses, visible, courseEdits, priceOf } = useCatalog();
   const { user, role } = useAuth();
 
+  // Honor deep links like /courses?category=Accounting from nav/footer
   useEffect(() => {
     const cat = new URLSearchParams(window.location.search).get('category');
     if (cat) setSelectedCategory(cat);
-    fetch('/api/courses/settings')
-      .then((res) => res.json())
-      .then((data) => {
-        const rows = Object.values(data.settings || {}) as { course_id: string; visibility: string; discount: number }[];
-        setHiddenIds(rows.filter((row) => row.visibility !== 'published').map((row) => row.course_id));
-        setDiscounts(Object.fromEntries(rows.map((row) => [row.course_id, row.discount || 0])));
-      })
-      .catch(() => undefined);
   }, []);
-  const courseDiscount = (id: string) => discounts[id] || 0;
 
   // All categories list
   const categoryNames = useMemo(() => {
@@ -104,17 +45,10 @@ export default function CoursesCatalogPage() {
     return [ALL, ...BASE_CATEGORIES, ...Array.from(set)];
   }, [allCourses]);
 
-  // Filtered & Sorted courses
-  const filteredCourses = useMemo(() => {
-    const catalog = allCourses.map((course) => applyCourseEdit(course, courseEdits[String(course.id)]));
-    return catalog
-      .filter((c) => {
-        const matchesCat = selectedCategory === ALL || c.category === selectedCategory;
-        const isVisible = !hiddenIds.includes(String(c.id));
-
-        return matchesCat && isVisible;
-      });
-  }, [selectedCategory, hiddenIds, courseEdits, allCourses]);
+  const filteredCourses = useMemo(
+    () => visible.filter((c) => selectedCategory === ALL || c.category === selectedCategory),
+    [visible, selectedCategory],
+  );
 
   const handleEnroll = useCallback((course: any) => {
     setSelectedCourse({
@@ -209,8 +143,7 @@ export default function CoursesCatalogPage() {
         ) : (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 sm:gap-8">
             {filteredCourses.map((course) => {
-              const discount = courseDiscount(String(course.id));
-              const price = Math.max(0, Math.round(course.price * (100 - discount) / 100));
+              const price = priceOf(course);
               return (
                 <motion.article
                   key={course.id}
@@ -238,9 +171,9 @@ export default function CoursesCatalogPage() {
                       <span className="flex items-center gap-1.5">
                         {course.duration && (<><Clock className="w-3.5 h-3.5 text-amber-500" />{course.duration}</>)}
                       </span>
-                      {/* Every course runs with live classes (client layout: "20h 00m · Live"). */}
+                      {/* The course type set in the panel; "Live" when none is set (client layout: "20h 00m · Live"). */}
                       <span className="flex items-center gap-1.5 rounded-full bg-[#FEF9C3] px-2 py-0.5 text-[10px] font-bold uppercase tracking-wide text-[#A16207]">
-                        <span className="h-1.5 w-1.5 rounded-full bg-rose-500" aria-hidden="true" /> Live
+                        {(course.type || 'Live') === 'Live' && <span className="h-1.5 w-1.5 rounded-full bg-rose-500" aria-hidden="true" />} {course.type || 'Live'}
                       </span>
                     </div>
 

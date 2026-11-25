@@ -8,7 +8,9 @@ import LessonToolsBar, { type ToolCommand, type ToolItems, type ToolKind } from 
 import { getFallbackCourseData } from '@/lib/progress';
 import { loadCourseEdits, shrinkImage } from '@/lib/course-edits-client';
 import { usdToBdt, USD_TO_BDT } from '@/lib/utils';
-import type { ModuleSchema } from '@/types/course';
+import { courseOverviews } from '@/lib/data';
+import { TIMELINE_CHANGED } from './CourseSettingsPanel';
+import { COURSE_TYPES, type CourseType, type ModuleSchema } from '@/types/course';
 
 export default function AdminCourseEditor({
   courseId,
@@ -36,6 +38,11 @@ export default function AdminCourseEditor({
     category: course?.category || '',
     description: course?.description || '',
     thumbnail: course?.thumbnail || '',
+    type: (course?.type || 'Live') as CourseType,
+    outcomes: courseOverviews[courseId]?.outcomes.join('\n') || '',
+    prerequisites: courseOverviews[courseId]?.prerequisites.join('\n') || '',
+    audience: courseOverviews[courseId]?.audience.join('\n') || '',
+    certification: '',
   });
   const [videos, setVideos] = useState<Record<string, string>>(
     Object.fromEntries(lessons.map((lesson) => [lesson.id, lesson.videoUrl || ''])),
@@ -53,14 +60,20 @@ export default function AdminCourseEditor({
   const [savingDays, setSavingDays] = useState(false);
 
   useEffect(() => {
-    fetch(`/api/courses/timeline?courseId=${encodeURIComponent(courseId)}`, { cache: 'no-store' })
-      .then((res) => res.json())
-      .then((data) => {
-        const days = Number(data.accessDays) || 0;
-        setSavedAccessDays(days);
-        setAccessDays(days ? String(days) : '');
-      })
-      .catch(() => undefined);
+    const load = () => {
+      fetch(`/api/courses/timeline?courseId=${encodeURIComponent(courseId)}`, { cache: 'no-store' })
+        .then((res) => res.json())
+        .then((data) => {
+          const days = Number(data.accessDays) || 0;
+          setSavedAccessDays(days);
+          setAccessDays(days ? String(days) : '');
+        })
+        .catch(() => undefined);
+    };
+    load();
+    // Saving the four dates in course Settings changes the course length shown here.
+    window.addEventListener(TIMELINE_CHANGED, load);
+    return () => window.removeEventListener(TIMELINE_CHANGED, load);
   }, [courseId]);
 
   const saveDays = async () => {
@@ -94,6 +107,11 @@ export default function AdminCourseEditor({
             category: stored.category || prev.category,
             description: stored.description || prev.description,
             thumbnail: stored.thumbnail || prev.thumbnail,
+            type: stored.type || prev.type,
+            outcomes: stored.outcomes ?? prev.outcomes,
+            prerequisites: stored.prerequisites ?? prev.prerequisites,
+            audience: stored.audience ?? prev.audience,
+            certification: stored.certification ?? prev.certification,
           }));
         }
         if (stored && Array.isArray(stored.modules) && stored.modules.length) {
@@ -112,6 +130,11 @@ export default function AdminCourseEditor({
         category: edit.category || prev.category,
         description: edit.description || prev.description,
         thumbnail: edit.thumbnail || prev.thumbnail,
+        type: edit.type || prev.type,
+        outcomes: edit.outcomes ?? prev.outcomes,
+        prerequisites: edit.prerequisites ?? prev.prerequisites,
+        audience: edit.audience ?? prev.audience,
+        certification: edit.certification ?? prev.certification,
       }));
       setVideos((prev) => ({ ...prev, ...edit.videos }));
       if (Array.isArray(edit.modules) && edit.modules.length) {
@@ -123,7 +146,7 @@ export default function AdminCourseEditor({
     });
   }, [courseId]); // eslint-disable-line react-hooks/exhaustive-deps
 
-  const set = (key: keyof typeof form) => (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) =>
+  const set = (key: keyof typeof form) => (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) =>
     setForm((prev) => ({ ...prev, [key]: e.target.value }));
 
   const pickImage = async (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -213,11 +236,31 @@ export default function AdminCourseEditor({
             Category
             <input value={form.category} onChange={set('category')} className={fieldClass} />
           </label>
+          <label className="block space-y-1 text-xs font-bold text-slate-500">
+            Course type
+            <select value={form.type} onChange={set('type')} className={fieldClass}>
+              {COURSE_TYPES.map((item) => <option key={item}>{item}</option>)}
+            </select>
+          </label>
         </div>
         <label className="block space-y-1 text-xs font-bold text-slate-500">
-          Description
+          Description (Overview)
           <textarea value={form.description} onChange={set('description')} rows={4} className={fieldClass} />
         </label>
+        <div className="space-y-3 rounded-2xl bg-slate-50 p-4">
+          <p className="text-xs font-extrabold uppercase tracking-wide text-slate-500">Course page — shown to visitors</p>
+          {([
+            ['outcomes', 'What You Will Learn', 'One point per line'],
+            ['prerequisites', 'Course Prerequisites', 'One point per line'],
+            ['audience', 'Who Is This Course For?', 'One point per line'],
+            ['certification', 'Certification', 'Leave empty to use the standard certificate text'],
+          ] as const).map(([key, label, hint]) => (
+            <label key={key} className="block space-y-1 text-xs font-bold text-slate-500">
+              {label}
+              <textarea value={form[key]} onChange={set(key)} rows={3} placeholder={hint} className={fieldClass} />
+            </label>
+          ))}
+        </div>
     </>
   );
 
@@ -249,7 +292,7 @@ export default function AdminCourseEditor({
             {!accessDays && lessonDaysTotal > 0 && <li>Without a course length, the course lasts as long as the lesson days add up to.</li>}
           </ul>
           <button type="button" disabled={savingDays || Math.round(Number(accessDays) || 0) === savedAccessDays} onClick={saveDays} className="rounded-full bg-[#111827] px-5 py-2 text-xs font-bold text-white disabled:opacity-50">{savingDays ? 'Saving…' : 'Save course length'}</button>
-          <p className="text-[11px] leading-relaxed text-slate-500">Set days for a lesson in the box beside it in the curriculum, then press Save there.</p>
+          <p className="text-[11px] leading-relaxed text-slate-500">Set days for a lesson in the box beside it in the curriculum, then press Save there. Saving a course length replaces the dates in Settings.</p>
         </div>
     </>
   );

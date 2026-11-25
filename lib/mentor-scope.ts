@@ -1,20 +1,21 @@
 import { NextResponse } from 'next/server';
 import { isAdminSession } from '@/lib/admin-guard';
 import { listCourseSettings } from '@/lib/accounts';
+import { coursesAssistedBy } from '@/lib/course-assistants';
 import { getCoursesByInstructor } from '@/lib/db';
 import { currentProfile } from '@/lib/user-session';
 
 /**
- * The courses a signed-in mentor may work on: courses assigned to them by the admin,
- * plus courses they created. Returns null for the admin, who sees everything.
+ * The courses a signed-in mentor may work on: courses assigned to them by the admin (as mentor
+ * or mentor assistant), plus courses they created. Returns null for the admin, who sees everything.
  */
 export async function mentorCourseScope(): Promise<Set<string> | null> {
   if (isAdminSession()) return null;
   const profile = await currentProfile();
   if (!profile) return new Set();
   const email = profile.email.toLowerCase();
-  const [settings, own] = await Promise.all([listCourseSettings(), getCoursesByInstructor(profile.id)]);
-  const ids = new Set<string>(own.map((course) => course.id).filter((id): id is string => Boolean(id)));
+  const [settings, own, assisted] = await Promise.all([listCourseSettings(), getCoursesByInstructor(profile.id), coursesAssistedBy(email)]);
+  const ids = new Set<string>([...own.map((course) => course.id).filter((id): id is string => Boolean(id)), ...assisted]);
   for (const row of settings) {
     if (row.mentor_email && row.mentor_email.toLowerCase() === email) ids.add(row.course_id);
   }

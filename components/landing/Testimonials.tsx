@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { ChevronsRight, Star, ArrowLeft, ArrowRight, Quote, ShieldCheck } from 'lucide-react';
+import { ChevronsRight, Star, ArrowLeft, ArrowRight, Quote } from 'lucide-react';
 import { motion } from 'framer-motion';
 
 type LearnerReview = {
@@ -16,14 +16,13 @@ type LearnerReview = {
 // "Md. Arif" -> "MA": first letters of the first two words.
 const initials = (name: string) => name.trim().split(/\s+/).slice(0, 2).map((word) => word.charAt(0)).join('').toUpperCase();
 
-export default function Testimonials() {
+export default function Testimonials({ page = 'home' }: { page?: 'home' | 'contact' } = {}) {
   const [reviews, setReviews] = useState<LearnerReview[]>([]);
   const [currentIndex, setCurrentIndex] = useState(0);
-  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     let active = true;
-    fetch('/api/landing/reviews', { cache: 'no-store' })
+    fetch(`/api/landing/reviews?page=${page}`, { cache: 'no-store' })
       .then((response) => (response.ok ? response.json() : Promise.reject(new Error('Could not load reviews'))))
       .then((data) => {
         if (active) setReviews(Array.isArray(data.reviews) ? data.reviews.filter((review: LearnerReview) => {
@@ -33,12 +32,9 @@ export default function Testimonials() {
       })
       .catch(() => {
         if (active) setReviews([]);
-      })
-      .finally(() => {
-        if (active) setLoading(false);
       });
     return () => { active = false; };
-  }, []);
+  }, [page]);
 
   const visibleReviews = reviews.length
     ? [0, 1].slice(0, Math.min(2, reviews.length)).map((offset) => reviews[(currentIndex + offset) % reviews.length])
@@ -47,6 +43,9 @@ export default function Testimonials() {
   const move = (direction: -1 | 1) => {
     if (reviews.length > 1) setCurrentIndex((index) => (index + direction + reviews.length) % reviews.length);
   };
+
+  // Client rule: a part with no data is not shown; it appears once a verified review is published.
+  if (reviews.length === 0) return null;
 
   return (
     <section id="testimonials" className="relative overflow-hidden border-t border-white/10 bg-[#111827] py-16 text-white sm:py-20">
@@ -67,58 +66,44 @@ export default function Testimonials() {
           </p>
         </div>
 
-        {loading ? (
-          <div className="grid grid-cols-1 gap-5 md:grid-cols-2" aria-label="Loading learner feedback">
-            {[0, 1].map((item) => <div key={item} className="h-64 animate-pulse rounded-3xl border border-white/10 bg-white/5" />)}
-          </div>
-        ) : visibleReviews.length ? (
-          <div className="grid grid-cols-1 items-stretch gap-5 md:grid-cols-2">
-            {visibleReviews.map((review, index) => (
-              <motion.article
-                key={review.id}
-                initial={{ opacity: 0, y: 16 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ duration: 0.35, delay: index * 0.08 }}
-                className="relative flex min-h-64 flex-col justify-between rounded-3xl border border-white/10 bg-slate-800/80 p-6 shadow-lg shadow-black/10 sm:p-8"
-              >
-                <Quote aria-hidden="true" className="absolute right-6 top-6 h-10 w-10 text-[#FACC15]/25" />
-                <div className="space-y-4 pr-10">
-                  {review.rating && (
-                    <div className="flex items-center gap-0.5" aria-label={`${review.rating} out of 5 stars`}>
-                      {Array.from({ length: review.rating }).map((_, starIndex) => (
-                        <Star key={starIndex} aria-hidden="true" className="h-4 w-4 fill-[#FACC15] text-[#FACC15]" />
-                      ))}
-                    </div>
-                  )}
-                  {review.title && review.title !== 'A Better Learning Experience' && <h3 className="font-display text-lg font-bold text-white">{review.title}</h3>}
-                  <p className="text-sm leading-relaxed text-slate-300">“{review.text}”</p>
-                </div>
+        <div className="grid grid-cols-1 items-stretch gap-5 md:grid-cols-2">
+          {visibleReviews.map((review, index) => (
+            <motion.article
+              key={review.id}
+              initial={{ opacity: 0, y: 16 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.35, delay: index * 0.08 }}
+              className="relative flex min-h-64 flex-col justify-between rounded-3xl border border-white/10 bg-slate-800/80 p-6 shadow-lg shadow-black/10 sm:p-8"
+            >
+              <Quote aria-hidden="true" className="absolute right-6 top-6 h-10 w-10 text-[#FACC15]/25" />
+              <div className="space-y-4 pr-10">
+                {review.rating && (
+                  <div className="flex items-center gap-0.5" aria-label={`${review.rating} out of 5 stars`}>
+                    {Array.from({ length: review.rating }).map((_, starIndex) => (
+                      <Star key={starIndex} aria-hidden="true" className="h-4 w-4 fill-[#FACC15] text-[#FACC15]" />
+                    ))}
+                  </div>
+                )}
+                {review.title && review.title !== 'A Better Learning Experience' && <h3 className="font-display text-lg font-bold text-white">{review.title}</h3>}
+                <p className="text-sm leading-relaxed text-slate-300">“{review.text}”</p>
+              </div>
 
-                <div className="mt-7 flex flex-wrap items-center justify-between gap-4 border-t border-white/10 pt-5">
-                  <div className="flex min-w-0 items-center gap-3">
-                    <div aria-hidden="true" className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl border border-[#FACC15]/70 bg-slate-700 text-sm font-bold text-[#FACC15]">
-                      {initials(review.name)}
-                    </div>
-                    <div className="min-w-0">
-                      <p className="truncate text-sm font-bold text-white">{review.name}</p>
-                      {review.role && <p className="mt-0.5 truncate text-xs text-slate-400">{review.role}</p>}
-                    </div>
+              <div className="mt-7 flex flex-wrap items-center justify-between gap-4 border-t border-white/10 pt-5">
+                <div className="flex min-w-0 items-center gap-3">
+                  <div aria-hidden="true" className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl border border-[#FACC15]/70 bg-slate-700 text-sm font-bold text-[#FACC15]">
+                    {initials(review.name)}
+                  </div>
+                  <div className="min-w-0">
+                    <p className="truncate text-sm font-bold text-white">{review.name}</p>
+                    {review.role && <p className="mt-0.5 truncate text-xs text-slate-400">{review.role}</p>}
                   </div>
                 </div>
-              </motion.article>
-            ))}
-          </div>
-        ) : (
-          <div className="rounded-3xl border border-dashed border-white/15 bg-slate-800/50 px-6 py-10 text-center sm:py-12">
-            <ShieldCheck aria-hidden="true" className="mx-auto h-9 w-9 text-[#FACC15]" />
-            <h3 className="mt-4 font-display text-lg font-bold text-white">Learner feedback is being gathered</h3>
-            <p className="mx-auto mt-2 max-w-lg text-sm leading-relaxed text-slate-400">
-              Reviews will appear here after the learner’s feedback is verified and permission to publish is confirmed.
-            </p>
-          </div>
-        )}
+              </div>
+            </motion.article>
+          ))}
+        </div>
 
-        {!loading && reviews.length > 1 && (
+        {reviews.length > 1 && (
           <div className="flex items-center justify-center gap-3 pt-1">
             <button
               onClick={() => move(-1)}

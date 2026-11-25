@@ -20,7 +20,9 @@ export async function GET(request: Request) {
     if (!(await getEnrollments(profile.id)).includes(courseId)) {
       return NextResponse.json({ success: false, message: 'Enroll in this course to watch its lessons.' }, { status: 403 });
     }
-    if (!(await lessonOpen(profile.id, courseId, lessonIdFromKey(key)))) {
+    // Short videos sit beside the lessons and are open to every enrolled student.
+    const lessonId = lessonIdFromKey(key);
+    if (!lessonId.startsWith('short-') && !(await lessonOpen(profile.id, courseId, lessonId))) {
       return NextResponse.json({ success: false, message: 'Finish the previous lesson first.' }, { status: 403 });
     }
   }

@@ -9,7 +9,8 @@ import { useAuth } from '@/context/AuthContext';
 import LessonVideoField from '@/components/admin/LessonVideoField';
 import { CourseMentorSelect, saveCourseMentor } from './CourseMentorField';
 import { USD_TO_BDT, usdToBdt } from '@/lib/utils';
-import type { LessonSchema, ModuleSchema } from '@/types/course';
+import { shrinkImage } from '@/lib/course-edits-client';
+import { COURSE_TYPES, type CourseType, type LessonSchema, type ModuleSchema } from '@/types/course';
 
 const freshId = () => `c${Date.now().toString(36)}${Math.random().toString(36).slice(2, 8)}`;
 
@@ -36,6 +37,7 @@ export default function CourseUploadModal({
   const [description, setDescription] = useState('');
   const [price, setPrice] = useState(String(usdToBdt(49)));
   const [category, setCategory] = useState('Accounting');
+  const [type, setType] = useState<CourseType>('Live');
   const [thumbnailUrl, setThumbnailUrl] = useState('');
   const [thumbnailPreview, setThumbnailPreview] = useState<string | null>(null);
   const [modules, setModules] = useState<ModuleSchema[]>(starterModules);
@@ -47,12 +49,18 @@ export default function CourseUploadModal({
   const [accessDays, setAccessDays] = useState('');
   const [mentorEmail, setMentorEmail] = useState('');
 
-  const handleThumbnailChange = (e: ChangeEvent<HTMLInputElement>) => {
+  const handleThumbnailChange = async (e: ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
-    const objectUrl = URL.createObjectURL(file);
-    setThumbnailPreview(objectUrl);
-    setThumbnailUrl(objectUrl);
+    try {
+      // The picture itself is saved with the course (a link to a file on this computer would not work for anyone else).
+      const picture = await shrinkImage(file);
+      setThumbnailPreview(picture);
+      setThumbnailUrl(picture);
+      setFormError('');
+    } catch (err) {
+      setFormError(err instanceof Error ? err.message : 'This picture could not be used.');
+    }
   };
 
   const addModule = () => {
@@ -87,6 +95,7 @@ export default function CourseUploadModal({
           price: Math.round(Number(price) / USD_TO_BDT) || 0,
           thumbnail: thumbnailUrl.trim() || 'https://images.unsplash.com/photo-1522202176988-66273c2fd55f?w=600&h=340&fit=crop',
           category,
+          type,
           modules,
         }),
       });
@@ -147,11 +156,17 @@ export default function CourseUploadModal({
                 <label className={labelClass}>Course title *</label>
                 <input required value={title} onChange={(e) => setTitle(e.target.value)} placeholder="e.g. Foundations of Bookkeeping & Accounting" className={inputClass} />
               </div>
-              <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+              <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
                 <div>
                   <label className={labelClass}>Category</label>
                   <select value={category} onChange={(e) => setCategory(e.target.value)} className={inputClass}>
                     <option>Accounting</option><option>Business</option><option>Digital Skills</option>
+                  </select>
+                </div>
+                <div>
+                  <label htmlFor="new-course-type" className={labelClass}>Course type</label>
+                  <select id="new-course-type" value={type} onChange={(e) => setType(e.target.value as CourseType)} className={inputClass}>
+                    {COURSE_TYPES.map((item) => <option key={item}>{item}</option>)}
                   </select>
                 </div>
                 <div>
@@ -160,7 +175,7 @@ export default function CourseUploadModal({
                 </div>
               </div>
               <div>
-                <label className={labelClass}>Description *</label>
+                <label className={labelClass}>Description (Overview) *</label>
                 <textarea required rows={5} value={description} onChange={(e) => setDescription(e.target.value)} placeholder="What students will learn in this course" className={`${inputClass} resize-y`} />
               </div>
               <div>
@@ -170,11 +185,11 @@ export default function CourseUploadModal({
                     <ImageIcon className="h-4 w-4 text-amber-600" /> Choose file
                     <input type="file" accept="image/*" onChange={handleThumbnailChange} className="hidden" />
                   </label>
-                  <input type="url" value={thumbnailUrl} onChange={(e) => { setThumbnailUrl(e.target.value); setThumbnailPreview(e.target.value); }} placeholder="Or paste an image link…" className={inputClass} />
+                  <input type="url" aria-label="Thumbnail image link" value={thumbnailUrl.startsWith('data:') ? '' : thumbnailUrl} onChange={(e) => { setThumbnailUrl(e.target.value); setThumbnailPreview(e.target.value); }} placeholder="Or paste an image link…" className={inputClass} />
                 </div>
                 {thumbnailPreview && (
                   <div className="relative mt-3 aspect-video w-48 overflow-hidden rounded-xl border border-slate-200">
-                    <Image src={thumbnailPreview} alt="Thumbnail preview" fill className="object-cover" />
+                    <Image src={thumbnailPreview} alt="Thumbnail preview" fill unoptimized className="object-cover" />
                   </div>
                 )}
               </div>

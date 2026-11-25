@@ -1,7 +1,7 @@
 'use client';
 
 import { createContext, useContext, useEffect, useState } from 'react';
-import { bn } from '@/lib/bn';
+import { toBangla } from '@/lib/bn';
 
 type Lang = 'en' | 'bn';
 const KEY = 'cb-lang';
@@ -15,7 +15,8 @@ export function useLanguage() {
   return useContext(LanguageContext);
 }
 
-const originals = new WeakMap<Text, string>();
+// The English text of every translated node, and what we last put there.
+const originals = new WeakMap<Text, { raw: string; shown: string }>();
 const attrOriginals = new WeakMap<Element, Record<string, string>>();
 const ATTRS = ['placeholder', 'aria-label', 'title', 'alt'] as const;
 
@@ -29,12 +30,18 @@ function trailing(value: string) {
 function translateText(node: Text, lang: Lang) {
   const parent = node.parentElement;
   if (!parent || parent.closest('script,style,noscript,textarea,input,[data-no-translate]')) return;
-  const raw = originals.get(node) ?? node.nodeValue ?? '';
+  const current = node.nodeValue ?? '';
+  const saved = originals.get(node);
+  // React may have written new text into a translated node; then that new text is the English one.
+  const raw = saved && (current === saved.shown || current === saved.raw) ? saved.raw : current;
   const key = raw.trim();
-  if (!key || !bn[key]) return;
-  if (!originals.has(node)) originals.set(node, raw);
-  const next = lang === 'bn' ? `${leading(raw)}${bn[key]}${trailing(raw)}` : raw;
-  if (node.nodeValue !== next) node.nodeValue = next;
+  const translated = key ? toBangla(key) : '';
+  if (!translated) { originals.delete(node); return; }
+  // An option without a value sends its text, so keep the English text as its value.
+  if (parent instanceof HTMLOptionElement && !parent.hasAttribute('value')) parent.setAttribute('value', key);
+  const next = lang === 'bn' ? `${leading(raw)}${translated}${trailing(raw)}` : raw;
+  originals.set(node, { raw, shown: next });
+  if (current !== next) node.nodeValue = next;
 }
 
 function translateAttrs(element: Element, lang: Lang) {
@@ -44,12 +51,13 @@ function translateAttrs(element: Element, lang: Lang) {
   for (const attr of ATTRS) {
     const current = element.getAttribute(attr);
     const original = saved[attr] ?? current;
-    if (!original || !bn[original.trim()]) continue;
+    const translated = original ? toBangla(original.trim()) : '';
+    if (!original || !translated) continue;
     if (!(attr in saved)) {
       saved[attr] = original;
       changed = true;
     }
-    element.setAttribute(attr, lang === 'bn' ? bn[original.trim()] : original);
+    element.setAttribute(attr, lang === 'bn' ? translated : original);
   }
   if (changed) attrOriginals.set(element, saved);
 }
@@ -68,9 +76,10 @@ function apply(root: ParentNode, lang: Lang) {
   }
   const title = document.title.trim();
   const stored = document.documentElement.dataset.enTitle || title;
-  if (bn[stored]) {
+  const translatedTitle = toBangla(stored);
+  if (translatedTitle) {
     document.documentElement.dataset.enTitle = stored;
-    document.title = lang === 'bn' ? bn[stored] : stored;
+    document.title = lang === 'bn' ? translatedTitle : stored;
   }
 }
 

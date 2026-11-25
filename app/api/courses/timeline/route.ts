@@ -32,6 +32,8 @@ export async function GET(request: Request) {
       ? Math.round(((accessDays * DAY) / total / 3600000) * 100) / 100
       : timeline && total ? Math.round((minimumLessonTime(timeline.dates, total) / 3600000) * 100) / 100 : 0,
     timeline: accessDays ? null : timeline?.input || null,
+    // The four dates as saved in course Settings, even when days are in use for deadlines.
+    dates: timeline?.input || null,
     enrollmentClosed: await enrollmentClosedReason(courseId),
   });
 }
@@ -51,6 +53,8 @@ export async function PUT(request: Request) {
       firstEnrolled: String(body.firstEnrolled || ''), lastEnrolled: String(body.lastEnrolled || ''),
       lastCounting: String(body.lastCounting || ''), courseEnding: String(body.courseEnding || ''),
     });
+    // Saved dates replace a course length in days.
+    await saveDayPlan(courseId, 0);
     return NextResponse.json({ success: true, timeline });
   } catch (error) {
     return NextResponse.json({ success: false, message: error instanceof Error ? error.message : 'Could not save the timeline.' }, { status: 400 });
@@ -65,6 +69,7 @@ export async function DELETE(request: Request) {
   const outside = await courseAccessDenied(courseId);
   if (outside) return outside;
   await clearTimeline(courseId);
-  await saveDayPlan(courseId, 0);
+  // "Remove dates" in course Settings leaves a course length in days alone.
+  if (new URL(request.url).searchParams.get('part') !== 'dates') await saveDayPlan(courseId, 0);
   return NextResponse.json({ success: true });
 }

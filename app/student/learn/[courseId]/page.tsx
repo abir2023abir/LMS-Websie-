@@ -26,6 +26,11 @@ import CourseReviewForm from '@/components/student/CourseReviewForm';
 import { useLearningPrefs } from '@/components/student/LearningSettings';
 import LessonExams from '@/components/student/LessonExams';
 import CampusMessageForm from '@/components/messages/CampusMessageForm';
+import MyMessages from '@/components/student/MyMessages';
+import ShortVideoList from '@/components/course/ShortVideoList';
+import QuestionList from '@/components/course/QuestionList';
+import DiscussionBoard from '@/components/course/DiscussionBoard';
+import { useCommunity } from '@/components/course/useCommunity';
 import { lessonNote, lessonVideo, recordWatch, saveLessonNote, watchPercent } from '@/lib/workspace';
 import type { CourseSchema, ModuleSchema, LessonSchema } from '@/types/course';
 import {
@@ -85,6 +90,8 @@ export default function StudentLearnPage() {
   type ClassTab = 'overview' | 'video' | 'quiz' | 'assignment' | 'ask-instructor' | 'exams' | 'resources';
   const [topTab, setTopTab] = useState<TopTab>('overview');
   const [activeTab, setActiveTab] = useState<ClassTab>('overview');
+  const community = useCommunity(courseId);
+  const [sentCount, setSentCount] = useState(0);
   // Lessons whose video the student started (until then the cover picture shows).
   const [started, setStarted] = useState<Record<string, boolean>>({});
   const [noteSaved, setNoteSaved] = useState(false);
@@ -477,7 +484,7 @@ export default function StudentLearnPage() {
                 </div>
               )}
 
-              {topTab === 'modules' && (currentPath && path ? (
+              {topTab === 'modules' && (<>{currentPath && path ? (
                 <LessonSteps
                   section="steps"
                   courseId={courseId}
@@ -489,9 +496,16 @@ export default function StudentLearnPage() {
                   onOpenTab={openPart}
                   onChanged={() => loadPath(currentLesson?.id)}
                 />
-              ) : <p className="text-sm text-slate-500">Loading the lesson path…</p>)}
+              ) : <p className="text-sm text-slate-500">Loading the lesson path…</p>}
+                {Boolean(community.data?.shorts.length) && (
+                  <section className="mt-6 space-y-3 border-t border-slate-100 pt-5">
+                    <h3 className="font-display text-base font-bold text-[#111827]">Short videos</h3>
+                    <ShortVideoList videos={community.data!.shorts} />
+                  </section>
+                )}
+              </>)}
 
-              {topTab === 'classroom' && (currentPath && path ? (
+              {topTab === 'classroom' && (<>{currentPath && path ? (
                 <LessonSteps
                   section="lives"
                   courseId={courseId}
@@ -503,17 +517,26 @@ export default function StudentLearnPage() {
                   onOpenTab={openPart}
                   onChanged={() => loadPath(currentLesson?.id)}
                 />
-              ) : <p className="text-sm text-slate-500">Loading live classes…</p>)}
+              ) : <p className="text-sm text-slate-500">Loading live classes…</p>}
+                <section className="mt-6 space-y-3 border-t border-slate-100 pt-5">
+                  <h3 className="font-display text-base font-bold text-[#111827]">Course discussion</h3>
+                  {community.data
+                    ? <DiscussionBoard posts={community.data.discussions} onAction={community.post} canManage={community.data.canManage} />
+                    : <p className="text-sm text-slate-500">{community.error || 'Loading the discussion…'}</p>}
+                </section>
+              </>)}
 
               {topTab === 'message' && (
-                <div className="max-w-xl">
+                <div className="max-w-xl space-y-6">
                   <CampusMessageForm
+                    onSent={() => setSentCount((count) => count + 1)}
                     kind="student"
                     lockedKind
                     defaultName={userProfile?.name || user?.displayName || ''}
                     defaultEmail={user?.email || ''}
                     context={{ courseId, courseTitle: course.title, moduleTitle: currentModule?.title || '', lessonId: currentLesson?.id || '', lessonTitle: currentLesson?.title || '' }}
                   />
+                  <MyMessages courseId={courseId} email={user?.email || ''} refresh={sentCount} />
                 </div>
               )}
             </div>
@@ -678,6 +701,16 @@ export default function StudentLearnPage() {
                     rankTotal={standing.total}
                     progress={standing.progress}
                   />
+                )}
+
+                {activeTab === 'ask-instructor' && currentLesson && community.data && (
+                  <section className="space-y-3 border-t border-slate-100 pt-5">
+                    <h3 className="font-display text-base font-bold text-[#111827]">Relevant questions</h3>
+                    {/* Questions of this lesson, then the ones that cover its module or the whole course. */}
+                    <QuestionList questions={community.data.questions
+                      .filter((item) => item.lessonId === currentLesson.id || (!item.lessonId && (!item.moduleId || item.moduleId === currentModule?.id)))
+                      .sort((a, b) => Number(b.lessonId === currentLesson.id) - Number(a.lessonId === currentLesson.id))} />
+                  </section>
                 )}
 
                 {activeTab === 'exams' && <LessonExams courseId={courseId} />}

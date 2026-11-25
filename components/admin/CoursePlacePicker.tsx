@@ -29,11 +29,14 @@ export default function CoursePlacePicker({
   value,
   onChange,
   depth = 'lesson',
+  lockCourse = false,
 }: {
   outline: Outline;
   value: Place;
   onChange: (next: Place) => void;
   depth?: 'lesson' | 'course';
+  /** The course is already decided (course workspace). */
+  lockCourse?: boolean;
 }) {
   const course = outline.find((item) => item.id === value.courseId);
   const mod = course?.modules.find((item) => item.id === value.moduleId);
@@ -44,7 +47,7 @@ export default function CoursePlacePicker({
       <p className="text-xs font-extrabold uppercase tracking-wide text-slate-500">Where students see it</p>
       <div className="grid gap-3 sm:grid-cols-3">
         <label><span className={labelClass}>1. Course</span>
-          <select className={fieldClass} value={value.courseId} onChange={(e) => {
+          <select className={fieldClass} value={value.courseId} disabled={lockCourse} onChange={(e) => {
             const picked = outline.find((item) => item.id === e.target.value);
             onChange({ courseId: e.target.value, courseTitle: picked?.title || '', moduleId: '', moduleTitle: '', lessonId: '', lessonTitle: '' });
           }}>

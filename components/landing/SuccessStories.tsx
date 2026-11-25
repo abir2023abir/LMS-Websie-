@@ -4,6 +4,8 @@ import { getSuccessStories } from '@/lib/cms-db';
 
 export default async function SuccessStories() {
   const stories = (await getSuccessStories()).filter((story) => (story.page || 'home') === 'home');
+  // Client rule: a part with no data is not shown; it appears as soon as the admin adds a story.
+  if (stories.length === 0) return null;
   return (
     <section className="bg-white py-16 sm:py-24 text-[#111827]">
       <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 space-y-12">
@@ -29,7 +31,7 @@ export default async function SuccessStories() {
         </div>
 
         {/* ── Two-column video story cards, four at first, then "See More" ── */}
-        {stories.length > 0 ? <SuccessStoryGrid
+        <SuccessStoryGrid
           stories={stories.map((story, index) => ({
             id: story.id || String(index),
             headline: story.headline,
@@ -37,12 +39,7 @@ export default async function SuccessStories() {
             caption: /\[sample\]/i.test(story.caption || '') ? 'Story' : story.caption,
             videoUrl: story.videoUrl,
           }))}
-        /> : (
-          <div className="rounded-3xl border border-dashed border-slate-300 bg-slate-50 px-6 py-12 text-center">
-            <p className="font-display text-lg font-extrabold text-[#111827]">Learner stories are coming soon</p>
-            <p className="mx-auto mt-2 max-w-xl text-sm leading-relaxed text-slate-600">We’ll share real learning journeys here as learners give permission to publish their stories.</p>
-          </div>
-        )}
+        />
       </div>
     </section>
   );

@@ -4,9 +4,10 @@ import { useCallback, useEffect, useState } from 'react';
 import { createPortal } from 'react-dom';
 import dynamic from 'next/dynamic';
 import Link from 'next/link';
-import { CalendarClock, ClipboardList, UserRound, ExternalLink, FileText, GraduationCap, HelpCircle, Layers, Settings2, Video, X, type LucideIcon } from 'lucide-react';
+import { CalendarClock, ClipboardList, Clapperboard, ExternalLink, FileText, GraduationCap, HelpCircle, Layers, Mail, MessageCircleQuestion, MessagesSquare, Settings2, SlidersHorizontal, Star, Video, X, type LucideIcon } from 'lucide-react';
 import AdminCourseEditor from './AdminCourseEditor';
-import CourseMentorCard from './CourseMentorField';
+import CourseSettingsPanel from './CourseSettingsPanel';
+import CoursePublishButton from './CoursePublishButton';
 import { emptyToolItems, type ToolCommand, type ToolItem, type ToolItems, type ToolKind } from './LessonTools';
 
 const Loading = () => null;
@@ -14,19 +15,30 @@ const AdminQuizzes = dynamic(() => import('./AdminQuizzes'), { loading: Loading 
 const AdminAssignments = dynamic(() => import('./AdminAssignments'), { loading: Loading });
 const AdminExams = dynamic(() => import('./AdminExams'), { loading: Loading });
 const AdminLiveClasses = dynamic(() => import('./AdminLiveClasses'), { loading: Loading });
+const AdminMessages = dynamic(() => import('./AdminMessages'), { loading: Loading });
+const ReviewsEditor = dynamic(() => import('./cms/ReviewsEditor'), { loading: Loading });
+const ShortVideosManager = dynamic(() => import('./CourseCommunityManagers').then((mod) => mod.ShortVideosManager), { loading: Loading });
+const QuestionsManager = dynamic(() => import('./CourseCommunityManagers').then((mod) => mod.QuestionsManager), { loading: Loading });
+const DiscussionManager = dynamic(() => import('./CourseCommunityManagers').then((mod) => mod.DiscussionManager), { loading: Loading });
 
-type TabId = 'details' | 'timeline' | 'curriculum' | 'mentor' | 'quizzes' | 'assignments' | 'exams' | 'live';
+type TabId = 'details' | 'timeline' | 'curriculum' | 'shorts' | 'settings' | 'quizzes' | 'assignments' | 'exams' | 'live' | 'discussion' | 'questions' | 'reviews' | 'message';
+const GROUPS = ['Course', 'Assessments', 'Classes', 'Community'] as const;
 type Counts = Partial<Record<TabId, number>>;
 
-const TABS: { id: TabId; label: string; hint: string; icon: LucideIcon; group: 'Course' | 'Assessments' | 'Classes'; panelTab?: string; adminOnly?: boolean }[] = [
+const TABS: { id: TabId; label: string; hint: string; icon: LucideIcon; group: (typeof GROUPS)[number]; panelTab?: string; adminOnly?: boolean }[] = [
   { id: 'details', label: 'Details', hint: 'Name, price, category, picture and description.', icon: Settings2, group: 'Course' },
   { id: 'curriculum', label: 'Curriculum', hint: 'Build the course here: modules and lessons, and under each lesson its quiz, assignment, exam and live class.', icon: Layers, group: 'Course' },
   { id: 'timeline', label: 'Timeline', hint: 'How many days a student gets, counted from the day they enroll.', icon: CalendarClock, group: 'Course' },
-  { id: 'mentor', label: 'Mentor', hint: 'The mentor who runs this course.', icon: UserRound, group: 'Course', adminOnly: true },
+  { id: 'shorts', label: 'Short Videos', hint: 'Short lectures students watch beside the lessons.', icon: Clapperboard, group: 'Course', panelTab: 'Courses' },
+  { id: 'settings', label: 'Settings', hint: 'Enrollment and course dates, the mentor and the mentor assistant.', icon: SlidersHorizontal, group: 'Course', panelTab: 'Courses' },
   { id: 'quizzes', label: 'Quizzes', hint: 'Lesson quizzes for this course.', icon: HelpCircle, group: 'Assessments', panelTab: 'Quizzes' },
   { id: 'assignments', label: 'Assignments', hint: 'Assignments and student submissions for this course.', icon: FileText, group: 'Assessments', panelTab: 'Assignments' },
   { id: 'exams', label: 'Exams', hint: 'Lesson, module and final exams for this course.', icon: GraduationCap, group: 'Assessments', panelTab: 'Exams' },
   { id: 'live', label: 'Live Classes', hint: 'Scheduled live classes and attendance for this course.', icon: Video, group: 'Classes', panelTab: 'Live Classes' },
+  { id: 'discussion', label: 'Discussion', hint: 'What the course members are talking about.', icon: MessagesSquare, group: 'Community', panelTab: 'Courses' },
+  { id: 'questions', label: 'Relevant Questions', hint: 'Questions and answers shown on the course page and in the classroom.', icon: MessageCircleQuestion, group: 'Community', panelTab: 'Courses' },
+  { id: 'reviews', label: 'Reviews', hint: 'Reviews of this course. Publish the ones visitors may see.', icon: Star, group: 'Community', adminOnly: true },
+  { id: 'message', label: 'Message', hint: 'Messages students sent about this course.', icon: Mail, group: 'Community', panelTab: 'Messages' },
 ];
 
 /**
@@ -82,7 +94,7 @@ export default function CourseWorkspace({
   }, [onClose]);
 
   const current = tabs.find((tab) => tab.id === active) || tabs[0];
-  const groups = (['Course', 'Assessments', 'Classes'] as const).map((group) => ({ group, items: tabs.filter((tab) => tab.group === group) })).filter((entry) => entry.items.length);
+  const groups = GROUPS.map((group) => ({ group, items: tabs.filter((tab) => tab.group === group) })).filter((entry) => entry.items.length);
   const editorView = active === 'details' || active === 'timeline' || active === 'curriculum' ? active : null;
 
   // Drawn on <body> so it always covers the whole window, whatever the panel around it does.
@@ -102,6 +114,7 @@ export default function CourseWorkspace({
           <Link href={`/courses/${courseId}`} target="_blank" className="hidden min-h-10 shrink-0 items-center gap-1.5 rounded-full border border-white/20 px-4 text-xs font-bold text-white transition hover:bg-white/10 md:inline-flex">
             <ExternalLink className="h-3.5 w-3.5" /> View course page
           </Link>
+          <CoursePublishButton courseId={courseId} />
           <button type="button" onClick={onClose} className="inline-flex min-h-10 shrink-0 items-center gap-1.5 rounded-full bg-[#FACC15] px-4 text-xs font-extrabold text-[#111827] transition hover:bg-[#EAB308]">
             <X className="h-4 w-4" /> Close
           </button>
@@ -155,7 +168,7 @@ export default function CourseWorkspace({
 
           {isNew && active === 'curriculum' && (
             <p className="rounded-2xl border border-[#FACC15] bg-[#FEFCE8] px-4 py-3 text-sm font-medium text-slate-700">
-              The course is created. Add your lessons here. Under each lesson, press Add quiz, Add assignment, Add exam or Add live class. Mentor and timeline are in the menu.
+              The course is created. Add your lessons here. Under each lesson, press Add quiz, Add assignment, Add exam or Add live class. Timeline and settings are in the menu.
             </p>
           )}
 
@@ -164,7 +177,21 @@ export default function CourseWorkspace({
             <AdminCourseEditor bare view={editorView || 'details'} courseId={courseId} onClose={onClose} onSaved={onSaved} lessonTools={{ kinds: toolKinds, items, open: openTool }} />
           </div>
 
-          {active === 'mentor' && <CourseMentorCard courseId={courseId} />}
+          {current.id === 'settings' && <CourseSettingsPanel courseId={courseId} isAdmin={isAdmin} />}
+          {current.id === 'shorts' && <ShortVideosManager courseId={courseId} courseTitle={title} />}
+          {current.id === 'discussion' && <DiscussionManager courseId={courseId} />}
+          {current.id === 'questions' && <QuestionsManager courseId={courseId} courseTitle={title} />}
+          {current.id === 'reviews' && <div className="rounded-3xl border border-slate-200 bg-white p-5 shadow-sm sm:p-6"><ReviewsEditor courseId={courseId} /></div>}
+          {current.id === 'message' && (
+            <AdminMessages
+              courseId={courseId}
+              listUrl={isAdmin ? '/api/admin/messages' : '/api/messages?board=1'}
+              replyUrl={isAdmin ? '/api/admin/messages' : '/api/messages'}
+              replyBody={isAdmin ? undefined : (id, text) => ({ action: 'reply', id, text })}
+              title="Course messages"
+              intro="Questions and messages from students of this course."
+            />
+          )}
           {toolKinds.includes('quiz') && <AdminQuizzes courseId={courseId} headless={active !== 'quizzes'} command={commands.quiz} onItems={setQuizItems} />}
           {toolKinds.includes('assignment') && <AdminAssignments courseId={courseId} headless={active !== 'assignments'} command={commands.assignment} onItems={setAssignmentItems} />}
           {toolKinds.includes('exam') && <AdminExams courseId={courseId} headless={active !== 'exams'} command={commands.exam} onItems={setExamItems} />}

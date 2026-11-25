@@ -13,14 +13,21 @@ type Quiz = {
   moduleId: string; moduleTitle: string;
   lessonId: string; lessonTitle: string;
   title: string; passMark: number; maxAttempts: number; published: boolean;
+  number?: string; marksPerQuestion?: number; negativeMarks?: number; showAnswers?: boolean; timeLimitMinutes?: number; availableFrom?: string;
   questions: Question[];
 };
 type Stats = Record<string, { attempts: number; average: number | null; passed: number }>;
 type Outline = { id: string; title: string; modules: { id: string; title: string; lessons: { id: string; title: string }[] }[] }[];
 
 const blankQuestion = (): Question => ({ prompt: '', choices: ['', '', '', ''], correctIndex: 0, explanation: '' });
-const blankQuiz = (): Quiz => ({ courseId: '', courseTitle: '', moduleId: '', moduleTitle: '', lessonId: '', lessonTitle: '', title: '', passMark: 70, maxAttempts: 0, published: true, questions: [blankQuestion()] });
+const blankQuiz = (): Quiz => ({ courseId: '', courseTitle: '', moduleId: '', moduleTitle: '', lessonId: '', lessonTitle: '', title: '', passMark: 70, maxAttempts: 0, published: true, marksPerQuestion: 1, negativeMarks: 0, showAnswers: true, timeLimitMinutes: 0, availableFrom: '', questions: [blankQuestion()] });
 const labelClass = 'mb-1 block text-xs font-bold uppercase tracking-wide text-slate-500';
+
+/** A saved time as the "date & time" box wants it (this computer's time zone). */
+const toLocalInput = (iso?: string) => {
+  const date = new Date(iso || '');
+  return Number.isNaN(date.getTime()) ? '' : new Date(date.getTime() - date.getTimezoneOffset() * 60000).toISOString().slice(0, 16);
+};
 
 export default function AdminQuizzes({ courseId, headless = false, command, onItems }: ToolManagerProps) {
   const [quizzes, setQuizzes] = useState<Quiz[]>([]);
@@ -149,7 +156,7 @@ export default function AdminQuizzes({ courseId, headless = false, command, onIt
                     <p className="flex items-center gap-1 truncate text-[11px] font-semibold text-slate-500">{quiz.moduleTitle}<ChevronRight className="h-3 w-3 shrink-0" />{quiz.lessonTitle}</p>
                     <p className="truncate font-bold text-slate-900">{quiz.title}</p>
                     <p className="text-xs text-slate-500">
-                      {quiz.questions.length} question{quiz.questions.length === 1 ? '' : 's'} · pass {quiz.passMark}%
+                      {quiz.number ? `${quiz.number} · ` : ''}{quiz.questions.length} question{quiz.questions.length === 1 ? '' : 's'} · pass {quiz.passMark}%{quiz.timeLimitMinutes ? ` · ${quiz.timeLimitMinutes} min` : ''}
                       {stat?.attempts ? ` · ${stat.attempts} attempt${stat.attempts === 1 ? '' : 's'}, average ${stat.average}%` : ' · no attempts yet'}
                     </p>
                   </div>
@@ -191,10 +198,28 @@ export default function AdminQuizzes({ courseId, headless = false, command, onIt
               </div>
             </div>
 
-            <div className="grid gap-3 sm:grid-cols-[1fr_120px_150px]">
-              <label><span className={labelClass}>Quiz title</span><input className={fieldClass} value={draft.title} onChange={(e) => setDraft({ ...draft, title: e.target.value })} placeholder="e.g. Ledgers — Quick Check" /></label>
+            <label className="block"><span className={labelClass}>Quiz title</span><input className={fieldClass} value={draft.title} onChange={(e) => setDraft({ ...draft, title: e.target.value })} placeholder="e.g. Ledgers — Quick Check" /></label>
+            <div className="grid gap-3 sm:grid-cols-3">
+              <label><span className={labelClass}>Quiz number (auto)</span><input readOnly className={`${fieldClass} bg-slate-50 text-slate-500`} value={draft.number || 'Given when saved'} /></label>
+              <label><span className={labelClass}>Total questions (auto)</span><input readOnly className={`${fieldClass} bg-slate-50 text-slate-500`} value={draft.questions.length} /></label>
+              <label><span className={labelClass}>Marks per question</span><input type="number" min={0.25} max={100} step={0.25} className={fieldClass} value={draft.marksPerQuestion ?? 1} onChange={(e) => setDraft({ ...draft, marksPerQuestion: Number(e.target.value) })} /></label>
               <label><span className={labelClass}>Pass mark %</span><input type="number" min={0} max={100} className={fieldClass} value={draft.passMark} onChange={(e) => setDraft({ ...draft, passMark: Number(e.target.value) })} /></label>
               <label><span className={labelClass}>Attempts (0 = no limit)</span><input type="number" min={0} max={50} className={fieldClass} value={draft.maxAttempts ?? 0} onChange={(e) => setDraft({ ...draft, maxAttempts: Number(e.target.value) })} /></label>
+              <label><span className={labelClass}>Auto answer</span>
+                <select className={fieldClass} value={draft.showAnswers === false ? 'off' : 'on'} onChange={(e) => setDraft({ ...draft, showAnswers: e.target.value === 'on' })}>
+                  <option value="on">Enable: show right answers after submitting</option>
+                  <option value="off">Disable: show only the score</option>
+                </select>
+              </label>
+              <label><span className={labelClass}>Time limit</span>
+                <select className={fieldClass} value={draft.timeLimitMinutes ? 'on' : 'off'} onChange={(e) => setDraft({ ...draft, timeLimitMinutes: e.target.value === 'on' ? 10 : 0 })}>
+                  <option value="off">Disable</option>
+                  <option value="on">Enable</option>
+                </select>
+              </label>
+              <label><span className={labelClass}>Duration (minutes)</span><input type="number" min={1} max={600} disabled={!draft.timeLimitMinutes} placeholder="Enter minutes" className={`${fieldClass} disabled:bg-slate-50`} value={draft.timeLimitMinutes || ''} onChange={(e) => setDraft({ ...draft, timeLimitMinutes: Math.max(1, Number(e.target.value) || 1) })} /></label>
+              <label><span className={labelClass}>Negative marking (per wrong)</span><input type="number" min={0} max={100} step={0.25} className={fieldClass} value={draft.negativeMarks ?? 0} onChange={(e) => setDraft({ ...draft, negativeMarks: Number(e.target.value) })} /></label>
+              <label className="sm:col-span-3"><span className={labelClass}>Available from (empty = as soon as published)</span><input type="datetime-local" className={`${fieldClass} sm:max-w-xs`} value={toLocalInput(draft.availableFrom)} onChange={(e) => setDraft({ ...draft, availableFrom: e.target.value ? new Date(e.target.value).toISOString() : '' })} /></label>
             </div>
 
             {/* Questions */}

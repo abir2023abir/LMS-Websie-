@@ -21,8 +21,9 @@ type LiveProgramme = {
 /**
  * Part A of the client's "Learning Programmes & Courses" layout: live programmes and orientation
  * sessions (LIVE ONLINE · Upcoming cards). Shown on the home page and the All Courses page.
+ * With `hideWhenEmpty` (the home page) the whole part is left out until a programme is scheduled.
  */
-export default function LiveProgrammes() {
+export default function LiveProgrammes({ hideWhenEmpty = false }: { hideWhenEmpty?: boolean } = {}) {
   const [liveProgrammes, setLiveProgrammes] = useState<LiveProgramme[]>([]);
   const [programmesLoading, setProgrammesLoading] = useState(true);
 
@@ -41,6 +42,8 @@ export default function LiveProgrammes() {
       });
     return () => { active = false; };
   }, []);
+
+  if (hideWhenEmpty && liveProgrammes.length === 0) return null;
 
   return (
       <div className="bg-white py-16 sm:py-24 text-[#111827]">
@@ -69,7 +72,7 @@ export default function LiveProgrammes() {
             </p>
           </motion.div>
 
-          {/* Publish only programmes that have a real upcoming schedule; the section itself always shows. */}
+          {/* Only programmes that have a real upcoming schedule are published. */}
           {programmesLoading ? (
             <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
               <div className="h-80 animate-pulse rounded-3xl bg-slate-100" />

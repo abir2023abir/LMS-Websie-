@@ -7,7 +7,7 @@ import AuthGuard from '@/components/auth/AuthGuard';
 import StudentShell from '@/components/student/StudentShell';
 
 type Quiz = {
-  id: string; title: string; passMark: number; questions: unknown[];
+  id: string; title: string; passMark: number; questionCount: number; timeLimitMinutes?: number; availableFrom?: string;
   courseId: string; courseTitle: string; moduleTitle: string; lessonTitle: string;
   best: number | null; passed: boolean; attempts: number;
 };
@@ -60,7 +60,7 @@ export default function StudentQuizzesPage() {
                     <div className="min-w-0 flex-1">
                       <p className="flex items-center gap-1 truncate text-[11px] font-semibold text-slate-500">{quiz.moduleTitle}<ChevronRight className="h-3 w-3 shrink-0" />{quiz.lessonTitle}</p>
                       <p className="truncate font-bold text-[#111827]">{quiz.title}</p>
-                      <p className="text-xs text-slate-500">{quiz.questions.length} questions · pass mark {quiz.passMark}%</p>
+                      <p className="text-xs text-slate-500">{quiz.questionCount} questions · pass mark {quiz.passMark}%{quiz.timeLimitMinutes ? ` · ${quiz.timeLimitMinutes} minutes` : ''}{quiz.availableFrom ? ` · opens ${new Date(quiz.availableFrom).toLocaleDateString('en-GB', { day: 'numeric', month: 'short' })}` : ''}</p>
                     </div>
                     {quiz.best === null ? (
                       <span className="rounded-full bg-slate-100 px-3 py-1 text-xs font-bold text-slate-600">Not taken</span>

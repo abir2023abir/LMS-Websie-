@@ -1,15 +1,16 @@
 import { NextResponse } from 'next/server';
-import { requireAdmin } from '@/lib/admin-guard';
+import { adminOnly } from '@/lib/mentor-scope';
 import { listDeskThreads, replyDeskThread } from '@/lib/desk-messages';
 
+// Every message, for the admin only. Instructors use /api/messages, limited to their own courses.
 export async function GET() {
-  const denied = await requireAdmin('Messages');
+  const denied = adminOnly();
   if (denied) return denied;
   return NextResponse.json({ success: true, threads: await listDeskThreads() });
 }
 
 export async function POST(request: Request) {
-  const denied = await requireAdmin('Messages');
+  const denied = adminOnly();
   if (denied) return denied;
   try {
     const body = await request.json();

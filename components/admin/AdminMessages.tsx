@@ -57,6 +57,7 @@ export default function AdminMessages({
   title = 'Messages',
   intro = 'Lesson questions from students and consultation requests from the contact page.',
   initialFilter = 'all',
+  courseId = '',
 }: {
   listUrl?: string;
   replyUrl?: string;
@@ -64,6 +65,8 @@ export default function AdminMessages({
   title?: string;
   intro?: string;
   initialFilter?: 'all' | 'student' | 'service';
+  /** Only the conversations of this course (course workspace → Message). */
+  courseId?: string;
 }) {
   const [threads, setThreads] = useState<Thread[]>([]);
   const [loading, setLoading] = useState(true);
@@ -80,13 +83,13 @@ export default function AdminMessages({
     fetch(listUrl, { cache: 'no-store' })
       .then((res) => res.json())
       .then((data) => {
-        const list = (data.threads || []) as Thread[];
+        const list = ((data.threads || []) as Thread[]).filter((item) => !courseId || item.courseId === courseId);
         setThreads(list);
         setActiveId((current) => current || list[0]?.id || null);
       })
       .catch(() => setNote('Could not load messages.'))
       .finally(() => setLoading(false));
-  }, [listUrl]);
+  }, [listUrl, courseId]);
 
   const lastAt = (item: Thread) => item.messages[item.messages.length - 1]?.at || item.createdAt;
   const visible = useMemo(() => {
@@ -112,7 +115,7 @@ export default function AdminMessages({
       });
       const data = await res.json();
       if (!res.ok) { setNote(data.message || 'Reply failed.'); return; }
-      setThreads(data.threads || []);
+      setThreads(((data.threads || []) as Thread[]).filter((item) => !courseId || item.courseId === courseId));
       setReply('');
       setNote('');
     } finally {
@@ -136,13 +139,13 @@ export default function AdminMessages({
             <Search className="h-4 w-4 text-slate-400" />
             <input value={query} onChange={(e) => setQuery(e.target.value)} placeholder="Search name, course, lesson…" className="w-full bg-transparent text-sm focus:outline-none" />
           </label>
-          <div className="flex gap-1.5 text-xs font-bold">
+          {!courseId && <div className="flex gap-1.5 text-xs font-bold">
             {(['all', 'student', 'service'] as const).map((key) => (
               <button key={key} type="button" onClick={() => setFilter(key)} className={`rounded-full px-3 py-1.5 ${filter === key ? 'bg-[#111827] text-white' : 'bg-slate-100 text-slate-600'}`}>
                 {key === 'all' ? 'All' : key === 'student' ? 'Lesson questions' : 'Consultations'}
               </button>
             ))}
-          </div>
+          </div>}
         </div>
 
         <div className="flex-1 overflow-y-auto">
@@ -245,7 +248,7 @@ export default function AdminMessages({
                   <Send className="h-4 w-4" />
                 </button>
               </div>
-              <p className="mt-1.5 px-1 text-[10px] text-slate-400">{active.kind === 'student' ? 'The student sees your answer under this lesson.' : 'Saved here — contact them by phone or email to confirm.'} · Enter to send</p>
+              <p className="mt-1.5 px-1 text-[10px] text-slate-400">{active.kind !== 'student' ? 'Saved here — contact them by phone or email to confirm.' : active.lessonTitle ? 'The student sees your answer under this lesson.' : 'The student sees your answer in their messages.'} · Enter to send</p>
             </div>
           </>
         ) : (

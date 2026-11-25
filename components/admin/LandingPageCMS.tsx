@@ -2,13 +2,12 @@
 
 import { useState } from 'react';
 import {
-  BarChart3, BookOpen, CalendarDays, CalendarClock, ExternalLink, Home, Inbox, Info, MessageSquareQuote, Sparkles, Trophy, type LucideIcon,
+  BarChart3, BookOpen, CalendarDays, CalendarClock, ExternalLink, Home, Inbox, Info, MessageSquareQuote, Trophy, type LucideIcon,
 } from 'lucide-react';
 import OrientationProgrammesManager from './OrientationProgrammesManager';
 import HeroEditor from './cms/HeroEditor';
 import AboutEditor from './cms/AboutEditor';
 import SuccessStoriesEditor from './cms/SuccessStoriesEditor';
-import FeaturesEditor from './cms/FeaturesEditor';
 import BlogEditor from './cms/BlogEditor';
 import EnquiriesEditor from './cms/EnquiriesEditor';
 import ReviewsEditor from './cms/ReviewsEditor';
@@ -23,9 +22,8 @@ const groups: { label: string; sections: Section[] }[] = [
     sections: [
       { id: 'hero', name: 'Hero', icon: Home, description: 'The first screen visitors see: headline, text, buttons and picture.', preview: '/' },
       { id: 'about', name: 'About', icon: Info, description: 'The "A Better Learning Journey" section with its four cards.', preview: '/' },
-      { id: 'features', name: 'Why Choose Us', icon: Sparkles, description: 'The reasons to learn with Career Bridge.Studio.', preview: '/' },
       { id: 'stories', name: 'Success Stories', icon: Trophy, description: 'Learner story videos. The section stays hidden until you add one.', preview: '/' },
-      { id: 'reviews', name: 'Reviews', icon: MessageSquareQuote, description: 'Verified learner reviews for "Student Reviews".', preview: '/' },
+      { id: 'reviews', name: 'Reviews', icon: MessageSquareQuote, description: 'Verified learner reviews for "Student Reviews". The section stays hidden until you publish one.', preview: '/' },
     ],
   },
   {
@@ -49,7 +47,7 @@ const allSections = groups.flatMap((group) => group.sections);
 const ownTabSections: Record<'program' | 'bookkeeping' | 'blog', Section> = {
   program: { id: 'orientation', name: 'Program', icon: CalendarDays, description: 'Orientation sessions and workshops. Shown only when one is scheduled.', preview: '/' },
   bookkeeping: { id: 'bookkeeping', name: 'Bookkeeping', icon: BarChart3, description: 'Bookkeeping service page: plans, prices and features.', preview: '/bookkeeping' },
-  blog: { id: 'blog', name: 'Blog', icon: BookOpen, description: 'Articles for "Latest from LMS" on the home page. The two newest are shown; the section stays hidden until you add one.', preview: '/' },
+  blog: { id: 'blog', name: 'Blog', icon: BookOpen, description: 'Articles for "Latest from LMS" on the home page. The two newest are shown.', preview: '/' },
 };
 
 /** One website section as a full admin page: Program, Bookkeeping or Blog. */
@@ -142,7 +140,6 @@ export default function LandingPageCMS() {
         <div className="p-5 sm:p-6">
           {activeSection === 'hero' && <HeroEditor />}
           {activeSection === 'about' && <AboutEditor />}
-          {activeSection === 'features' && <FeaturesEditor />}
           {activeSection === 'stories' && <SuccessStoriesEditor />}
           {activeSection === 'reviews' && <ReviewsEditor />}
           {activeSection === 'contact-booking' && <ContactBookingEditor />}

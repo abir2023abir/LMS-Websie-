@@ -1,4 +1,4 @@
-import type { ModuleSchema } from '@/types/course';
+import type { CourseType, ModuleSchema } from '@/types/course';
 import fs from 'fs';
 import path from 'path';
 import { dataPath } from '@/lib/data-dir';
@@ -10,6 +10,11 @@ export type CourseEdit = {
   category?: string;
   level?: string;
   description?: string;
+  type?: CourseType;
+  outcomes?: string;
+  prerequisites?: string;
+  audience?: string;
+  certification?: string;
   thumbnail?: string;
   videos?: Record<string, string>;
   modules?: ModuleSchema[];

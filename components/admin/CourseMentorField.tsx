@@ -9,7 +9,7 @@ type Mentor = { id: string; name: string; email: string; level: 'lead' | 'assist
 type Loaded = { mentors: Mentor[]; assigned: Record<string, string>; ready: boolean };
 
 /** Mentor accounts and which mentor each course has (admin only). */
-function useMentors() {
+export function useMentors() {
   const [state, setState] = useState<Loaded>({ mentors: [], assigned: {}, ready: false });
   const load = useCallback(() => {
     fetch('/api/admin/accounts', { cache: 'no-store' })

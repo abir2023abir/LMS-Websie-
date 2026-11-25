@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server';
 import { requireRole } from '@/lib/user-session';
 import { getEnrollments } from '@/lib/payments';
-import { gradeQuiz, listAttempts, listQuizzes } from '@/lib/quizzes';
+import { endsAt, gradeQuiz, listAttempts, listQuizzes, notYetAvailable, setStart, startedAt, SUBMIT_GRACE_MS } from '@/lib/quizzes';
 import { stepOpen } from '@/lib/progression';
 import { attemptLimit } from '@/lib/assessment-risk';
 
@@ -20,12 +20,27 @@ export async function POST(request: Request) {
   if (!(await stepOpen(profile.id, quiz.courseId, quiz.lessonId, 'quiz'))) {
     return NextResponse.json({ success: false, message: 'Finish the earlier steps of this lesson first.' }, { status: 403 });
   }
+  if (notYetAvailable(quiz)) return NextResponse.json({ success: false, message: 'This quiz is not open yet.' }, { status: 403 });
+  let late = false;
+  if (quiz.timeLimitMinutes) {
+    const start = await startedAt(profile.id, quiz.id);
+    if (!start) return NextResponse.json({ success: false, message: 'Press Start quiz first.' }, { status: 409 });
+    late = Date.now() > endsAt(quiz, start) + SUBMIT_GRACE_MS;
+  }
   const used = (await listAttempts(profile.id)).filter((item) => item.quizId === quiz.id).length;
   const limit = await attemptLimit(profile.id, 'quiz', quiz.id, quiz.maxAttempts || 0);
   if (limit && used >= limit) {
     return NextResponse.json({ success: false, message: 'You have used all your attempts for this quiz. Ask your instructor for more attempts.' }, { status: 403 });
   }
-  const answers = (body.answers && typeof body.answers === 'object' ? body.answers : {}) as Record<string, number>;
+  // Answers that arrive after the time limit are not marked.
+  const answers = (!late && body.answers && typeof body.answers === 'object' ? body.answers : {}) as Record<string, number>;
   const { attempt, results } = await gradeQuiz(quiz, profile.id, answers);
-  return NextResponse.json({ success: true, correct: attempt.correct, total: attempt.total, percent: attempt.percent, passed: attempt.passed, passMark: quiz.passMark, results });
+  if (quiz.timeLimitMinutes) await setStart(profile.id, quiz.id, null);
+  const reveal = quiz.showAnswers !== false;
+  return NextResponse.json({
+    success: true, correct: attempt.correct, total: attempt.total, score: attempt.score, maxScore: attempt.maxScore,
+    percent: attempt.percent, passed: attempt.passed, passMark: quiz.passMark, late,
+    // With "Auto answer" off, the browser never receives which choices are right.
+    results: reveal ? results : [],
+  });
 }

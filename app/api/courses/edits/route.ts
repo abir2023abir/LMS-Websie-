@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server';
 import { courseAccessDenied } from '@/lib/mentor-scope';
 import { requireAdmin, requireAdminWrite } from '@/lib/admin-guard';
 import { listCourseEdits, saveCourseEdit, type CourseEdit } from '@/lib/course-edits';
+import { COURSE_TYPES } from '@/types/course';
 
 export const dynamic = 'force-dynamic';
 
@@ -30,6 +31,10 @@ export async function PUT(request: Request) {
     for (const key of ['title', 'category', 'level', 'description'] as const) {
       if (typeof body[key] === 'string') patch[key] = body[key].trim();
     }
+    for (const key of ['outcomes', 'prerequisites', 'audience', 'certification'] as const) {
+      if (typeof body[key] === 'string') patch[key] = body[key].trim().slice(0, 4000);
+    }
+    if (COURSE_TYPES.includes(body.type)) patch.type = body.type;
     for (const key of ['price', 'originalPrice'] as const) {
       if (body[key] !== undefined && body[key] !== '') {
         const value = Number(body[key]);

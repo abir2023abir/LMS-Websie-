@@ -13,7 +13,9 @@ import { getCourseById } from '@/lib/course-client';
 import { getFallbackCourseData } from '@/lib/progress';
 import { applyCourseEdit, loadCourseEdits } from '@/lib/course-edits-client';
 import { takaFromUsd } from '@/lib/utils';
-import { courseOverviews } from '@/lib/data';
+import { coursePoints } from '@/lib/course-overview';
+import CourseDiscussionTab from '@/components/course/CourseDiscussionTab';
+import CourseReviews from '@/components/course/CourseReviews';
 import type { CourseSchema, LessonSchema } from '@/types/course';
 import {
   Star,
@@ -29,7 +31,8 @@ import {
   Globe,
   FileCheck,
   Check,
-  ChevronsRight,
+  MessagesSquare,
+  Eye,
 } from 'lucide-react';
 
 export default function CourseDetailsPage() {
@@ -38,7 +41,7 @@ export default function CourseDetailsPage() {
 
   const [course, setCourse] = useState<CourseSchema | null>(null);
   const [loading, setLoading] = useState(true);
-  const [activeTab, setActiveTab] = useState<'overview' | 'curriculum'>('overview');
+  const [activeTab, setActiveTab] = useState<'overview' | 'curriculum' | 'discussion' | 'reviews'>('overview');
   const [showCheckoutModal, setShowCheckoutModal] = useState(false);
   const [activeVideoUrl, setActiveVideoUrl] = useState<string | undefined>(undefined);
   const [lessonVideos, setLessonVideos] = useState<Record<string, string>>({});
@@ -143,7 +146,12 @@ export default function CourseDetailsPage() {
     totalLessons += m.lessons?.length || 0;
   });
 
-  const overview = courseOverviews[String(course.id)];
+  const overview = {
+    outcomes: coursePoints(course, 'outcomes'),
+    prerequisites: coursePoints(course, 'prerequisites'),
+    audience: coursePoints(course, 'audience'),
+  };
+  const hasOverview = overview.outcomes.length + overview.prerequisites.length + overview.audience.length > 0;
 
   const discount =
     course.originalPrice && course.price
@@ -170,6 +178,9 @@ export default function CourseDetailsPage() {
           <div className="flex flex-wrap items-center gap-2.5 pt-2">
             <span className="bg-[#111827] text-white text-xs font-extrabold px-3 py-1 rounded-full uppercase tracking-wider">
               {course.category || 'Course'}
+            </span>
+            <span className="bg-white text-[#111827] text-xs font-extrabold px-3 py-1 rounded-full">
+              {course.type || 'Live'}
             </span>
             <span className="bg-black/10 text-[#111827] text-xs font-extrabold px-3 py-1 rounded-full flex items-center gap-1">
               <CheckCircle className="w-3.5 h-3.5" /> Certificate of Completion
@@ -230,15 +241,17 @@ export default function CourseDetailsPage() {
 
             {/* Tabs */}
             <div className="bg-white rounded-3xl border border-slate-200/80 p-6 sm:p-8 space-y-8 shadow-sm">
-              <div className="flex items-center gap-2 border-b border-slate-100 pb-4 overflow-x-auto scrollbar-none">
+              <div className="flex flex-wrap items-center gap-2 border-b border-slate-100 pb-4">
                 {[
                   { key: 'overview', label: 'Overview & Outcomes', icon: BookOpen },
-                  { key: 'curriculum', label: `Curriculum (${modules.length} Modules)`, icon: FileCheck },
+                  { key: 'curriculum', label: `Curriculum (${modules.length} Module${modules.length === 1 ? '' : 's'})`, icon: FileCheck },
+                  { key: 'discussion', label: 'Discussion', icon: MessagesSquare },
+                  { key: 'reviews', label: 'Reviews', icon: Star },
                 ].map(({ key, label, icon: Icon }) => (
                   <button
                     key={key}
                     onClick={() => setActiveTab(key as any)}
-                    className={`flex items-center gap-2 px-4 py-2.5 rounded-full text-xs font-bold transition-all whitespace-nowrap ${
+                    className={`flex items-center gap-1.5 px-3 py-2.5 rounded-full text-xs font-bold transition-all whitespace-nowrap ${
                       activeTab === key
                         ? 'bg-[#FACC15] text-[#111827] shadow-md shadow-[#FACC15]/20'
                         : 'text-slate-600 hover:text-[#111827] bg-slate-100'
@@ -252,9 +265,9 @@ export default function CourseDetailsPage() {
 
               {/* TAB 1: OVERVIEW */}
               {activeTab === 'overview' && (
-                overview ? (
+                hasOverview ? (
                 <div className="space-y-8">
-                  <div className="space-y-4">
+                  {overview.outcomes.length > 0 && <div className="space-y-4">
                     <h3 className="font-display font-bold text-xl text-[#111827] flex items-center gap-2">
                       <Sparkles className="w-5 h-5 text-amber-500" />
                       <span>What You Will Learn</span>
@@ -271,23 +284,23 @@ export default function CourseDetailsPage() {
                         </div>
                       ))}
                     </div>
-                  </div>
+                  </div>}
 
                   {/* Prerequisites */}
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-6 pt-4 border-t border-slate-100 text-xs sm:text-sm">
-                    <div className="space-y-3 bg-slate-50 p-6 rounded-2xl border border-slate-200/80">
+                    {overview.prerequisites.length > 0 && <div className="space-y-3 bg-slate-50 p-6 rounded-2xl border border-slate-200/80">
                       <h4 className="font-display font-bold text-[#111827] text-base">Course Prerequisites</h4>
                       <ul className="space-y-2 text-slate-600 list-disc list-inside">
                         {overview.prerequisites.map((item) => <li key={item}>{item}</li>)}
                       </ul>
-                    </div>
+                    </div>}
 
-                    <div className="space-y-3 bg-slate-50 p-6 rounded-2xl border border-slate-200/80">
+                    {overview.audience.length > 0 && <div className="space-y-3 bg-slate-50 p-6 rounded-2xl border border-slate-200/80">
                       <h4 className="font-display font-bold text-[#111827] text-base">Who is This Course For?</h4>
                       <ul className="space-y-2 text-slate-600 list-disc list-inside">
                         {overview.audience.map((item) => <li key={item}>{item}</li>)}
                       </ul>
-                    </div>
+                    </div>}
                   </div>
                 </div>
                 ) : (
@@ -301,7 +314,7 @@ export default function CourseDetailsPage() {
                   <div className="pb-2">
                     <h3 className="font-display font-bold text-lg text-[#111827]">Curriculum Breakdown</h3>
                     <p className="text-xs text-slate-500">
-                      {modules.length} Modules • {totalLessons} Lectures • Total Duration: {course.duration || '24h'}
+                      {`${modules.length} Module${modules.length === 1 ? '' : 's'} • ${totalLessons} Lecture${totalLessons === 1 ? '' : 's'}${course.duration ? ` • Total Duration: ${course.duration}` : ''}`}
                     </p>
                   </div>
 
@@ -323,7 +336,7 @@ export default function CourseDetailsPage() {
                                 {mod.title}
                               </div>
                               <div className="text-xs text-slate-500">
-                                {mod.lessons?.length || 0} Lectures
+                                {`${mod.lessons?.length || 0} Lectures`}
                               </div>
                             </div>
 
@@ -344,9 +357,7 @@ export default function CourseDetailsPage() {
                                     <PlayCircle className="w-4 h-4 text-amber-500 flex-shrink-0" />
                                     <span className="font-medium text-[#111827]">{les.title}</span>
                                   </div>
-                                  <span className="text-xs text-slate-400 font-mono">
-                                    {les.duration || '10:00'}
-                                  </span>
+                                  {les.duration && <span className="text-xs text-slate-400 font-mono">{les.duration}</span>}
                                 </div>
                               ))}
                             </div>
@@ -358,6 +369,8 @@ export default function CourseDetailsPage() {
                 </div>
               )}
 
+              {activeTab === 'discussion' && <CourseDiscussionTab courseId={courseId} />}
+              {activeTab === 'reviews' && <CourseReviews courseId={courseId} />}
             </div>
           </div>
 
@@ -394,7 +407,7 @@ export default function CourseDetailsPage() {
 
                 {discount > 0 && (
                   <span className="bg-rose-50 text-rose-600 border border-rose-200 text-xs font-extrabold px-3 py-1 rounded-full">
-                    Save {discount}% Today
+                    {`Save ${discount}% Today`}
                   </span>
                 )}
               </div>
@@ -417,14 +430,23 @@ export default function CourseDetailsPage() {
                   <span>Enroll Now</span>
                 </button>
                 )}
+                {!enrolled && (
+                  <Link
+                    href={`/courses/${encodeURIComponent(courseId)}/preview`}
+                    className="w-full border-2 border-[#111827] text-[#111827] hover:bg-[#111827] hover:text-white font-extrabold text-sm py-3.5 px-6 rounded-2xl flex items-center justify-center gap-2 transition-colors"
+                  >
+                    <Eye className="w-5 h-5" />
+                    <span>Preview Classroom Environment</span>
+                  </Link>
+                )}
               </div>
 
               {/* Perks Checklist */}
               <div className="space-y-2.5 pt-3 border-t border-slate-100 text-xs text-slate-700 font-medium">
-                <div className="flex items-center gap-2">
+                {totalLessons > 0 && <div className="flex items-center gap-2">
                   <Check className="w-4 h-4 text-amber-500 stroke-[3]" />
-                  <span>Instant Lifetime Access to All {totalLessons || 24} Lectures</span>
-                </div>
+                  <span>{totalLessons === 1 ? 'Instant Lifetime Access to 1 Lecture' : `Instant Lifetime Access to All ${totalLessons} Lectures`}</span>
+                </div>}
                 <div className="flex items-center gap-2">
                   <Check className="w-4 h-4 text-amber-500 stroke-[3]" />
                   <span>Downloadable Study Notes & Practice Files</span>

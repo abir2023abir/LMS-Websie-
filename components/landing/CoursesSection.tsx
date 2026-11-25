@@ -6,47 +6,24 @@ import Link from 'next/link';
 import { ArrowRight, ChevronsRight, Sparkles, Clock, ChevronRight } from 'lucide-react';
 import { motion } from 'framer-motion';
 import LiveProgrammes from './LiveProgrammes';
-import dynamic from 'next/dynamic';
-
-const CheckoutModal = dynamic(() => import('@/components/checkout/CheckoutModal'), { ssr: false });
-import { homepageFeaturedCourses } from '@/lib/data';
-import type { CourseSchema } from '@/types/course';
+import { useCatalog } from '@/lib/catalog-client';
 import { takaFromUsd } from '@/lib/utils';
 
 const categoryFilters = ['All Courses', 'Accounting', 'Business', 'Digital Skills'];
 
 export default function CoursesSection() {
   const [activeCategory, setActiveCategory] = useState('All Courses');
-  const [selectedCourse, setSelectedCourse] = useState<CourseSchema | null>(null);
-  const [checkoutOpen, setCheckoutOpen] = useState(false);
-  const filtered = (
-    activeCategory === 'All Courses'
-      ? homepageFeaturedCourses
-      : homepageFeaturedCourses.filter((c) => c.category === activeCategory)
-  ).slice(0, 3);
-
-  const handleViewCourse = (course: any) => {
-    setSelectedCourse({
-      id: course.id,
-      title: course.title,
-      description: course.description,
-      price: course.price,
-      originalPrice: course.originalPrice,
-      thumbnail: course.thumbnail,
-      instructorId: course.instructor.name,
-      instructorName: course.instructor.name,
-      category: course.category,
-      level: course.level,
-      duration: course.duration,
-      lessonCount: course.lessonCount,
-    });
-    setCheckoutOpen(true);
-  };
+  const { visible, priceOf, added } = useCatalog();
+  // Three cards on the home page: courses added in the panel come first (newest on top), then the built-in ones.
+  const isAdded = new Set(added.map((course) => String(course.id)));
+  const filtered = [...visible.filter((c) => isAdded.has(String(c.id))), ...visible.filter((c) => !isAdded.has(String(c.id)))]
+    .filter((c) => activeCategory === 'All Courses' || c.category === activeCategory)
+    .slice(0, 3);
 
   return (
     <section id="courses" className="space-y-20">
       {/* ── PART A: LIVE PROGRAMMES & ORIENTATION ── */}
-      <LiveProgrammes />
+      <LiveProgrammes hideWhenEmpty />
 
       {/* ── PART B: FEATURED COURSES ── */}
       <div className="relative bg-[#111827] text-white py-20 overflow-hidden">
@@ -102,6 +79,8 @@ export default function CoursesSection() {
             })}
           </div>
 
+          {filtered.length === 0 && <p className="text-center text-sm text-slate-400">No course is in this category yet.</p>}
+
           {/* 3-Column Course Grid */}
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
             {filtered.map((course, idx) => (
@@ -119,6 +98,7 @@ export default function CoursesSection() {
                     src={course.thumbnail}
                     alt={course.title}
                     fill
+                    unoptimized={!course.thumbnail.startsWith('https://images.unsplash.com/')}
                     className="object-cover group-hover:scale-105 transition-transform duration-500"
                   />
                   <span className="absolute top-3 left-3 bg-[#111827]/90 text-[#FACC15] text-[10px] font-extrabold px-2.5 py-1 rounded-full backdrop-blur-md border border-white/10">
@@ -130,11 +110,11 @@ export default function CoursesSection() {
                   <div className="space-y-2">
                     <div className="flex items-center justify-between text-xs text-slate-400">
                       <span className="flex items-center gap-1">
-                        <Clock className="w-3.5 h-3.5 text-[#FACC15]" /> {course.duration}
+                        {course.duration && (<><Clock className="w-3.5 h-3.5 text-[#FACC15]" /> {course.duration}</>)}
                       </span>
-                      {/* Every course runs with live classes (client layout: "◷ 20h 00m · Live"). */}
+                      {/* The course type set in the panel; "Live" when none is set (client layout: "◷ 20h 00m · Live"). */}
                       <span className="flex items-center gap-1.5 rounded-full bg-[#FACC15]/15 px-2 py-0.5 text-[10px] font-bold uppercase tracking-wide text-[#FACC15]">
-                        <span className="h-1.5 w-1.5 rounded-full bg-rose-500" aria-hidden="true" /> Live
+                        {(course.type || 'Live') === 'Live' && <span className="h-1.5 w-1.5 rounded-full bg-rose-500" aria-hidden="true" />} {course.type || 'Live'}
                       </span>
                     </div>
 
@@ -151,17 +131,17 @@ export default function CoursesSection() {
 
                   <div className="pt-3 border-t border-white/10 flex items-center justify-between">
                     <span className="font-display font-extrabold text-2xl text-[#FACC15]">
-                      {takaFromUsd(course.price)}
+                      {priceOf(course) === 0 ? 'Free' : takaFromUsd(priceOf(course))}
                     </span>
-                    <button
-                      onClick={() => handleViewCourse(course)}
+                    <Link
+                      href={`/courses/${course.id}`}
                       className="group flex items-center gap-2 bg-[#FACC15] hover:bg-[#eab308] text-[#111827] rounded-full pl-4 pr-1 py-1.5 text-xs font-extrabold transition-all shadow-md shadow-[#FACC15]/20"
                     >
                       <span>View Course</span>
                       <div className="w-6 h-6 rounded-full bg-[#111827] flex items-center justify-center">
                         <ArrowRight className="w-3.5 h-3.5 text-[#FACC15]" />
                       </div>
-                    </button>
+                    </Link>
                   </div>
                 </div>
               </motion.div>
@@ -179,15 +159,6 @@ export default function CoursesSection() {
             </Link>
           </div>
         </div>
-
-        {/* Checkout Modal */}
-        {selectedCourse && (
-          <CheckoutModal
-            course={selectedCourse}
-            isOpen={checkoutOpen}
-            onClose={() => setCheckoutOpen(false)}
-          />
-        )}
       </div>
     </section>
   );

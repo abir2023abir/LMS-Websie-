@@ -30,7 +30,10 @@ export async function POST(request: Request) {
       verified: false,
       permission: Boolean(body.permission),
       published: false,
-      page: 'home',
+      pages: ['home', 'course'],
+      courseId,
+      courseTitle: String(body.courseTitle || 'Course').slice(0, 200),
+      studentEmail: profile.email,
     });
     return NextResponse.json({ success: true });
   } catch (error) {
