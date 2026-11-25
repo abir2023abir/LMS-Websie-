@@ -1,0 +1,67 @@
+---
+name: lms-timeline-engine
+description: Advanced LMS Dynamic Timeline, Lesson Unlock Sequence, Quiz Validation, and Risk Alert Calculation Engine. Use when developing or debugging backend logic, database schemas, or calculation services for LMS courses with strict timing constraints, live course exceptions, and student risk monitoring.
+---
+
+# LMS Dynamic Timeline & Lesson Unlock Engine
+
+## 1. Core Philosophy & Rules
+This skill governs the complex time-based calculations, prerequisite checks, live course overrides, and risk alert automation for the LMS platform. Every timestamp calculation must rely strictly on **Server Time**, never on browser/local time[cite: 8].
+
+## 2. Timeline Configuration & Calculations
+An admin defines four key date fields for a course:
+- **First Enrolled Date:** Enrollment window opens[cite: 1].
+- **Last Enrolled Date:** New enrollments close[cite: 1].
+- **Last Counting Date:** Used as the baseline for minimum lesson time calculations[cite: 1, 2].
+- **Course Ending Date:** Final deadline for course completion[cite: 1].
+
+### Formulas:
+1. **Minimum Lesson Time Calculation:**
+   $$\text{Minimum Available Time} = \text{Course Ending Date} - \text{Last Counting Date}$$
+   $$\text{Minimum Lesson Time} = \frac{\text{Minimum Available Time}}{\text{Total Lessons}}$$
+   *(This acts as a fixed benchmark; changing course dates or total lessons updates this value dynamically).*[cite: 2]
+
+2. **Initial Dynamic Timeline (Per Student):**
+   $$\text{Student Available Time} = \text{Course Ending Date} - \text{Actual Enrollment Date}$$
+   $$\text{Initial Per Lesson Time} = \frac{\text{Student Available Time}}{\text{Total Lessons}}$$
+   $$\text{Initial Allocation} = \max(\text{Initial Per Lesson Time}, \text{Minimum Lesson Time})$$[cite: 2, 3]
+
+3. **Dynamic Recalculation (After Lesson Completion):**
+   $$\text{Remaining Time} = \text{Course Ending Date} - \text{Current Date \& Time}$$
+   $$\text{Remaining Lessons} = \text{Total Lessons} - \text{Completed Lessons}$$
+   $$\text{Dynamic Per Lesson Time} = \frac{\text{Remaining Time}}{\text{Remaining Lessons}}$$
+   $$\text{New Lesson Allocation} = \max(\text{Dynamic Per Lesson Time}, \text{Minimum Lesson Time})$$[cite: 3, 4]
+
+## 3. Minimum Time Protection & Risk Management
+- **Constraint Priority:** Minimum Lesson Time and Course Ending Date are separate constraints. The system **never** breaks Minimum Lesson Time just to fit a deadline[cite: 4, 5].
+- **At-Risk Status:** If remaining time divided by remaining lessons falls below the Minimum Lesson Time, the system must set the student status to **"Behind Schedule"** or **"At Risk"**, calculate the projected completion date, and show appropriate warnings without lowering the minimum limit[cite: 4, 5].
+- **Course Expiry:** If the Course Ending Date passes, set status to **"Course Expired"** and halt new allocations unless an Admin grants an extension[cite: 5].
+
+## 4. Lesson Part Unlock Sequence
+Each lesson contains 6 parts that must unlock conditionally:
+1. **Stage 1 (Initial Access):** Overview & Videos are unlocked simultaneously[cite: 5, 6].
+2. **Stage 2 (Quiz Unlock):** $\text{Overview Completed} \land \text{Videos Completed} = \text{Quiz Unlocked}$[cite: 6].
+3. **Stage 3 (Notes & Assignments):** $\text{Quiz Completed} = \text{Notes + Assignments Unlocked}$[cite: 6].
+4. **Stage 4 (Exams):** All first five parts completed = Exams Unlocked[cite: 6].
+- *Strict Rule:* No part opens before prerequisites are met. Opening a tab does not mark it complete[cite: 6].
+
+## 5. Live Course Special Exception Rules
+- **Rule 1 (Live Attendance):** Students can join live classes even if they missed previous recorded lessons or are behind schedule[cite: 7].
+- **Rules 2-4 (Video, Assignment, Exam Restrictions):** Recorded videos, assignments, and exams still follow strict completion and sequence rules. If sequence is broken, assignments/exams remain locked[cite: 7].
+- **Rule 5 (Sequence Recovery):** Completing pending prerequisite lessons restores assignment and exam access[cite: 7].
+
+## 6. Quiz/Exam Validation, Retakes & Risk Alerts
+- **Passing Criteria:** Student must achieve configurable **Minimum Passing Marks** (e.g., 60% of total marks). Mere submission does not unlock the next part[cite: 10, 11].
+- **Retakes:** Multiple attempts are logged individually. If failed, the retake option remains active up to the Admin's attempt limit[cite: 11, 12].
+- **Repeated Failure Risk Alert:** If a student fails multiple times past a set threshold, trigger a **Risk Alert** in the Admin Dashboard[cite: 11, 12].
+- **Admin Interventions:** Admins can take actions (Contact, Warning, Mentor Support, Extra Attempts, Temporary Restrictions, Review) which are logged with timestamps and Admin IDs[cite: 12, 13].
+
+## 7. Developer Acceptance Testing Checklist
+When generating code, ensure automated tests cover:
+1. Enrollment window validation[cite: 8].
+2. Initial allocation accuracy based on enrollment date[cite: 8, 9].
+3. Minimum time calculation from Last Counting Date[cite: 9].
+4. Late completion reallocation and minimum time protection[cite: 4, 5, 9].
+5. Part unlock restrictions (e.g., locking quizzes until videos/overview complete)[cite: 10].
+6. Live course attendance override vs. assignment/exam locking[cite: 10].
+7. Quiz retake history tracking and automated admin risk alerts upon repeated failures[cite: 11, 12].

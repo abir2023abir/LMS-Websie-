@@ -1,7 +1,6 @@
 'use client';
 
 import { GraduationCap } from 'lucide-react';
-import SiteMenuBar from '@/components/dashboard/SiteMenuBar';
 
 /** "Good morning / afternoon / evening" by the time in Bangladesh. */
 function greeting() {
@@ -10,14 +9,12 @@ function greeting() {
 }
 
 /**
- * Top of the admin Overview (client layout): the website's own menu, then a greeting with the
- * signed-in name and role.
+ * Top of the admin Overview: a greeting with the signed-in name and role. (The website menu is
+ * not shown inside the admin panel.)
  */
 export default function OverviewWelcome({ name, title }: { name: string; title: string }) {
   return (
     <div className="space-y-4">
-      <SiteMenuBar />
-
       <div className="flex items-center gap-4 rounded-3xl border border-[#FACC15]/40 bg-gradient-to-r from-[#FEF9C3] to-white p-5 shadow-sm">
         <span className="flex h-14 w-14 shrink-0 items-center justify-center rounded-2xl bg-[#111827] text-[#FACC15]"><GraduationCap className="h-7 w-7" /></span>
         <div className="min-w-0">
