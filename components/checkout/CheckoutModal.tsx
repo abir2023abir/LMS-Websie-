@@ -179,7 +179,7 @@ export default function CheckoutModal({ course, isOpen, onClose, onSuccess }: Ch
             >
               Create student account
             </Link>
-            <Link href={`/login?next=${encodeURIComponent(`/checkout/${course.id || ''}`)}`} className="block text-xs font-semibold text-slate-200 underline underline-offset-4">
+            <Link href={`/login?next=${encodeURIComponent(`/checkout/${course.id || ''}`)}`} className="block py-2 text-xs font-semibold text-slate-200 underline underline-offset-4">
               Already registered? Sign in
             </Link>
           </div>

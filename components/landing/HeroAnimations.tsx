@@ -22,7 +22,7 @@ export default function HeroAnimations({ heroData }: HeroAnimationsProps) {
         <div className="bg-[#FACC15] text-[#111827] p-1 rounded-full flex items-center justify-center">
           <ChevronsRight className="w-3 h-3 sm:w-3.5 sm:h-3.5" />
         </div>
-        <span className="text-[10px] sm:text-xs font-semibold tracking-wide">{heroData.badgeText}</span>
+        <span className="text-[11px] sm:text-xs font-semibold tracking-wide">{heroData.badgeText}</span>
       </div>
 
       {/* Main Headline */}
@@ -31,7 +31,7 @@ export default function HeroAnimations({ heroData }: HeroAnimationsProps) {
       </h1>
 
       {/* Description */}
-      <p className="text-[10px] min-[400px]:text-xs sm:text-lg text-[#111827]/85 font-medium leading-snug sm:leading-relaxed max-w-xl">
+      <p className="text-xs sm:text-lg text-[#111827]/85 font-medium leading-snug sm:leading-relaxed max-w-xl">
         <span className="sm:hidden">{heroData.description}</span>
         <span className="hidden sm:inline">{heroData.description}</span>
       </p>
@@ -40,7 +40,7 @@ export default function HeroAnimations({ heroData }: HeroAnimationsProps) {
       <div className="pt-1 sm:pt-2 flex flex-col items-stretch gap-1.5 sm:flex-row sm:flex-wrap sm:gap-3">
         <a
           href={heroData.cta1Link}
-          className="group inline-flex items-center justify-between bg-[#111827] hover:bg-black text-white rounded-full pl-2.5 sm:pl-6 pr-1 py-1 sm:py-2.5 text-[10px] sm:text-sm font-bold shadow-2xl transition-all hover:scale-105"
+          className="group inline-flex items-center justify-between bg-[#111827] hover:bg-black text-white min-h-11 rounded-full pl-3 sm:pl-6 pr-1 py-1 sm:py-2.5 text-xs sm:text-sm font-bold shadow-2xl transition-all hover:scale-105"
         >
           <span>{heroData.cta1Text}</span>
           <div className="ml-1 sm:ml-3 w-6 h-6 sm:w-8 sm:h-8 rounded-full bg-white/10 group-hover:bg-white/20 flex items-center justify-center transition-colors">
@@ -49,7 +49,7 @@ export default function HeroAnimations({ heroData }: HeroAnimationsProps) {
         </a>
         <a
           href={heroData.cta2Link}
-          className="group inline-flex items-center justify-between bg-white hover:bg-gray-100 text-[#111827] rounded-full pl-2.5 sm:pl-6 pr-1 py-1 sm:py-2.5 text-[10px] sm:text-sm font-bold shadow-xl transition-all hover:scale-105 border-2 border-[#111827]"
+          className="group inline-flex items-center justify-between bg-white hover:bg-gray-100 text-[#111827] min-h-11 rounded-full pl-3 sm:pl-6 pr-1 py-1 sm:py-2.5 text-xs sm:text-sm font-bold shadow-xl transition-all hover:scale-105 border-2 border-[#111827]"
         >
           <span>{heroData.cta2Text}</span>
           <div className="ml-1 sm:ml-3 w-6 h-6 sm:w-8 sm:h-8 rounded-full bg-[#111827] group-hover:bg-black flex items-center justify-center transition-colors">

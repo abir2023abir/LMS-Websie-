@@ -7,11 +7,11 @@ import BrandLogo from '@/components/brand/BrandLogo';
 
 export default function Footer() {
   return (
-    <footer id="contact" className="border-t border-slate-200 bg-white pt-10 pb-8 text-[#111827]">
-      <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 space-y-10">
-        <div className="flex flex-col items-start justify-between gap-5 rounded-3xl border border-slate-200 bg-slate-50 px-6 py-6 sm:flex-row sm:items-center">
+    <footer id="contact" className="border-t border-slate-200 bg-white pt-6 pb-20 text-[#111827] md:pt-10 md:pb-8">
+      <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 space-y-6 md:space-y-10">
+        <div className="flex flex-col items-start justify-between gap-3 rounded-3xl border border-slate-200 bg-slate-50 px-4 py-4 sm:gap-5 sm:px-6 sm:py-6 sm:flex-row sm:items-center">
           <div>
-            <p className="font-display text-xl font-extrabold text-[#111827]">Take the next step</p>
+            <p className="font-display text-lg font-extrabold text-[#111827] sm:text-xl">Take the next step</p>
             <p className="mt-1 max-w-md text-sm text-[#111827]">Open a course, or talk to the team about bookkeeping for your business.</p>
           </div>
           <div className="flex flex-wrap gap-3">
@@ -20,11 +20,11 @@ export default function Footer() {
           </div>
         </div>
         {/* Top Grid */}
-        <div className={`grid grid-cols-1 md:grid-cols-2 gap-8 ${hasContactDetails || socialLinks.length > 0 ? 'lg:grid-cols-4' : 'lg:grid-cols-3'}`}>
+        <div className={`grid grid-cols-2 gap-x-4 gap-y-5 md:gap-8 ${hasContactDetails || socialLinks.length > 0 ? 'lg:grid-cols-4' : 'lg:grid-cols-3'}`}>
           {/* Brand Column */}
-          <div className="space-y-4">
+          <div className="col-span-2 space-y-3 md:col-span-1 md:space-y-4">
             <Link href="/" className="inline-block" aria-label="Career Bridge Studio home">
-              <BrandLogo className="h-16 w-auto" />
+              <BrandLogo className="h-12 w-auto md:h-16" />
             </Link>
             <p className="text-xs leading-relaxed text-[#111827]">
               A structured learning platform designed to help learners build knowledge, develop practical skills, and progress toward their goals.
@@ -60,7 +60,7 @@ export default function Footer() {
 
           {/* Contact Information — fields come from lib/contact.ts; empty ones stay hidden */}
           {(hasContactDetails || socialLinks.length > 0) && (
-            <div className="space-y-3">
+            <div className="col-span-2 space-y-3 md:col-span-1">
               {hasContactDetails && (
                 <>
                   <h4 className="font-display font-bold text-sm uppercase tracking-wider text-[#111827]">
@@ -104,14 +104,14 @@ export default function Footer() {
         </div>
 
         {/* Bottom copyright */}
-        <div className="flex flex-col items-center justify-between gap-3 border-t border-slate-200 pt-6 text-xs text-[#111827] sm:flex-row">
+        <div className="flex flex-col items-center justify-between gap-1 border-t border-slate-200 pt-3 text-center text-xs md:gap-3 md:pt-6 text-[#111827] sm:flex-row">
           <p>© {new Date().getFullYear()} Career Bridge.Studio. All rights reserved.</p>
-          <div className="flex flex-wrap justify-center gap-x-4 gap-y-2">
-            <Link href="/about" className="hover:underline">About</Link>
-            <Link href="/privacy" className="hover:underline">Privacy</Link>
-            <Link href="/terms" className="hover:underline">Terms</Link>
-            <Link href="/refund" className="hover:underline">Refunds</Link>
-            <Link href="/verify-certificate" className="hover:underline">Verify certificate</Link>
+          <div className="flex flex-wrap justify-center gap-x-4 md:gap-y-2">
+            <Link href="/about" className="py-2.5 hover:underline md:py-0">About</Link>
+            <Link href="/privacy" className="py-2.5 hover:underline md:py-0">Privacy</Link>
+            <Link href="/terms" className="py-2.5 hover:underline md:py-0">Terms</Link>
+            <Link href="/refund" className="py-2.5 hover:underline md:py-0">Refunds</Link>
+            <Link href="/verify-certificate" className="py-2.5 hover:underline md:py-0">Verify certificate</Link>
           </div>
         </div>
       </div>

@@ -14,19 +14,19 @@ const categoryFilters = ['All Courses', 'Accounting', 'Business', 'Digital Skill
 export default function CoursesSection() {
   const [activeCategory, setActiveCategory] = useState('All Courses');
   const { visible, priceOf, added } = useCatalog();
-  // Three cards on the home page: courses added in the panel come first (newest on top), then the built-in ones.
+  // Three cards on the home page (four, two by two, on phones): courses added in the panel come first (newest on top), then the built-in ones.
   const isAdded = new Set(added.map((course) => String(course.id)));
   const filtered = [...visible.filter((c) => isAdded.has(String(c.id))), ...visible.filter((c) => !isAdded.has(String(c.id)))]
     .filter((c) => activeCategory === 'All Courses' || c.category === activeCategory)
-    .slice(0, 3);
+    .slice(0, 4); // the fourth shows on phones only, to fill the second row
 
   return (
-    <section id="courses" className="space-y-20">
+    <section id="courses" className="space-y-8 md:space-y-20">
       {/* ── PART A: LIVE PROGRAMMES & ORIENTATION ── */}
       <LiveProgrammes hideWhenEmpty />
 
       {/* ── PART B: FEATURED COURSES ── */}
-      <div className="relative bg-[#111827] text-white py-20 overflow-hidden">
+      <div className="relative bg-[#111827] text-white py-12 md:py-20 overflow-hidden">
         {/* Top SVG Curve Transition */}
         <div className="absolute top-0 inset-x-0 overflow-hidden leading-none pointer-events-none">
           <svg viewBox="0 0 1440 80" fill="none" className="w-full h-12 text-white" preserveAspectRatio="none">
@@ -34,9 +34,9 @@ export default function CoursesSection() {
           </svg>
         </div>
 
-        <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10 space-y-10 pt-8">
+        <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10 space-y-5 pt-6 md:space-y-10 md:pt-8">
           {/* Header */}
-          <div className="text-center space-y-4 max-w-3xl mx-auto relative">
+          <div className="text-center space-y-3 max-w-3xl mx-auto relative md:space-y-4">
             {/* Spark SVG accents */}
             <Sparkles className="w-6 h-6 text-[#FACC15] absolute -top-4 right-10 fill-[#FACC15]" />
             <Sparkles className="w-4 h-4 text-[#FACC15] absolute top-8 left-6 fill-[#FACC15]" />
@@ -49,7 +49,7 @@ export default function CoursesSection() {
               <span className="text-xs font-bold tracking-wide">EXPLORE OUR COURSES</span>
             </div>
 
-            <h2 className="font-display font-extrabold text-3xl sm:text-4xl text-white tracking-tight leading-tight">
+            <h2 className="font-display font-extrabold text-2xl sm:text-4xl text-white tracking-tight leading-tight">
               Find the Right Course for Your Next Step
             </h2>
 
@@ -59,7 +59,7 @@ export default function CoursesSection() {
           </div>
 
           {/* Category Filters */}
-          <div className="flex flex-wrap items-center justify-center gap-2">
+          <div className="flex flex-wrap items-center justify-center gap-1 md:gap-2">
             {categoryFilters.map((cat) => {
               const isActive = activeCategory === cat;
               return (
@@ -67,7 +67,7 @@ export default function CoursesSection() {
                   key={cat}
                   onClick={() => setActiveCategory(cat)}
                   aria-pressed={isActive}
-                  className={`px-4 py-2 rounded-full text-xs font-bold transition-all ${
+                  className={`px-2 py-2 rounded-full text-[11px] font-bold transition-all md:px-4 md:text-xs ${
                     isActive
                       ? 'bg-[#FACC15] text-[#111827] shadow-lg shadow-[#FACC15]/20'
                       : 'bg-white/5 hover:bg-white/10 text-slate-300 border border-white/10'
@@ -81,8 +81,8 @@ export default function CoursesSection() {
 
           {filtered.length === 0 && <p className="text-center text-sm text-slate-400">No course is in this category yet.</p>}
 
-          {/* 3-Column Course Grid */}
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+          {/* Course grid: two by two on phones, three across on larger screens */}
+          <div className="grid grid-cols-2 gap-2.5 md:grid-cols-3 md:gap-6">
             {filtered.map((course, idx) => (
               <motion.div
                 key={course.id}
@@ -91,7 +91,7 @@ export default function CoursesSection() {
                 viewport={{ once: true }}
                 transition={{ duration: 0.5, delay: idx * 0.1 }}
                 whileHover={{ y: -6 }}
-                className="bg-[#1a2234] rounded-3xl overflow-hidden border border-white/10 hover:border-[#FACC15]/50 transition-all flex flex-col justify-between shadow-xl group"
+                className={`bg-[#1a2234] rounded-2xl overflow-hidden border border-white/10 hover:border-[#FACC15]/50 transition-all flex flex-col justify-between shadow-xl group md:rounded-3xl ${idx === 3 ? 'md:hidden' : ''}`}
               >
                 <div className="relative aspect-[16/10] bg-dark-900 overflow-hidden">
                   <Image
@@ -101,14 +101,14 @@ export default function CoursesSection() {
                     unoptimized={!course.thumbnail.startsWith('https://images.unsplash.com/')}
                     className="object-cover group-hover:scale-105 transition-transform duration-500"
                   />
-                  <span className="absolute top-3 left-3 bg-[#111827]/90 text-[#FACC15] text-[10px] font-extrabold px-2.5 py-1 rounded-full backdrop-blur-md border border-white/10">
+                  <span className="absolute left-1.5 top-1.5 bg-[#111827]/90 text-[#FACC15] text-[9px] font-extrabold px-2 py-0.5 rounded-full md:left-3 md:top-3 md:px-2.5 md:py-1 md:text-[10px] backdrop-blur-md border border-white/10">
                     {course.category}
                   </span>
                 </div>
 
-                <div className="p-6 flex-1 flex flex-col justify-between space-y-4">
-                  <div className="space-y-2">
-                    <div className="flex items-center justify-between text-xs text-slate-400">
+                <div className="p-2.5 flex-1 flex flex-col justify-between space-y-2 md:p-6 md:space-y-4">
+                  <div className="space-y-1.5 md:space-y-2">
+                    <div className="flex flex-wrap items-center justify-between gap-1 text-[10px] text-slate-400 md:text-xs">
                       <span className="flex items-center gap-1">
                         {course.duration && (<><Clock className="w-3.5 h-3.5 text-[#FACC15]" /> {course.duration}</>)}
                       </span>
@@ -119,26 +119,26 @@ export default function CoursesSection() {
                     </div>
 
                     <Link href={`/courses/${course.id}`}>
-                      <h3 className="font-display font-bold text-base text-white group-hover:text-[#FACC15] transition-colors line-clamp-2">
+                      <h3 className="font-display font-bold text-[13px] leading-snug text-white md:text-base md:leading-normal group-hover:text-[#FACC15] transition-colors line-clamp-2">
                         {course.title}
                       </h3>
                     </Link>
 
-                    <p className="text-xs text-slate-400 line-clamp-2 leading-relaxed">
+                    <p className="text-xs text-slate-400 line-clamp-2 leading-relaxed max-md:hidden">
                       {course.description}
                     </p>
                   </div>
 
-                  <div className="pt-3 border-t border-white/10 flex items-center justify-between">
-                    <span className="font-display font-extrabold text-2xl text-[#FACC15]">
+                  <div className="pt-2 border-t border-white/10 flex flex-col items-stretch gap-1.5 md:flex-row md:items-center md:justify-between md:gap-0 md:pt-3">
+                    <span className="font-display font-extrabold text-base text-[#FACC15] md:text-2xl">
                       {priceOf(course) === 0 ? 'Free' : takaFromUsd(priceOf(course))}
                     </span>
                     <Link
                       href={`/courses/${course.id}`}
-                      className="group flex items-center gap-2 bg-[#FACC15] hover:bg-[#eab308] text-[#111827] rounded-full pl-4 pr-1 py-1.5 text-xs font-extrabold transition-all shadow-md shadow-[#FACC15]/20"
+                      className="group flex items-center justify-center gap-2 bg-[#FACC15] hover:bg-[#eab308] text-[#111827] rounded-full px-2 py-1.5 text-[11px] font-extrabold md:justify-start md:pl-4 md:pr-1 md:text-xs transition-all shadow-md shadow-[#FACC15]/20"
                     >
                       <span>View Course</span>
-                      <div className="w-6 h-6 rounded-full bg-[#111827] flex items-center justify-center">
+                      <div className="hidden w-6 h-6 rounded-full bg-[#111827] items-center justify-center md:flex">
                         <ArrowRight className="w-3.5 h-3.5 text-[#FACC15]" />
                       </div>
                     </Link>

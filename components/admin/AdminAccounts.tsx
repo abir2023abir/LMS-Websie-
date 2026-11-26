@@ -101,7 +101,7 @@ export default function AdminAccounts() {
           <h2 className="font-display font-extrabold text-xl">Add instructor</h2>
           <p className="text-xs text-slate-500">Creates a mentor account. Give them the email and password so they can sign in.</p>
         </div>
-        <form onSubmit={addInstructor} className="grid gap-3 sm:grid-cols-2">
+        <form onSubmit={addInstructor} className="grid grid-cols-1 gap-3 sm:grid-cols-2">
           <label className="block text-xs font-bold text-slate-600">Full name
             <input required value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} className="mt-1 w-full border border-slate-200 rounded-xl px-3 py-2.5 text-sm font-medium" />
           </label>
@@ -132,7 +132,7 @@ export default function AdminAccounts() {
             </label>
             <div className="text-xs font-bold text-slate-600">
               Profile photo
-              <input type="file" accept="image/jpeg,image/png,image/webp" className="mt-1 block text-xs font-medium" onChange={async (e) => {
+              <input type="file" accept="image/jpeg,image/png,image/webp" className="mt-1 block w-full min-w-0 text-xs font-medium" onChange={async (e) => {
                 const file = e.target.files?.[0];
                 if (!file) return;
                 setPhoto(await shrinkImage(file, 320));

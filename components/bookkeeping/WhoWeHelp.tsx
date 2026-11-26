@@ -18,28 +18,29 @@ const CARDS: { slug: string; label: string; icon: LucideIcon }[] = [
 export default function WhoWeHelp() {
   const known = new Set(bookkeepingIndustries.map((industry) => industry.slug));
   return (
-    <section id="industries" className="scroll-mt-28 bg-[#111827] px-4 py-16 text-white sm:px-6 sm:py-20">
+    <section id="industries" className="scroll-mt-28 bg-[#111827] px-4 py-10 text-white sm:px-6 sm:py-20">
       <div className="mx-auto max-w-5xl">
         <p className="text-center text-xs font-extrabold tracking-[0.18em] text-[#FACC15]">WHO WE HELP</p>
-        <h2 className="mx-auto mt-3 max-w-2xl text-center font-display text-3xl font-extrabold leading-tight sm:text-4xl">Bookkeeping for Businesses Like Yours</h2>
-        <p className="mx-auto mt-3 max-w-xl text-center text-sm leading-relaxed text-slate-300">Practical bookkeeping support for different business needs and industries.</p>
-        <ul className="mt-10 grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
+        <h2 className="mx-auto mt-3 max-w-2xl text-center font-display text-2xl font-extrabold leading-tight sm:text-4xl">Bookkeeping for Businesses Like Yours</h2>
+        <p className="mx-auto mt-2 max-w-xl text-center text-[13px] leading-relaxed text-slate-300 sm:mt-3 sm:text-sm">Practical bookkeeping support for different business needs and industries.</p>
+        {/* Phones: all nine industries fit one screen, three across. */}
+        <ul className="mt-5 grid grid-cols-3 gap-2 sm:mt-10 sm:gap-4">
           {CARDS.filter((card) => known.has(card.slug)).map(({ slug, label, icon: Icon }) => (
             <li key={slug}>
               {/* Each card opens the industry's own bookkeeping page. */}
               <Link
                 href={`/bookkeeping/${slug}`}
-                className="group flex h-full min-h-36 flex-col items-center justify-center gap-4 rounded-3xl border border-white/10 bg-white px-5 py-7 text-center text-[#111827] shadow-sm transition duration-200 hover:-translate-y-1 hover:border-[#FACC15] hover:shadow-xl focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-[#FACC15]"
+                className="group flex h-full min-h-24 flex-col items-center justify-center gap-2 rounded-2xl border border-white/10 bg-white px-1 py-3 sm:min-h-36 sm:gap-4 sm:rounded-3xl sm:px-5 sm:py-7 text-center text-[#111827] shadow-sm transition duration-200 hover:-translate-y-1 hover:border-[#FACC15] hover:shadow-xl focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-[#FACC15]"
               >
-                <span className="flex h-14 w-14 items-center justify-center rounded-2xl bg-[#FEF9C3] text-[#A16207] transition group-hover:bg-[#FACC15] group-hover:text-[#111827]">
-                  <Icon className="h-7 w-7" aria-hidden="true" />
+                <span className="flex h-10 w-10 items-center justify-center rounded-xl sm:h-14 sm:w-14 sm:rounded-2xl bg-[#FEF9C3] text-[#A16207] transition group-hover:bg-[#FACC15] group-hover:text-[#111827]">
+                  <Icon className="h-5 w-5 sm:h-7 sm:w-7" aria-hidden="true" />
                 </span>
-                <span className="font-display text-lg font-extrabold leading-snug">{label}</span>
+                <span className="font-display text-[11px] font-extrabold leading-tight [overflow-wrap:anywhere] sm:text-lg sm:leading-snug">{label}</span>
               </Link>
             </li>
           ))}
         </ul>
-        <p className="mt-8 text-center font-display text-base font-bold text-[#FACC15]">and 70+ more industries</p>
+        <p className="mt-4 text-center font-display text-sm font-bold sm:mt-8 sm:text-base text-[#FACC15]">and 70+ more industries</p>
       </div>
     </section>
   );

@@ -163,12 +163,12 @@ export default function CourseDetailsPage() {
       <FloatingNavbar />
 
       {/* ── HERO BANNER HEADER ── */}
-      <section className="bg-gradient-to-b from-[#FACC15] via-[#FACC15] to-[#EAB308] pt-32 lg:pt-36 pb-12 px-4 sm:px-6 lg:px-8 text-[#111827]">
-        <div className="max-w-7xl mx-auto space-y-4">
+      <section className="bg-gradient-to-b from-[#FACC15] via-[#FACC15] to-[#EAB308] pt-28 pb-6 sm:pt-32 sm:pb-12 lg:pt-36 px-4 sm:px-6 lg:px-8 text-[#111827]">
+        <div className="max-w-7xl mx-auto space-y-3 sm:space-y-4">
           <div>
             <Link
               href="/courses"
-              className="inline-flex items-center gap-2 text-xs font-extrabold text-[#111827]/80 hover:text-[#111827] transition-colors bg-black/5 px-3 py-1.5 rounded-full"
+              className="inline-flex min-h-10 items-center gap-2 text-xs font-extrabold text-[#111827]/80 hover:text-[#111827] transition-colors bg-black/5 px-4 py-1.5 rounded-full md:min-h-0 md:px-3"
             >
               <ArrowLeft className="w-4 h-4" />
               <span>Back to All Courses</span>
@@ -191,7 +191,7 @@ export default function CourseDetailsPage() {
             {course.title}
           </h1>
 
-          <p className="text-sm sm:text-base text-[#111827]/90 leading-relaxed max-w-3xl font-medium">
+          <p className="text-[13px] sm:text-base text-[#111827]/90 leading-relaxed max-w-3xl font-medium">
             {course.description}
           </p>
 
@@ -216,12 +216,12 @@ export default function CourseDetailsPage() {
       </section>
 
       {/* ── MAIN 2-COLUMN CONTENT ── */}
-      <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10 w-full flex-1 space-y-10">
-        <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
+      <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-5 w-full flex-1 space-y-5 sm:py-10 sm:space-y-10">
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-4 sm:gap-8 items-start">
           {/* Left Column (7 Cols): Tabs & Curriculum */}
-          <div className="lg:col-span-7 space-y-6">
+          <div className="lg:col-span-7 space-y-4 sm:space-y-6">
             {/* Instructor Details Card */}
-            <div className="bg-white rounded-3xl border border-slate-200/80 p-6 shadow-sm">
+            <div className="bg-white rounded-3xl border border-slate-200/80 p-4 shadow-sm sm:p-6">
               <div className="flex items-center gap-4">
                 <InstructorAvatar instructorId={mentor?.id || course.instructorId} name={mentor?.name || course.instructorName} />
                 <div>
@@ -240,8 +240,8 @@ export default function CourseDetailsPage() {
             </div>
 
             {/* Tabs */}
-            <div className="bg-white rounded-3xl border border-slate-200/80 p-6 sm:p-8 space-y-8 shadow-sm">
-              <div className="flex flex-wrap items-center gap-2 border-b border-slate-100 pb-4">
+            <div className="bg-white rounded-3xl border border-slate-200/80 p-3.5 sm:p-8 space-y-4 sm:space-y-8 shadow-sm">
+              <div className="grid grid-cols-2 gap-1.5 border-b border-slate-100 pb-3 sm:flex sm:flex-wrap sm:items-center sm:gap-2 sm:pb-4">
                 {[
                   { key: 'overview', label: 'Overview & Outcomes', icon: BookOpen },
                   { key: 'curriculum', label: `Curriculum (${modules.length} Module${modules.length === 1 ? '' : 's'})`, icon: FileCheck },
@@ -251,13 +251,13 @@ export default function CourseDetailsPage() {
                   <button
                     key={key}
                     onClick={() => setActiveTab(key as any)}
-                    className={`flex items-center gap-1.5 px-3 py-2.5 rounded-full text-xs font-bold transition-all whitespace-nowrap ${
+                    className={`flex min-h-10 items-center justify-center gap-1.5 px-2 py-2 rounded-2xl text-[11px] font-bold transition-all sm:justify-start sm:whitespace-nowrap sm:rounded-full sm:px-3 sm:py-2.5 sm:text-xs ${
                       activeTab === key
                         ? 'bg-[#FACC15] text-[#111827] shadow-md shadow-[#FACC15]/20'
                         : 'text-slate-600 hover:text-[#111827] bg-slate-100'
                     }`}
                   >
-                    <Icon className="w-4 h-4" />
+                    <Icon className="w-4 h-4 shrink-0" />
                     <span>{label}</span>
                   </button>
                 ))}
@@ -266,20 +266,20 @@ export default function CourseDetailsPage() {
               {/* TAB 1: OVERVIEW */}
               {activeTab === 'overview' && (
                 hasOverview ? (
-                <div className="space-y-8">
+                <div className="space-y-5 sm:space-y-8">
                   {overview.outcomes.length > 0 && <div className="space-y-4">
                     <h3 className="font-display font-bold text-xl text-[#111827] flex items-center gap-2">
                       <Sparkles className="w-5 h-5 text-amber-500" />
                       <span>What You Will Learn</span>
                     </h3>
 
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div className="grid grid-cols-2 gap-2 sm:gap-4">
                       {overview.outcomes.map((item, idx) => (
                         <div
                           key={idx}
-                          className="bg-slate-50 border border-slate-200/80 rounded-2xl p-4 flex items-start gap-3 text-xs sm:text-sm text-slate-700 font-medium"
+                          className="bg-slate-50 border border-slate-200/80 rounded-2xl p-2.5 flex items-start gap-1.5 text-xs sm:p-4 sm:gap-3 sm:text-sm text-slate-700 font-medium"
                         >
-                          <CheckCircle className="w-5 h-5 text-amber-500 flex-shrink-0 mt-0.5" />
+                          <CheckCircle className="w-4 h-4 text-amber-500 flex-shrink-0 mt-0.5 sm:h-5 sm:w-5" />
                           <span>{item}</span>
                         </div>
                       ))}
@@ -287,16 +287,16 @@ export default function CourseDetailsPage() {
                   </div>}
 
                   {/* Prerequisites */}
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6 pt-4 border-t border-slate-100 text-xs sm:text-sm">
-                    {overview.prerequisites.length > 0 && <div className="space-y-3 bg-slate-50 p-6 rounded-2xl border border-slate-200/80">
-                      <h4 className="font-display font-bold text-[#111827] text-base">Course Prerequisites</h4>
+                  <div className="grid grid-cols-2 gap-2 pt-4 border-t border-slate-100 text-xs sm:gap-6 sm:text-sm">
+                    {overview.prerequisites.length > 0 && <div className="space-y-2 bg-slate-50 p-3 rounded-2xl border border-slate-200/80 sm:space-y-3 sm:p-6">
+                      <h4 className="font-display font-bold text-[#111827] text-sm sm:text-base">Course Prerequisites</h4>
                       <ul className="space-y-2 text-slate-600 list-disc list-inside">
                         {overview.prerequisites.map((item) => <li key={item}>{item}</li>)}
                       </ul>
                     </div>}
 
-                    {overview.audience.length > 0 && <div className="space-y-3 bg-slate-50 p-6 rounded-2xl border border-slate-200/80">
-                      <h4 className="font-display font-bold text-[#111827] text-base">Who is This Course For?</h4>
+                    {overview.audience.length > 0 && <div className="space-y-2 bg-slate-50 p-3 rounded-2xl border border-slate-200/80 sm:space-y-3 sm:p-6">
+                      <h4 className="font-display font-bold text-[#111827] text-sm sm:text-base">Who is This Course For?</h4>
                       <ul className="space-y-2 text-slate-600 list-disc list-inside">
                         {overview.audience.map((item) => <li key={item}>{item}</li>)}
                       </ul>
@@ -375,7 +375,7 @@ export default function CourseDetailsPage() {
           </div>
 
           {/* Right Video Preview & Sticky Enrollment Card (5 Cols) */}
-          <div className="lg:col-span-5 bg-white rounded-3xl border border-slate-200/80 p-6 sm:p-7 shadow-xl space-y-6 lg:sticky lg:top-28">
+          <div className="order-first lg:order-none lg:col-span-5 bg-white rounded-3xl border border-slate-200/80 p-3.5 sm:p-7 shadow-xl space-y-4 sm:space-y-6 lg:sticky lg:top-28">
             {/* Trailer Video Player */}
             <div className="relative aspect-video rounded-2xl overflow-hidden bg-black border border-slate-200 shadow-inner">
               {/* Uploaded class videos are for enrolled students only, so the public page shows a lock card. */}

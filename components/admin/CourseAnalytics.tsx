@@ -134,14 +134,14 @@ export default function CourseAnalytics() {
             Ranking, charts, and lesson breakdown refresh every few seconds. Open a student for the module list.
           </p>
         </div>
-        <div className="flex flex-wrap items-center gap-2">
-          <label className="text-xs font-bold text-slate-500">From
-            <input type="date" value={from} onChange={(e) => setFrom(e.target.value)} className="mt-1 block rounded-xl border border-slate-200 px-3 py-2 text-sm font-semibold" />
+        <div className="grid w-full grid-cols-2 gap-2 sm:flex sm:w-auto sm:flex-wrap sm:items-center">
+          <label className="min-w-0 text-xs font-bold text-slate-500">From
+            <input type="date" value={from} onChange={(e) => setFrom(e.target.value)} className="mt-1 block w-full min-w-0 rounded-xl border border-slate-200 px-3 py-2 text-sm font-semibold" />
           </label>
-          <label className="text-xs font-bold text-slate-500">To
-            <input type="date" value={to} onChange={(e) => setTo(e.target.value)} className="mt-1 block rounded-xl border border-slate-200 px-3 py-2 text-sm font-semibold" />
+          <label className="min-w-0 text-xs font-bold text-slate-500">To
+            <input type="date" value={to} onChange={(e) => setTo(e.target.value)} className="mt-1 block w-full min-w-0 rounded-xl border border-slate-200 px-3 py-2 text-sm font-semibold" />
           </label>
-          <select aria-label="Course" value={courseId} onChange={(e) => setCourseId(e.target.value)} className="rounded-xl border border-slate-200 px-3 py-2 text-sm font-semibold">
+          <select aria-label="Course" value={courseId} onChange={(e) => setCourseId(e.target.value)} className="col-span-2 w-full min-w-0 rounded-xl border border-slate-200 px-3 py-2 text-sm font-semibold sm:w-auto">
           {outline.length === 0 && <option value="">No courses</option>}
           {outline.map((course) => <option key={course.id} value={course.id}>{course.title}</option>)}
           </select>

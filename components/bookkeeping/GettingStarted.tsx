@@ -7,16 +7,16 @@ const steps = [
 
 export default function GettingStarted() {
   return (
-    <section className="mx-auto max-w-6xl px-4 py-16 sm:px-6">
-      <h2 className="text-center font-display text-3xl font-extrabold tracking-tight text-[#111827] sm:text-4xl">Getting Started Is Simple</h2>
-      <p className="mx-auto mt-3 max-w-2xl text-center text-sm text-slate-600 sm:text-base">Tell us about your business. We’ll discuss your needs and plan the next steps together.</p>
-      <ol className="mt-10 grid gap-5 sm:grid-cols-2 lg:grid-cols-4">
+    <section className="mx-auto max-w-6xl px-4 py-10 sm:px-6 sm:py-16">
+      <h2 className="text-center font-display text-2xl font-extrabold tracking-tight text-[#111827] sm:text-4xl">Getting Started Is Simple</h2>
+      <p className="mx-auto mt-2 max-w-2xl text-center text-[13px] text-slate-600 sm:mt-3 sm:text-base">Tell us about your business. We’ll discuss your needs and plan the next steps together.</p>
+      <ol className="mt-5 grid grid-cols-2 gap-2.5 sm:mt-10 sm:gap-5 lg:grid-cols-4">
         {steps.map((step, index) => (
-          <li key={step.title} className="flex h-full flex-col items-center rounded-3xl border border-slate-200 bg-white px-5 py-8 text-center shadow-sm">
+          <li key={step.title} className="flex h-full flex-col items-center rounded-2xl border border-slate-200 bg-white px-2.5 py-4 text-center shadow-sm sm:rounded-3xl sm:px-5 sm:py-8">
             <span className="rounded-full bg-[#111827] px-3 py-1 font-display text-xs font-extrabold tracking-wider text-[#FACC15]">STEP 0{index + 1}</span>
-            <h3 className="mt-4 font-display text-lg font-extrabold text-[#111827]">{step.title}</h3>
-            <span className="mt-3 h-1 w-10 rounded-full bg-[#FACC15]" />
-            <p className="mt-3 text-sm leading-relaxed text-slate-600">{step.detail}</p>
+            <h3 className="mt-2 font-display text-sm font-extrabold leading-snug text-[#111827] sm:mt-4 sm:text-lg">{step.title}</h3>
+            <span className="mt-2 h-1 w-8 rounded-full bg-[#FACC15] sm:mt-3 sm:w-10" />
+            <p className="mt-2 text-xs leading-snug text-slate-600 sm:mt-3 sm:text-sm sm:leading-relaxed">{step.detail}</p>
           </li>
         ))}
       </ol>

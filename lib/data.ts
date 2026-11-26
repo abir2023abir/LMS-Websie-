@@ -290,7 +290,7 @@ export const footerLinks = {
   ],
   support: [
     { label: 'Student Portal', href: '/student' },
-    { label: 'Contact Advisors', href: '/#contact' },
+    { label: 'Contact Advisors', href: '/contact' },
     { label: 'FAQs & Help', href: '/#why-us' },
   ],
   legal: [

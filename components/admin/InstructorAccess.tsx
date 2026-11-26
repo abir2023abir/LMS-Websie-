@@ -180,7 +180,7 @@ export default function InstructorAccess() {
       ) : (
         <div className="overflow-hidden rounded-3xl border border-slate-100 bg-white shadow-sm">
           <div className="overflow-x-auto">
-            <table className="w-full border-separate border-spacing-0 text-sm">
+            <table data-stack="grid" className="w-full border-separate border-spacing-0 text-sm">
               <thead>
                 {/* Group row */}
                 <tr>
@@ -201,7 +201,7 @@ export default function InstructorAccess() {
                     const Icon = tool.icon;
                     const count = shown.filter((p) => tabsOf(p.email).includes(tool.tab)).length;
                     return (
-                      <th key={tool.tab} className={`border-b border-slate-200 px-1 pb-3 align-bottom ${index === 0 ? 'border-l border-l-slate-100' : ''}`}>
+                      <th key={tool.tab} data-label={tool.label} className={`border-b border-slate-200 px-1 pb-3 align-bottom ${index === 0 ? 'border-l border-l-slate-100' : ''}`}>
                         <button
                           type="button"
                           onClick={() => toggleColumn(tool.tab)}
@@ -276,7 +276,7 @@ export default function InstructorAccess() {
                             const picked = PRESETS.find((p) => p.name === e.target.value);
                             if (picked) setTabs(person.email, picked.tabs);
                           }}
-                          className="w-32 rounded-lg border border-slate-200 bg-white px-2 py-1.5 text-xs font-semibold text-slate-700"
+                          className="w-44 max-w-full rounded-lg border border-slate-200 bg-white px-2 py-1.5 text-xs font-semibold text-slate-700"
                         >
                           {!preset && <option value="">Custom</option>}
                           {PRESETS.map((p) => <option key={p.name} value={p.name}>{p.name}</option>)}

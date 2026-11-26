@@ -7,10 +7,10 @@ export default async function SuccessStories() {
   // Client rule: a part with no data is not shown; it appears as soon as the admin adds a story.
   if (stories.length === 0) return null;
   return (
-    <section className="bg-white py-16 sm:py-24 text-[#111827]">
-      <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 space-y-12">
+    <section className="bg-white py-10 sm:py-24 text-[#111827]">
+      <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 space-y-6 sm:space-y-12">
         {/* ── Section Header ── */}
-        <div className="mx-auto max-w-4xl space-y-4 text-center">
+        <div className="mx-auto max-w-4xl space-y-3 text-center sm:space-y-4">
           {/* Real Learning Journeys Badge */}
           <div className="inline-flex items-center gap-2 bg-[#FEF9C3] border border-[#FACC15]/40 text-[#111827] rounded-full px-3.5 py-1.5">
             <div className="bg-[#FACC15] text-[#111827] p-1 rounded-full flex items-center justify-center">
@@ -20,12 +20,12 @@ export default async function SuccessStories() {
           </div>
 
           {/* Headline */}
-          <h2 className="font-display font-extrabold text-3xl sm:text-4xl lg:text-5xl text-[#111827] tracking-tight leading-tight">
+          <h2 className="font-display font-extrabold text-2xl sm:text-4xl lg:text-5xl text-[#111827] tracking-tight leading-tight">
             Small Steps. Big Dreams. Real Progress.
           </h2>
 
           {/* Description */}
-          <p className="text-slate-600 text-sm sm:text-base leading-relaxed font-normal max-w-3xl mx-auto">
+          <p className="text-slate-600 text-[13px] sm:text-base leading-relaxed font-normal max-w-3xl mx-auto">
             Every learning journey starts somewhere. Discover how learners build new skills, overcome challenges, and work toward their goals through learning, practice, and persistence.
           </p>
         </div>

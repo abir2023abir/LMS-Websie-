@@ -149,8 +149,8 @@ export default function BlogEditor() {
 
   return (
     <div className="space-y-6">
-      <div className="flex items-center justify-between">
-        <p className="text-sm text-slate-600">{articles.length ? `${articles.length} article${articles.length === 1 ? '' : 's'}.` : 'No articles yet.'} The blog page stays hidden on the site for now.</p>
+      <div className="flex flex-wrap items-center justify-between gap-3">
+        <p className="min-w-0 text-sm text-slate-600">{articles.length ? `${articles.length} article${articles.length === 1 ? '' : 's'}.` : 'No articles yet.'} The blog page stays hidden on the site for now.</p>
         <button
           onClick={() => {
             setEditingArticle(null);
@@ -184,14 +184,14 @@ export default function BlogEditor() {
         {articles.map((article) => (
           <div key={article.id} className="bg-white border border-slate-200 rounded-lg p-4 space-y-3">
             <div className="flex items-start justify-between gap-3">
-              <div className="flex-1 space-y-2">
-                <div className="flex items-center gap-2">
+              <div className="min-w-0 flex-1 space-y-2">
+                <div className="flex flex-wrap items-center gap-2">
                   {article.isFeatured && <Star className="w-4 h-4 text-[#FACC15] fill-[#FACC15]" />}
                   <input
                     type="text"
                     value={article.title}
                     readOnly
-                    className="flex-1 px-3 py-1.5 border border-slate-200 rounded text-sm font-bold bg-slate-50"
+                    className="min-w-0 flex-1 basis-40 px-3 py-1.5 border border-slate-200 rounded text-sm font-bold bg-slate-50"
                   />
                   <span className="px-2 py-1 bg-slate-100 rounded text-xs">{article.category}</span>
                 </div>
@@ -201,7 +201,7 @@ export default function BlogEditor() {
                   rows={2}
                   className="w-full px-3 py-1.5 border border-slate-200 rounded text-xs bg-slate-50 resize-none"
                 />
-                <div className="flex items-center gap-2 text-xs text-slate-500">
+                <div className="flex flex-wrap items-center gap-2 text-xs text-slate-500">
                   <span>{article.author.name}</span>
                   <span>•</span>
                   <span>{article.readTime}</span>
@@ -253,7 +253,7 @@ export default function BlogEditor() {
           }}
         >
           <div className="space-y-4 max-h-[70vh] overflow-y-auto">
-            <div className="grid grid-cols-2 gap-4">
+            <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
               <div className="space-y-2">
                 <label className="block text-xs font-bold text-slate-500 uppercase">Slug</label>
                 <input
@@ -319,7 +319,7 @@ export default function BlogEditor() {
               />
             </div>
 
-            <div className="grid grid-cols-3 gap-4">
+            <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
               <div className="space-y-2">
                 <label className="block text-xs font-bold text-slate-500 uppercase">Author Name</label>
                 <input

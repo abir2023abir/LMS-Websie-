@@ -48,8 +48,8 @@ export default function Testimonials({ page = 'home' }: { page?: 'home' | 'conta
   if (reviews.length === 0) return null;
 
   return (
-    <section id="testimonials" className="relative overflow-hidden border-t border-white/10 bg-[#111827] py-16 text-white sm:py-20">
-      <div className="mx-auto max-w-6xl space-y-9 px-4 sm:space-y-12 sm:px-6 lg:px-8">
+    <section id="testimonials" className="relative overflow-hidden border-t border-white/10 bg-[#111827] py-10 text-white sm:py-20">
+      <div className="mx-auto max-w-6xl space-y-5 px-4 sm:space-y-12 sm:px-6 lg:px-8">
         <div className="space-y-3">
           <div className="inline-flex items-center gap-2 rounded-full border border-white/15 bg-white/10 px-3.5 py-1 text-[#FACC15]">
             <span className="flex items-center justify-center rounded-full bg-[#FACC15] p-1 text-[#111827]">
@@ -58,7 +58,7 @@ export default function Testimonials({ page = 'home' }: { page?: 'home' | 'conta
             <span className="text-xs font-bold tracking-wide">STUDENT REVIEWS</span>
           </div>
 
-          <h2 className="font-display text-3xl font-extrabold tracking-tight text-white sm:text-4xl">
+          <h2 className="font-display text-2xl font-extrabold tracking-tight text-white sm:text-4xl">
             Student Reviews
           </h2>
           <p className="max-w-2xl text-sm text-slate-400 sm:text-base">
@@ -66,17 +66,17 @@ export default function Testimonials({ page = 'home' }: { page?: 'home' | 'conta
           </p>
         </div>
 
-        <div className="grid grid-cols-1 items-stretch gap-5 md:grid-cols-2">
+        <div className="grid grid-cols-1 items-stretch gap-2.5 md:grid-cols-2 md:gap-5">
           {visibleReviews.map((review, index) => (
             <motion.article
               key={review.id}
               initial={{ opacity: 0, y: 16 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.35, delay: index * 0.08 }}
-              className="relative flex min-h-64 flex-col justify-between rounded-3xl border border-white/10 bg-slate-800/80 p-6 shadow-lg shadow-black/10 sm:p-8"
+              className="relative flex flex-col justify-between rounded-2xl border border-white/10 bg-slate-800/80 p-4 shadow-lg shadow-black/10 sm:min-h-64 sm:rounded-3xl sm:p-8"
             >
               <Quote aria-hidden="true" className="absolute right-6 top-6 h-10 w-10 text-[#FACC15]/25" />
-              <div className="space-y-4 pr-10">
+              <div className="space-y-2 pr-10 sm:space-y-4">
                 {review.rating && (
                   <div className="flex items-center gap-0.5" aria-label={`${review.rating} out of 5 stars`}>
                     {Array.from({ length: review.rating }).map((_, starIndex) => (
@@ -88,7 +88,7 @@ export default function Testimonials({ page = 'home' }: { page?: 'home' | 'conta
                 <p className="text-sm leading-relaxed text-slate-300">“{review.text}”</p>
               </div>
 
-              <div className="mt-7 flex flex-wrap items-center justify-between gap-4 border-t border-white/10 pt-5">
+              <div className="mt-3 flex flex-wrap items-center justify-between gap-4 border-t border-white/10 pt-3 sm:mt-7 sm:pt-5">
                 <div className="flex min-w-0 items-center gap-3">
                   <div aria-hidden="true" className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl border border-[#FACC15]/70 bg-slate-700 text-sm font-bold text-[#FACC15]">
                     {initials(review.name)}

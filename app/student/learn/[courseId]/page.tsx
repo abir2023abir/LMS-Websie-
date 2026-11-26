@@ -327,12 +327,12 @@ export default function StudentLearnPage() {
     <AuthGuard allowedRole="Student">
       <div className="min-h-screen bg-slate-50 text-[#111827] flex flex-col selection:bg-[#FACC15] selection:text-[#111827]">
         {/* ── TOP CLASSROOM HEADER BAR (WHITE BACKGROUND) ── */}
-        <header className="bg-white border-b border-slate-200 px-4 sm:px-6 py-3.5 flex items-center justify-between sticky top-0 z-40 shadow-sm backdrop-blur-md">
-          <div className="flex items-center gap-4">
+        <header className="bg-white border-b border-slate-200 px-3 sm:px-6 py-3.5 flex items-center justify-between gap-3 sticky top-0 z-40 shadow-sm backdrop-blur-md">
+          <div className="flex min-w-0 flex-1 items-center gap-2 sm:gap-4">
             <Link
               href="/student"
               aria-label="Back to Dashboard"
-              className="p-2 text-slate-600 hover:text-[#111827] rounded-xl hover:bg-slate-100 transition-colors flex items-center gap-2 text-xs font-bold"
+              className="p-2 shrink-0 text-slate-600 hover:text-[#111827] rounded-xl hover:bg-slate-100 transition-colors flex items-center justify-center gap-2 text-xs font-bold"
             >
               <ArrowLeft className="w-4 h-4" />
               <span className="hidden sm:inline">Back to Dashboard</span>
@@ -340,7 +340,7 @@ export default function StudentLearnPage() {
 
             <span className="h-4 w-px bg-slate-200 hidden sm:block" />
 
-            <div className="flex items-center gap-2 max-w-md">
+            <div className="flex min-w-0 max-w-md items-center gap-2">
               <span className="hidden md:inline-block bg-[#FACC15] text-[#111827] text-[10px] font-extrabold px-2.5 py-0.5 rounded-full uppercase shadow-xs">
                 {course.category || 'Course'}
               </span>
@@ -351,7 +351,7 @@ export default function StudentLearnPage() {
           </div>
 
           {/* Right Header Progress & Certificate Trigger */}
-          <div className="flex items-center gap-4">
+          <div className="flex shrink-0 items-center gap-4">
             {/* Progress Gauge */}
             <div className="hidden lg:flex flex-col items-end">
               <div className="flex items-center gap-2 text-xs">
@@ -376,7 +376,7 @@ export default function StudentLearnPage() {
                 <span>Download Certificate</span>
               </button>
             ) : (
-              <div className="flex items-center gap-1.5 text-xs text-slate-600 bg-slate-100 px-3 py-1.5 rounded-xl border border-slate-200 font-medium">
+              <div className="flex items-center gap-1.5 text-xs text-slate-600 bg-slate-100 px-2.5 py-1.5 rounded-xl border border-slate-200 font-medium whitespace-nowrap sm:px-3">
                 <Award className="w-3.5 h-3.5 text-slate-400" />
                 <span>Cert at 100% ({completionPercent}%)</span>
               </div>
@@ -405,12 +405,12 @@ export default function StudentLearnPage() {
                     <img src={course.thumbnail} alt="" className="absolute inset-0 h-full w-full object-cover opacity-80 transition duration-500 group-hover:scale-105" />
                   )}
                   <span className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/20 to-transparent" aria-hidden="true" />
-                  <span className="absolute left-1/2 top-1/2 flex h-20 w-20 -translate-x-1/2 -translate-y-1/2 items-center justify-center rounded-full bg-[#FACC15] text-[#111827] shadow-2xl transition group-hover:scale-110">
-                    <PlayCircle className="h-10 w-10" />
+                  <span className="absolute left-1/2 top-[36%] flex h-14 w-14 -translate-x-1/2 -translate-y-1/2 items-center sm:top-1/2 sm:h-20 sm:w-20 justify-center rounded-full bg-[#FACC15] text-[#111827] shadow-2xl transition group-hover:scale-110">
+                    <PlayCircle className="h-7 w-7 sm:h-10 sm:w-10" />
                   </span>
-                  <span className="absolute inset-x-0 bottom-0 p-5 text-left">
+                  <span className="absolute inset-x-0 bottom-0 p-3 text-left sm:p-5">
                     <span className="block text-[11px] font-bold uppercase tracking-wide text-[#FACC15]">{currentModule?.title}</span>
-                    <span className="mt-1 block font-display text-lg font-extrabold text-white sm:text-xl">{currentLesson.title}</span>
+                    <span className="mt-1 line-clamp-2 font-display text-sm font-extrabold text-white sm:text-xl">{currentLesson.title}</span>
                   </span>
                 </button>
               ) : (
@@ -437,7 +437,7 @@ export default function StudentLearnPage() {
             </div>
 
             {/* ── CLASSROOM TABS (client layout): Overview · Modules · Classroom · Message ── */}
-            <nav aria-label="Classroom" className="flex gap-2 overflow-x-auto rounded-2xl border border-slate-200/80 bg-white p-2 shadow-sm scrollbar-none">
+            <nav aria-label="Classroom" className="grid grid-cols-2 gap-2 rounded-2xl border border-slate-200/80 bg-white p-2 shadow-sm scrollbar-none sm:flex sm:overflow-x-auto">
               {([
                 { key: 'overview', label: 'Overview', icon: FileText },
                 { key: 'modules', label: 'Modules', icon: Layers },
@@ -449,7 +449,7 @@ export default function StudentLearnPage() {
                   type="button"
                   onClick={() => setTopTab(key)}
                   aria-current={topTab === key ? 'page' : undefined}
-                  className={`flex min-h-10 shrink-0 items-center gap-2 rounded-xl px-3.5 text-xs font-bold transition-all whitespace-nowrap ${topTab === key ? 'bg-[#FACC15] text-[#111827] shadow-sm' : 'text-slate-600 hover:bg-slate-100 hover:text-[#111827]'}`}
+                  className={`flex min-h-10 shrink-0 items-center justify-center gap-2 rounded-xl px-3.5 text-xs font-bold transition-all whitespace-nowrap ${topTab === key ? 'bg-[#FACC15] text-[#111827] shadow-sm' : 'text-slate-600 hover:bg-slate-100 hover:text-[#111827]'}`}
                 >
                   <Icon className="h-4 w-4" />
                   <span>{label}</span>
@@ -568,7 +568,7 @@ export default function StudentLearnPage() {
                 <button
                   onClick={handlePrevLesson}
                   disabled={!hasPrevLesson}
-                  className="flex-1 sm:flex-none p-2.5 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 disabled:opacity-30 disabled:pointer-events-none transition-colors border border-slate-200 text-xs font-bold flex items-center justify-center gap-1"
+                  className="w-12 shrink-0 sm:w-auto p-2.5 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 disabled:opacity-30 disabled:pointer-events-none transition-colors border border-slate-200 text-xs font-bold flex items-center justify-center gap-1"
                   title="Previous Lecture"
                 >
                   <ChevronLeft className="w-4 h-4" />
@@ -577,7 +577,7 @@ export default function StudentLearnPage() {
 
                 <div
                   title="A lesson is complete once every step is done: video, quiz, assignment, exam and live class or approval."
-                  className={`flex-1 sm:flex-none px-4 py-2.5 rounded-xl text-xs font-extrabold flex items-center justify-center gap-1.5 ${
+                  className={`flex-1 sm:flex-none min-h-10 px-3 sm:px-4 py-2.5 rounded-xl text-xs font-extrabold flex items-center justify-center gap-1.5 ${
                     isCurrentLessonDone
                       ? 'bg-emerald-600 text-white shadow-md shadow-emerald-600/20'
                       : 'bg-slate-100 text-slate-500 border border-slate-200'
@@ -590,7 +590,7 @@ export default function StudentLearnPage() {
                 <button
                   onClick={handleNextLesson}
                   disabled={!hasNextLesson}
-                  className="flex-1 sm:flex-none p-2.5 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 disabled:opacity-30 disabled:pointer-events-none transition-colors border border-slate-200 text-xs font-bold flex items-center justify-center gap-1"
+                  className="w-12 shrink-0 sm:w-auto p-2.5 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 disabled:opacity-30 disabled:pointer-events-none transition-colors border border-slate-200 text-xs font-bold flex items-center justify-center gap-1"
                   title="Next Lecture"
                 >
                   <span className="hidden sm:inline">Next</span>
@@ -602,7 +602,7 @@ export default function StudentLearnPage() {
 
             {/* ── LESSON TABS (client layout): Overview & Study Notes · video · Quiz · Assignment · Ask Instructor · Exams · Resources ── */}
             <div id="classroom-panel" className="scroll-mt-24 overflow-hidden rounded-3xl border border-slate-200/80 bg-white shadow-sm">
-              <nav aria-label="Lesson" className="flex gap-1.5 overflow-x-auto border-b border-slate-100 p-2 scrollbar-none">
+              <nav aria-label="Lesson" className="grid grid-cols-2 gap-1.5 border-b border-slate-100 p-2 scrollbar-none sm:flex sm:overflow-x-auto">
                 {([
                   { key: 'overview', label: 'Overview & Study Notes', icon: FileText },
                   { key: 'video', label: 'Video', icon: PlayCircle },
@@ -617,7 +617,7 @@ export default function StudentLearnPage() {
                     type="button"
                     onClick={() => setActiveTab(key)}
                     aria-current={activeTab === key ? 'page' : undefined}
-                    className={`flex min-h-10 shrink-0 items-center gap-2 rounded-xl px-3.5 text-xs font-bold transition-all whitespace-nowrap ${activeTab === key ? 'bg-[#111827] text-[#FACC15]' : 'text-slate-600 hover:bg-slate-100 hover:text-[#111827]'}`}
+                    className={`flex min-h-11 shrink-0 items-center gap-2 rounded-xl px-3 text-left text-xs font-bold transition-all first:col-span-2 first:justify-center sm:min-h-10 sm:whitespace-nowrap sm:px-3.5 sm:first:col-span-1 ${activeTab === key ? 'bg-[#111827] text-[#FACC15]' : 'text-slate-600 hover:bg-slate-100 hover:text-[#111827]'}`}
                   >
                     <Icon className="h-4 w-4" />
                     <span>{label}</span>
@@ -744,7 +744,7 @@ export default function StudentLearnPage() {
           {/* ═════════════════════════════════════════════════════════
               RIGHT COLUMN (32% width): Scrollable Course Curriculum
              ═════════════════════════════════════════════════════════ */}
-          <div className="lg:col-span-4 bg-white rounded-3xl border border-slate-200/80 p-5 sm:p-6 shadow-sm space-y-5 lg:sticky lg:top-20 max-h-[calc(100vh-6rem)] overflow-y-auto scrollbar-thin scrollbar-thumb-slate-200">
+          <div className="lg:col-span-4 bg-white rounded-3xl border border-slate-200/80 p-5 sm:p-6 shadow-sm space-y-5 lg:sticky lg:top-20 lg:max-h-[calc(100vh-6rem)] lg:overflow-y-auto scrollbar-thin scrollbar-thumb-slate-200">
             {/* Curriculum Header */}
             <div className="space-y-1 pb-3 border-b border-slate-100">
               <div className="flex items-center justify-between">

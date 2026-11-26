@@ -116,9 +116,9 @@ export function LanguageProvider({ children }: { children: React.ReactNode }) {
   return (
     <LanguageContext.Provider value={{ lang, setLang }}>
       {children}
-      <div className="fixed bottom-4 right-4 z-[90] flex overflow-hidden rounded-full border-2 border-[#D4AF37] bg-white shadow-lg" data-no-translate>
-        <button type="button" onClick={() => setLang('en')} className={`px-3 py-2 text-xs font-extrabold ${lang === 'en' ? 'bg-[#FACC15] text-[#111827]' : 'text-[#111827]'}`}>EN</button>
-        <button type="button" onClick={() => setLang('bn')} className={`px-3 py-2 text-xs font-extrabold ${lang === 'bn' ? 'bg-[#FACC15] text-[#111827]' : 'text-[#111827]'}`}>বাংলা</button>
+      <div className="fixed bottom-2 right-2 z-[90] md:bottom-4 md:right-4 flex overflow-hidden rounded-full border-2 border-[#D4AF37] bg-white shadow-lg" data-no-translate data-language-switch>
+        <button type="button" onClick={() => setLang('en')} className={`min-h-8 px-2 text-[11px] font-extrabold md:min-h-0 md:px-3 md:py-2 md:text-xs ${lang === 'en' ? 'bg-[#FACC15] text-[#111827]' : 'text-[#111827]'}`}>EN</button>
+        <button type="button" onClick={() => setLang('bn')} className={`min-h-8 px-2 text-[11px] font-extrabold md:min-h-0 md:px-3 md:py-2 md:text-xs ${lang === 'bn' ? 'bg-[#FACC15] text-[#111827]' : 'text-[#111827]'}`}>বাংলা</button>
       </div>
     </LanguageContext.Provider>
   );

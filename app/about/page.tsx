@@ -38,29 +38,29 @@ export default function AboutPage() {
     <div className="min-h-screen bg-white text-[#111827] selection:bg-[#FACC15] selection:text-[#111827]">
       <FloatingNavbar />
 
-      <section className="bg-gradient-to-b from-[#FACC15] to-[#EAB308] pt-28 lg:pt-32 pb-12">
+      <section className="bg-gradient-to-b from-[#FACC15] to-[#EAB308] pt-28 lg:pt-32 pb-6 sm:pb-12">
         <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
           <p className="text-xs font-bold uppercase tracking-wider">About us</p>
-          <h1 className="mt-2 font-display font-extrabold text-4xl sm:text-5xl tracking-tight max-w-3xl">
+          <h1 className="mt-2 font-display font-extrabold text-[1.75rem] leading-tight sm:text-5xl tracking-tight max-w-3xl">
             Practical skills for your next career step.
           </h1>
-          <p className="mt-3 max-w-xl text-sm sm:text-base font-medium text-[#111827]/80">
+          <p className="mt-3 max-w-xl text-[13px] sm:text-base font-medium text-[#111827]/80">
             Career Bridge.Studio helps learners build job-ready skills in accounting, business finance, and digital work — and helps businesses keep their books in order.
           </p>
         </div>
       </section>
 
-      <section className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-14 space-y-12">
-        <div className="grid sm:grid-cols-3 gap-4">
+      <section className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-6 space-y-5 sm:py-14 sm:space-y-12">
+        <div className="grid grid-cols-3 gap-2 sm:gap-4">
           {figures.map((item) => (
-            <div key={item.label} className="rounded-3xl border border-[#FACC15]/40 bg-[#FEFCE8] p-6 text-center">
-              <div className="font-display font-extrabold text-3xl">{item.value}</div>
-              <div className="mt-1 text-sm font-semibold text-slate-600">{item.label}</div>
+            <div key={item.label} className="rounded-2xl border border-[#FACC15]/40 bg-[#FEFCE8] px-1.5 py-3 text-center sm:rounded-3xl sm:p-6">
+              <div className="font-display font-extrabold text-lg sm:text-3xl">{item.value}</div>
+              <div className="mt-1 text-[10px] font-semibold leading-tight text-slate-600 sm:text-sm sm:leading-normal">{item.label}</div>
             </div>
           ))}
         </div>
 
-        <div className="max-w-3xl space-y-4 text-sm sm:text-base leading-relaxed text-slate-600">
+        <div className="max-w-3xl space-y-3 text-[13px] sm:space-y-4 sm:text-base leading-relaxed text-slate-600">
           <p>
             We believe practical skills open doors. Our courses focus on what people actually use at work: recording transactions, reading financial reports, and working confidently with everyday digital tools. Mentors review assignments and answer questions, and guardians can follow the progress of a linked student.
           </p>
@@ -69,14 +69,14 @@ export default function AboutPage() {
           </p>
         </div>
 
-        <div className="grid md:grid-cols-3 gap-4">
+        <div className="grid grid-cols-2 gap-2.5 sm:gap-4 md:grid-cols-3">
           {points.map((item) => (
-            <article key={item.title} className="rounded-3xl border border-slate-200 p-6 space-y-3">
+            <article key={item.title} className="rounded-2xl border border-slate-200 p-3 space-y-2 last:col-span-2 sm:rounded-3xl sm:p-6 sm:space-y-3 md:last:col-span-1">
               <span className="w-10 h-10 rounded-xl bg-[#111827] text-[#FACC15] flex items-center justify-center">
                 <item.icon className="w-4 h-4" />
               </span>
-              <h2 className="font-display font-bold text-lg">{item.title}</h2>
-              <p className="text-sm text-slate-600 leading-relaxed">{item.text}</p>
+              <h2 className="font-display font-bold text-sm leading-snug sm:text-lg">{item.title}</h2>
+              <p className="text-xs text-slate-600 leading-relaxed sm:text-sm">{item.text}</p>
             </article>
           ))}
         </div>

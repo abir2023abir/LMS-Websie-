@@ -68,10 +68,10 @@ export default function SignUpPage() {
   };
 
   return (
-    <div className="min-h-screen bg-slate-50 text-[#111827] flex flex-col justify-center py-12 sm:px-6 lg:px-8 relative overflow-hidden selection:bg-[#FACC15] selection:text-[#111827]">
+    <div className="min-h-screen bg-slate-50 text-[#111827] flex flex-col justify-center pb-6 pt-16 sm:px-6 sm:py-12 lg:px-8 relative overflow-hidden selection:bg-[#FACC15] selection:text-[#111827]">
       <Link
         href="/"
-        className="absolute top-6 left-6 sm:top-8 sm:left-8 z-20 inline-flex items-center gap-2 bg-white/90 backdrop-blur border border-slate-200 hover:border-[#111827] hover:bg-[#FACC15] text-[#111827] text-xs font-bold px-4 py-2.5 rounded-full shadow-sm transition-all"
+        className="absolute top-3 left-4 sm:top-8 sm:left-8 z-20 inline-flex items-center gap-2 bg-white/90 backdrop-blur border border-slate-200 hover:border-[#111827] hover:bg-[#FACC15] text-[#111827] text-xs font-bold px-4 py-2.5 rounded-full shadow-sm transition-all"
       >
         <ArrowLeft className="w-4 h-4" />
         Back to Home
@@ -80,11 +80,11 @@ export default function SignUpPage() {
       <div className="absolute top-[-100px] left-[-100px] w-96 h-96 bg-[#FACC15]/20 rounded-full blur-3xl pointer-events-none" />
       <div className="absolute bottom-[-100px] right-[-100px] w-96 h-96 bg-amber-400/10 rounded-full blur-3xl pointer-events-none" />
 
-      <div className="sm:mx-auto sm:w-full sm:max-w-md text-center z-10 px-4 space-y-3">
+      <div className="sm:mx-auto sm:w-full sm:max-w-md text-center z-10 px-4 space-y-2 sm:space-y-3">
         <Link href="/" className="inline-flex items-center justify-center" aria-label="Career Bridge Studio home">
-          <BrandLogo className="mx-auto h-16 w-auto" />
+          <BrandLogo className="mx-auto h-12 w-auto sm:h-16" />
         </Link>
-        <h2 className="font-display font-extrabold text-3xl sm:text-4xl text-[#111827] tracking-tight">
+        <h2 className="font-display font-extrabold text-2xl sm:text-4xl text-[#111827] tracking-tight">
           Create Student Account
         </h2>
         <p className="text-xs sm:text-sm text-slate-600 font-medium">
@@ -92,8 +92,8 @@ export default function SignUpPage() {
         </p>
       </div>
 
-      <div className="mt-8 sm:mx-auto sm:w-full sm:max-w-md z-10 px-4">
-        <div className="bg-white rounded-3xl border border-slate-200/80 p-8 shadow-xl space-y-6">
+      <div className="mt-4 sm:mx-auto sm:mt-8 sm:w-full sm:max-w-md z-10 px-4">
+        <div className="bg-white rounded-3xl border border-slate-200/80 p-5 shadow-xl space-y-4 sm:space-y-6 sm:p-8">
           <div className="flex items-center justify-center gap-2 text-xs font-bold text-slate-600">
             <GraduationCap className="w-5 h-5 text-amber-600" />
             <span>Student registration only</span>
@@ -109,7 +109,7 @@ export default function SignUpPage() {
           <GoogleSignInButton />
           <p className="text-center text-[11px] font-bold uppercase tracking-wider text-slate-400">or create with email</p>
 
-          <form onSubmit={handleEmailSignUp} className="space-y-4">
+          <form onSubmit={handleEmailSignUp} className="space-y-3 sm:space-y-4">
             <div>
               <label htmlFor="signup-name" className="block text-xs font-bold text-slate-700 mb-1.5 uppercase tracking-wider">
                 Full Name

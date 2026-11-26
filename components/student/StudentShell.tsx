@@ -61,7 +61,7 @@ export default function StudentShell({ active, title, children }: { active: Stud
   return (
     <div className="min-h-screen bg-[#f6f3ec] font-sans text-slate-900 lg:flex">
       {menuOpen && <div className="fixed inset-0 z-40 bg-[#0b1220]/60 backdrop-blur-sm lg:hidden" onClick={() => setMenuOpen(false)} aria-hidden="true" />}
-      <aside className={`fixed inset-y-0 left-0 z-50 flex w-[17.5rem] shrink-0 flex-col bg-[#0c1222] text-white shadow-2xl shadow-black/30 transition-transform duration-200 lg:sticky lg:top-0 lg:h-screen lg:translate-x-0 ${menuOpen ? 'translate-x-0' : '-translate-x-full'}`}>
+      <aside className={`fixed inset-y-0 left-0 z-50 flex w-[17.5rem] shrink-0 flex-col bg-[#0c1222] text-white shadow-black/30 transition-transform duration-200 lg:shadow-2xl lg:sticky lg:top-0 lg:h-screen lg:translate-x-0 ${menuOpen ? 'translate-x-0 shadow-2xl' : '-translate-x-full'}`}>
         <div className="border-b border-white/10 bg-gradient-to-br from-[#172033] to-[#0c1222] px-5 py-5">
           <div className="flex items-start justify-between gap-3">
             <div className="min-w-0">

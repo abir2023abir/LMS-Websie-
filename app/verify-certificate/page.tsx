@@ -113,14 +113,14 @@ function VerifyCertificateContent() {
       <FloatingNavbar />
 
       {/* ── HEADER BANNER ── */}
-      <section className="bg-gradient-to-b from-[#FACC15] via-[#FACC15] to-[#EAB308] pt-32 lg:pt-36 pb-14 px-4 sm:px-6 lg:px-8 text-[#111827]">
+      <section className="bg-gradient-to-b from-[#FACC15] via-[#FACC15] to-[#EAB308] pt-28 pb-8 sm:pt-32 sm:pb-14 lg:pt-36 px-4 sm:px-6 lg:px-8 text-[#111827]">
         <div className="max-w-4xl mx-auto text-center space-y-4">
           <div className="inline-flex items-center gap-2 bg-[#111827] text-white rounded-full px-3.5 py-1.5 text-xs font-bold shadow-md">
             <ShieldCheck className="w-4 h-4 text-[#FACC15]" />
             <span>Public Credential Verification Registry</span>
           </div>
 
-          <h1 className="font-display font-extrabold text-3xl sm:text-5xl text-[#111827] tracking-tight leading-tight">
+          <h1 className="font-display font-extrabold text-2xl sm:text-5xl text-[#111827] tracking-tight leading-tight">
             Verify a Certificate
           </h1>
 
@@ -129,20 +129,20 @@ function VerifyCertificateContent() {
           </p>
 
           {/* Search Form */}
-          <form onSubmit={handleSearch} className="pt-3 max-w-lg mx-auto flex gap-2">
+          <form onSubmit={handleSearch} className="pt-1 max-w-lg mx-auto flex flex-col gap-2 sm:flex-row sm:pt-3">
             <div className="flex-1 relative">
               <input
                 type="text"
                 value={certInput}
                 onChange={(e) => setCertInput(e.target.value)}
                 placeholder="Enter Certificate ID (e.g. CBS-2026-K9P2W7)..."
-                className="w-full bg-white text-[#111827] placeholder-slate-400 font-mono font-bold text-xs sm:text-sm px-4 py-3.5 rounded-2xl border-2 border-black/10 shadow-xl focus:outline-none focus:border-[#111827]"
+                className="w-full bg-white text-[#111827] placeholder-slate-400 font-mono font-bold text-xs max-sm:placeholder:text-[11px] sm:text-sm px-4 py-3.5 rounded-2xl border-2 border-black/10 shadow-xl focus:outline-none focus:border-[#111827]"
               />
             </div>
             <button
               type="submit"
               disabled={loading}
-              className="bg-[#111827] hover:bg-slate-800 text-white font-extrabold text-xs px-6 py-3.5 rounded-2xl transition-all shadow-md flex items-center gap-2 flex-shrink-0 disabled:opacity-50"
+              className="bg-[#111827] hover:bg-slate-800 text-white font-extrabold text-xs px-6 py-3.5 rounded-2xl transition-all shadow-md flex items-center justify-center gap-2 flex-shrink-0 disabled:opacity-50"
             >
               {loading ? (
                 <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
@@ -157,7 +157,7 @@ function VerifyCertificateContent() {
       </section>
 
       {/* ── MAIN VERIFICATION RESULTS ── */}
-      <main className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-12 w-full flex-1 space-y-8">
+      <main className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-4 sm:py-12 w-full flex-1 space-y-4 sm:space-y-8">
         {/* Loading Indicator */}
         {loading && (
           <div className="bg-white rounded-3xl border border-slate-200 p-12 text-center space-y-3 shadow-sm">
@@ -171,7 +171,7 @@ function VerifyCertificateContent() {
           <motion.div
             initial={{ opacity: 0, y: 10 }}
             animate={{ opacity: 1, y: 0 }}
-            className="bg-rose-50 border-2 border-rose-200 rounded-3xl p-8 sm:p-10 text-center space-y-4 shadow-sm"
+            className="bg-rose-50 border-2 border-rose-200 rounded-3xl p-5 sm:p-10 text-center space-y-4 shadow-sm"
           >
             <div className="w-14 h-14 rounded-2xl bg-rose-100 text-rose-600 flex items-center justify-center mx-auto">
               <AlertCircle className="w-7 h-7" />
@@ -237,16 +237,16 @@ function VerifyCertificateContent() {
             </div>
 
             {/* ── PRINTABLE CERTIFICATE CARD ── */}
-            <div className="bg-[#FCFBF7] border-8 border-[#111827] rounded-3xl p-6 sm:p-12 shadow-2xl relative overflow-hidden print:p-0 print:border-none print:shadow-none">
+            <div className="bg-[#FCFBF7] border-4 border-[#111827] rounded-3xl p-2 sm:border-8 sm:p-12 shadow-2xl relative overflow-hidden print:p-0 print:border-none print:shadow-none">
               {/* Inner Decorative Gold Border */}
-              <div className="border-4 border-[#D4AF37] rounded-2xl p-6 sm:p-10 relative space-y-8 text-center bg-white/60">
+              <div className="border-2 border-[#D4AF37] rounded-2xl p-3 sm:border-4 sm:p-10 relative space-y-4 sm:space-y-8 text-center bg-white/60">
                 {/* Header Seal */}
                 <div className="space-y-2">
                   <div className="inline-flex items-center gap-2 bg-[#111827] text-[#FACC15] border border-[#D4AF37] text-[11px] font-extrabold px-4 py-1 rounded-full uppercase tracking-widest shadow">
                     <Sparkles className="w-3.5 h-3.5 fill-[#FACC15]" />
                     <span>Career Bridge.Studio</span>
                   </div>
-                  <h2 className="font-display font-black text-2xl sm:text-4xl text-[#111827] tracking-tight uppercase pt-2">
+                  <h2 className="font-display font-black text-lg sm:text-4xl text-[#111827] tracking-tight uppercase pt-2">
                     Certificate of Completion
                   </h2>
                   <p className="text-xs sm:text-sm text-slate-500 font-semibold uppercase tracking-widest">
@@ -257,7 +257,7 @@ function VerifyCertificateContent() {
                 {/* Recipient */}
                 <div className="space-y-2 py-2">
                   <p className="text-xs sm:text-sm text-slate-500 italic">This is proudly awarded to</p>
-                  <div className="font-display font-black text-2xl sm:text-4xl text-[#111827] underline decoration-[#FACC15] decoration-4 underline-offset-8">
+                  <div className="font-display font-black text-xl sm:text-4xl text-[#111827] underline decoration-[#FACC15] decoration-4 underline-offset-8">
                     {currentCert.studentName}
                   </div>
                 </div>

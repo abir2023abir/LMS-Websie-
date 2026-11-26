@@ -21,9 +21,9 @@ export default function ContactPage({ searchParams }: { searchParams?: Record<st
     <div className="min-h-screen bg-white text-[#111827] selection:bg-[#FACC15] selection:text-[#111827]">
       <FloatingNavbar />
 
-      <section className="bg-gradient-to-b from-[#FACC15] to-[#EAB308] pt-28 lg:pt-32 pb-12">
+      <section className="bg-gradient-to-b from-[#FACC15] to-[#EAB308] pt-28 lg:pt-32 pb-6 sm:pb-12">
         <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
-          <h1 className="font-display font-extrabold text-4xl sm:text-5xl tracking-tight">Contact us</h1>
+          <h1 className="font-display font-extrabold text-[1.75rem] sm:text-5xl tracking-tight">Contact us</h1>
           <p className="mt-2 max-w-lg text-sm sm:text-base font-medium text-[#111827]/80">
             {hasContactDetails ? 'Reach us using the details below, or book a time with our team.' : 'Book a time below and our team will get back to you.'}
           </p>
@@ -31,7 +31,7 @@ export default function ContactPage({ searchParams }: { searchParams?: Record<st
       </section>
 
       {(hasContactDetails || socialLinks.length > 0 || contactInfo.mapEmbed) && (
-      <section className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-12 grid grid-cols-1 lg:grid-cols-12 gap-6">
+      <section className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-6 grid grid-cols-1 lg:grid-cols-12 gap-4 sm:py-12 sm:gap-6">
         <div className={contactInfo.mapEmbed ? 'lg:col-span-5 space-y-3' : 'lg:col-span-12 grid sm:grid-cols-2 gap-3'}>
           {contactInfo.phoneDisplay && (
           <a href={`tel:${contactInfo.phoneTel}`} className="flex items-center gap-3 rounded-2xl border border-slate-200 p-4 hover:border-[#FACC15]">

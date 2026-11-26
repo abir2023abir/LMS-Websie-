@@ -83,38 +83,38 @@ export default function CoursesCatalogPage() {
       <FloatingNavbar />
 
       {/* ── PART A: LIVE PROGRAMMES & ORIENTATION (client layout) ── */}
-      <div className="pt-20">
+      <div className="pt-24 md:pt-20">
         <LiveProgrammes />
       </div>
 
       {/* ── PART B: FEATURED COURSES (client layout: "» EXPLORE OUR COURSES") ── */}
-      <section className="relative bg-gradient-to-b from-[#FACC15] via-[#FACC15] to-[#EAB308] pt-14 pb-14 px-4 sm:px-6 lg:px-8 overflow-hidden">
-        <div className="max-w-3xl mx-auto space-y-5 text-center relative z-10">
+      <section className="relative bg-gradient-to-b from-[#FACC15] via-[#FACC15] to-[#EAB308] py-8 px-4 md:py-14 sm:px-6 lg:px-8 overflow-hidden">
+        <div className="max-w-3xl mx-auto space-y-3 text-center relative z-10 md:space-y-5">
           <div className="inline-flex items-center gap-2 bg-[#111827] text-white rounded-full px-3.5 py-1.5 border border-black/20 shadow-md">
             <div className="bg-[#FACC15] text-[#111827] p-1 rounded-full flex items-center justify-center">
               <ChevronsRight className="w-3.5 h-3.5" />
             </div>
             <span className="text-xs font-bold tracking-wide">EXPLORE OUR COURSES</span>
           </div>
-          <h1 className="font-display font-extrabold text-3xl sm:text-5xl text-[#111827] leading-[1.1] tracking-tight">
+          <h1 className="font-display font-extrabold text-2xl sm:text-5xl text-[#111827] leading-[1.1] tracking-tight">
             Find the Right Course for Your Next Step
           </h1>
-          <p className="text-sm sm:text-base text-[#111827]/80 font-medium leading-relaxed max-w-2xl mx-auto">
+          <p className="text-[13px] sm:text-base text-[#111827]/80 font-medium leading-relaxed max-w-2xl mx-auto">
             Explore structured learning programmes designed to build knowledge, develop practical skills, and support your learning goals.
           </p>
         </div>
       </section>
 
-      <main className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-12 w-full flex-1 space-y-10">
+      <main className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-6 w-full flex-1 space-y-5 md:py-12 md:space-y-10">
         {/* Category buttons, shown openly (no panel around them) */}
-        <div className="flex flex-wrap items-center justify-center gap-2" role="group" aria-label="Course categories">
+        <div className="flex flex-wrap items-center justify-center gap-1 md:gap-2" role="group" aria-label="Course categories">
           {categoryNames.map((cat) => (
             <button
               key={cat}
               type="button"
               onClick={() => setSelectedCategory(cat)}
               aria-pressed={selectedCategory === cat}
-              className={`px-5 py-2.5 rounded-full text-xs sm:text-sm font-bold transition-all whitespace-nowrap ${
+              className={`min-h-10 px-2 rounded-full text-[11px] sm:text-sm font-bold md:min-h-0 md:px-5 md:py-2.5 transition-all whitespace-nowrap ${
                 selectedCategory === cat
                   ? 'bg-[#111827] text-[#FACC15] shadow-lg'
                   : 'bg-white hover:bg-slate-100 text-slate-700 border border-slate-200'
@@ -141,7 +141,7 @@ export default function CoursesCatalogPage() {
             </button>
           </div>
         ) : (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 sm:gap-8">
+          <div className="grid grid-cols-2 gap-2.5 md:gap-8 lg:grid-cols-3">
             {filteredCourses.map((course) => {
               const price = priceOf(course);
               return (
@@ -151,7 +151,7 @@ export default function CoursesCatalogPage() {
                   animate={{ opacity: 1, y: 0 }}
                   transition={{ duration: 0.3 }}
                   whileHover={{ y: -5 }}
-                  className="bg-white rounded-3xl border border-slate-200/80 hover:border-[#FACC15] overflow-hidden flex flex-col transition-all duration-300 shadow-sm hover:shadow-xl group"
+                  className="bg-white rounded-2xl border border-slate-200/80 hover:border-[#FACC15] overflow-hidden flex flex-col md:rounded-3xl transition-all duration-300 shadow-sm hover:shadow-xl group"
                 >
                   <div className="relative aspect-[16/10] bg-slate-100 overflow-hidden">
                     <Image
@@ -161,13 +161,13 @@ export default function CoursesCatalogPage() {
                       unoptimized={!course.thumbnail.startsWith('https://images.unsplash.com/')}
                       className="object-cover group-hover:scale-105 transition-transform duration-500"
                     />
-                    <span className="absolute top-3.5 left-3.5 bg-[#111827]/90 text-[#FACC15] text-[10px] font-extrabold uppercase tracking-wide px-3 py-1 rounded-full backdrop-blur-md shadow">
+                    <span className="absolute left-1.5 top-1.5 bg-[#111827]/90 text-[#FACC15] text-[9px] font-extrabold uppercase tracking-wide px-2 py-0.5 md:left-3.5 md:top-3.5 md:px-3 md:py-1 md:text-[10px] rounded-full backdrop-blur-md shadow">
                       {course.category}
                     </span>
                   </div>
 
-                  <div className="p-6 flex-1 flex flex-col gap-3">
-                    <div className="flex items-center justify-between text-xs text-slate-500 font-medium">
+                  <div className="p-2.5 flex-1 flex flex-col gap-1.5 md:p-6 md:gap-3">
+                    <div className="flex flex-wrap items-center justify-between gap-1 text-[10px] text-slate-500 font-medium md:text-xs">
                       <span className="flex items-center gap-1.5">
                         {course.duration && (<><Clock className="w-3.5 h-3.5 text-amber-500" />{course.duration}</>)}
                       </span>
@@ -178,25 +178,25 @@ export default function CoursesCatalogPage() {
                     </div>
 
                     <Link href={`/courses/${course.id}`}>
-                      <h3 className="font-display font-bold text-[#111827] text-base sm:text-lg leading-snug line-clamp-2 group-hover:text-amber-600 transition-colors">
+                      <h3 className="font-display font-bold text-[#111827] text-[13px] md:text-lg leading-snug line-clamp-2 group-hover:text-amber-600 transition-colors">
                         {course.title}
                       </h3>
                     </Link>
 
-                    <p className="text-xs text-slate-600 line-clamp-3 leading-relaxed">{course.description}</p>
+                    <p className="text-xs text-slate-600 line-clamp-3 leading-relaxed max-md:hidden">{course.description}</p>
 
-                    <div className="mt-auto pt-4 border-t border-slate-100 flex items-center justify-between gap-3">
+                    <div className="mt-auto pt-2 border-t border-slate-100 flex flex-col items-stretch gap-1.5 md:flex-row md:items-center md:justify-between md:gap-3 md:pt-4">
                       {price === 0 ? (
-                        <span className="font-display font-extrabold text-2xl text-emerald-600">Free</span>
+                        <span className="font-display font-extrabold text-base text-emerald-600 md:text-2xl">Free</span>
                       ) : (
-                        <span className="font-display font-extrabold text-2xl text-[#111827]">{takaFromUsd(price)}</span>
+                        <span className="font-display font-extrabold text-base text-[#111827] md:text-2xl">{takaFromUsd(price)}</span>
                       )}
                       <Link
                         href={`/courses/${course.id}`}
-                        className="flex items-center gap-2 bg-[#FACC15] hover:bg-[#eab308] text-[#111827] rounded-full pl-4 pr-1 py-1.5 text-xs font-extrabold transition-all shadow-md shadow-[#FACC15]/20"
+                        className="flex items-center justify-center gap-2 bg-[#FACC15] hover:bg-[#eab308] text-[#111827] rounded-full px-2 py-1.5 text-[11px] font-extrabold md:justify-start md:pl-4 md:pr-1 md:text-xs transition-all shadow-md shadow-[#FACC15]/20"
                       >
                         <span>View Course</span>
-                        <span className="w-6 h-6 rounded-full bg-[#111827] flex items-center justify-center">
+                        <span className="hidden w-6 h-6 rounded-full bg-[#111827] items-center justify-center md:flex">
                           <ArrowRight className="w-3.5 h-3.5 text-[#FACC15]" />
                         </span>
                       </Link>

@@ -5,7 +5,7 @@ import About from '@/components/landing/About';
 import SuccessStories from '@/components/landing/SuccessStories';
 import ServiceSection from '@/components/landing/ServiceSection';
 import LatestFromLms from '@/components/landing/LatestFromLms';
-import BlogAndContact from '@/components/landing/BlogAndContact';
+import ContactCta from '@/components/landing/ContactCta';
 
 const CoursesSection = lazy(() => import('@/components/landing/CoursesSection'));
 const Testimonials = lazy(() => import('@/components/landing/Testimonials'));
@@ -25,7 +25,7 @@ export default function HomePage() {
       <ServiceSection />
       <Testimonials />
       <LatestFromLms />
-      <BlogAndContact />
+      <ContactCta />
       <Footer />
     </main>
   );

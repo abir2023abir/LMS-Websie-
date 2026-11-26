@@ -176,7 +176,7 @@ export default function CourseMentorsPanel({
 
                 {history.length > 0 && (
                   <div>
-                    <button type="button" onClick={() => setOpenHistory(openHistory === course.id ? null : course.id)} className="flex items-center gap-1.5 text-xs font-semibold text-slate-500 hover:text-slate-800">
+                    <button type="button" onClick={() => setOpenHistory(openHistory === course.id ? null : course.id)} className="flex min-h-10 items-center gap-1.5 text-xs font-semibold text-slate-500 hover:text-slate-800 md:min-h-0">
                       <History className="h-3.5 w-3.5" />History ({history.length})
                       <ChevronDown className={`h-3.5 w-3.5 transition-transform ${openHistory === course.id ? 'rotate-180' : ''}`} />
                     </button>

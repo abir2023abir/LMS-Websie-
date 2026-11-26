@@ -104,9 +104,9 @@ export default function ClassroomPreviewPage() {
   return (
     <div className="flex min-h-screen flex-col justify-between bg-slate-50 text-[#111827]">
       <FloatingNavbar />
-      <section className="bg-gradient-to-b from-[#FACC15] via-[#FACC15] to-[#EAB308] px-4 pb-10 pt-32 sm:px-6 lg:px-8 lg:pt-36">
-        <div className="mx-auto max-w-7xl space-y-4">
-          <Link href={coursePage} className="inline-flex items-center gap-2 rounded-full bg-black/5 px-3 py-1.5 text-xs font-extrabold text-[#111827]/80 hover:text-[#111827]">
+      <section className="bg-gradient-to-b from-[#FACC15] via-[#FACC15] to-[#EAB308] px-4 pb-6 pt-28 sm:px-6 sm:pb-10 sm:pt-32 lg:px-8 lg:pt-36">
+        <div className="mx-auto max-w-7xl space-y-3 sm:space-y-4">
+          <Link href={coursePage} className="inline-flex min-h-10 items-center gap-2 rounded-full bg-black/5 px-4 py-1.5 text-xs font-extrabold md:min-h-0 md:px-3 text-[#111827]/80 hover:text-[#111827]">
             <ArrowLeft className="h-4 w-4" />Back to Course
           </Link>
           <p className="text-xs font-extrabold uppercase tracking-[0.18em]">Classroom Preview</p>
@@ -114,7 +114,7 @@ export default function ClassroomPreviewPage() {
         </div>
       </section>
 
-      <main className="mx-auto w-full max-w-7xl flex-1 space-y-6 px-4 py-10 sm:px-6 lg:px-8">
+      <main className="mx-auto w-full max-w-7xl flex-1 space-y-4 px-4 py-5 sm:space-y-6 sm:px-6 sm:py-10 lg:px-8">
         {error ? (
           <div className="space-y-4 py-16 text-center">
             <p role="alert" className="text-sm font-semibold text-slate-700">{error}</p>
@@ -124,16 +124,16 @@ export default function ClassroomPreviewPage() {
           <p className="py-16 text-center text-sm text-slate-500">Loading preview…</p>
         ) : (
           <>
-            <nav aria-label="Classroom preview parts" className="flex flex-wrap gap-2">
+            <nav aria-label="Classroom preview parts" className="grid grid-cols-4 gap-1.5 sm:flex sm:flex-wrap sm:gap-2">
               {TABS.map(({ id, label, icon: Icon }) => (
                 <button key={id} type="button" onClick={() => setTab(id)} aria-current={tab === id ? 'page' : undefined}
-                  className={`flex min-h-10 shrink-0 items-center gap-2 whitespace-nowrap rounded-full px-4 text-xs font-bold transition-colors ${tab === id ? 'bg-[#FACC15] text-[#111827]' : 'bg-white text-slate-600 hover:text-[#111827]'}`}>
+                  className={`flex min-h-12 flex-col items-center justify-center gap-0.5 rounded-2xl px-0.5 text-center text-[10px] font-bold sm:min-h-10 sm:shrink-0 sm:flex-row sm:gap-2 sm:whitespace-nowrap sm:rounded-full sm:px-4 sm:text-xs transition-colors ${tab === id ? 'bg-[#FACC15] text-[#111827]' : 'bg-white text-slate-600 hover:text-[#111827]'}`}>
                   <Icon className="h-4 w-4" />{label}
                 </button>
               ))}
             </nav>
 
-            <div className="space-y-6 rounded-3xl border border-slate-200/80 bg-white p-5 shadow-sm sm:p-8">
+            <div className="space-y-4 rounded-3xl border border-slate-200/80 bg-white p-3.5 shadow-sm sm:space-y-6 sm:p-8">
               <div className="flex flex-wrap items-center justify-between gap-3">
                 <h2 className="font-display text-xl font-bold">{TABS.find((item) => item.id === tab)?.label}</h2>
                 <span className="rounded-full bg-emerald-50 px-3 py-1 text-xs font-bold text-emerald-700">Preview Available</span>
@@ -152,11 +152,11 @@ export default function ClassroomPreviewPage() {
                     </section>
                     <section className="space-y-3">
                       <h3 className="font-display text-base font-bold">Course Snapshot</h3>
-                      <dl className="grid grid-cols-2 gap-3 sm:grid-cols-4">
+                      <dl className="grid grid-cols-4 gap-1.5 sm:gap-3">
                         {[['Total Lessons', lessons], ['Assignments', data.assignments.length], ['Quizzes', data.quizzes.length], ['Exams', data.exams.length]].map(([label, value]) => (
-                          <div key={label} className="flex flex-col-reverse rounded-2xl border border-slate-200 p-4">
+                          <div key={label} className="flex flex-col-reverse items-center justify-end rounded-2xl border border-slate-200 px-1 py-2.5 text-center sm:items-start sm:p-4 sm:text-left">
                             <dd className="font-display text-2xl font-extrabold">{value}</dd>
-                            <dt className="text-xs font-semibold text-slate-500">{label}</dt>
+                            <dt className="text-[10px] font-semibold leading-tight text-slate-500 sm:text-xs">{label}</dt>
                           </div>
                         ))}
                       </dl>
@@ -164,9 +164,9 @@ export default function ClassroomPreviewPage() {
                     {data.course.outcomes.length > 0 && (
                       <section className="space-y-3">
                         <h3 className="font-display text-base font-bold">What You Will Learn</h3>
-                        <ul className="grid gap-3 sm:grid-cols-2">
+                        <ul className="grid grid-cols-2 gap-2 sm:gap-3">
                           {data.course.outcomes.map((item) => (
-                            <li key={item} className="flex items-start gap-2 rounded-2xl bg-slate-50 p-3 text-sm text-slate-700"><CheckCircle className="mt-0.5 h-4 w-4 shrink-0 text-amber-500" />{item}</li>
+                            <li key={item} className="flex items-start gap-1.5 rounded-2xl bg-slate-50 p-2.5 text-xs text-slate-700 sm:gap-2 sm:p-3 sm:text-sm"><CheckCircle className="mt-0.5 h-4 w-4 shrink-0 text-amber-500" />{item}</li>
                           ))}
                         </ul>
                       </section>
@@ -210,9 +210,9 @@ export default function ClassroomPreviewPage() {
               {tab === 'classroom' && (
                 <div className="space-y-4">
                   <p className="text-sm text-slate-600">After enrollment your classroom opens with these parts, one lesson after another.</p>
-                  <ul className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+                  <ul className="grid grid-cols-2 gap-2 sm:gap-3 lg:grid-cols-3">
                     {CLASSROOM_PARTS.map((part) => (
-                      <li key={part} className="flex items-center gap-3 rounded-2xl border border-slate-200 p-4 text-sm font-semibold"><Lock aria-hidden="true" className="h-4 w-4 shrink-0 text-slate-400" />{part}</li>
+                      <li key={part} className="flex items-center gap-2 rounded-2xl border border-slate-200 p-2.5 text-xs font-semibold sm:gap-3 sm:p-4 sm:text-sm"><Lock aria-hidden="true" className="h-4 w-4 shrink-0 text-slate-400" />{part}</li>
                     ))}
                   </ul>
                 </div>

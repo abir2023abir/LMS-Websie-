@@ -172,7 +172,7 @@ export default function HeroEditor() {
                 }}
                 className="block text-sm"
               />
-              <button type="button" onClick={() => setContent({ ...content, imageUrl: ORIGINAL_HERO })} className="text-xs font-bold text-slate-600 underline">
+              <button type="button" onClick={() => setContent({ ...content, imageUrl: ORIGINAL_HERO })} className="min-h-10 text-xs font-bold text-slate-600 underline md:min-h-0">
                 Use the original photo
               </button>
             </div>

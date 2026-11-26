@@ -571,8 +571,8 @@ export default function TeacherPanelPage() {
                     <label className="block text-xs font-bold text-slate-700 mb-1.5 uppercase tracking-wider">
                       Thumbnail Image
                     </label>
-                    <div className="flex items-center gap-3">
-                      <label className="flex items-center gap-2 px-4 py-2.5 rounded-xl bg-slate-50 border border-slate-200 hover:bg-slate-100 text-xs font-bold text-slate-600 cursor-pointer transition-colors">
+                    <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
+                      <label className="flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl bg-slate-50 border border-slate-200 hover:bg-slate-100 text-xs font-bold text-slate-600 cursor-pointer transition-colors">
                         <ImageIcon className="w-4 h-4 text-amber-600" />
                         Choose File
                         <input
@@ -590,7 +590,7 @@ export default function TeacherPanelPage() {
                           setThumbnailPreview(e.target.value);
                         }}
                         placeholder="Or paste Image URL…"
-                        className="flex-1 bg-slate-50 border border-slate-200 rounded-xl px-3 py-2.5 text-xs text-[#111827] placeholder-slate-400 focus:outline-none focus:border-[#111827] transition-colors"
+                        className="w-full min-w-0 sm:flex-1 bg-slate-50 border border-slate-200 rounded-xl px-3 py-2.5 text-xs text-[#111827] placeholder-slate-400 focus:outline-none focus:border-[#111827] transition-colors"
                       />
                     </div>
                     {thumbnailPreview && (
@@ -644,7 +644,7 @@ export default function TeacherPanelPage() {
                       syllabus.
                     </div>
                   ) : (
-                    <div className="space-y-4 max-h-80 overflow-y-auto pr-2">
+                    <div className="space-y-4 sm:max-h-80 sm:overflow-y-auto sm:pr-2">
                       {modules.map((mod, modIdx) => (
                         <div
                           key={mod.id}
@@ -657,7 +657,7 @@ export default function TeacherPanelPage() {
                               value={mod.title}
                               onChange={(e) => updateModuleTitle(mod.id, e.target.value)}
                               placeholder={`Module ${modIdx + 1} Title`}
-                              className="font-bold text-sm bg-white border border-slate-200 rounded-lg px-3 py-1.5 text-[#111827] flex-1 focus:outline-none focus:border-[#111827]"
+                              className="min-w-0 font-bold text-sm bg-white border border-slate-200 rounded-lg px-3 py-1.5 text-[#111827] flex-1 focus:outline-none focus:border-[#111827]"
                             />
                             <button
                               type="button"
@@ -670,7 +670,7 @@ export default function TeacherPanelPage() {
                           </div>
 
                           {/* Lessons inside Module */}
-                          <div className="pl-4 space-y-2 border-l-2 border-[#FACC15]">
+                          <div className="pl-2 sm:pl-4 space-y-2 border-l-2 border-[#FACC15]">
                             {mod.lessons.map((les, lesIdx) => (
                               <div
                                 key={les.id}
@@ -684,12 +684,12 @@ export default function TeacherPanelPage() {
                                     updateLesson(mod.id, les.id, 'title', e.target.value)
                                   }
                                   placeholder={`Lesson ${lesIdx + 1} Title`}
-                                  className="bg-slate-50 border border-slate-200 rounded-lg px-2.5 py-1.5 text-[#111827] flex-1 focus:outline-none focus:border-[#111827]"
+                                  className="min-w-0 basis-32 bg-slate-50 border border-slate-200 rounded-lg px-2.5 py-1.5 text-[#111827] flex-1 focus:outline-none focus:border-[#111827]"
                                 />
                                 <button
                                   type="button"
                                   onClick={() => removeLesson(mod.id, les.id)}
-                                  className="text-slate-400 hover:text-rose-500 p-1 self-end sm:self-auto"
+                                  className="shrink-0 text-slate-400 hover:text-rose-500 p-1"
                                 >
                                   <X className="w-3.5 h-3.5" />
                                 </button>

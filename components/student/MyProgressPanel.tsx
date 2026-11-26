@@ -41,7 +41,7 @@ export default function MyProgressPanel() {
           <span className="flex h-16 w-16 items-center justify-center rounded-2xl bg-[#FACC15] text-[#111827] shadow-lg shadow-[#FACC15]/30">
             {level.number >= 5 ? <Crown className="h-8 w-8" /> : <Award className="h-8 w-8" />}
           </span>
-          <div className="min-w-0 flex-1">
+          <div className="min-w-[11rem] flex-1">
             <p className="text-xs font-bold uppercase tracking-widest text-[#FACC15]">Level {level.number}</p>
             <p className="font-display text-2xl font-extrabold">{level.name}</p>
             <div className="mt-2 h-2 overflow-hidden rounded-full bg-white/10"><div className="h-full rounded-full bg-[#FACC15] transition-all duration-700" style={{ width: `${Math.min(100, toNext)}%` }} /></div>
@@ -55,9 +55,9 @@ export default function MyProgressPanel() {
       </div>
 
       {/* Per course */}
-      <div className="grid gap-3 md:grid-cols-2">
+      <div className="grid grid-cols-1 gap-3 md:grid-cols-2">
         {data.courses.map((course) => (
-          <div key={course.courseId} className="flex items-center gap-4 rounded-3xl border border-slate-200 bg-white p-4 shadow-sm">
+          <div key={course.courseId} className="flex flex-wrap items-center gap-4 rounded-3xl border border-slate-200 bg-white p-4 shadow-sm sm:flex-nowrap">
             <Ring percent={course.percent} />
             <div className="min-w-0 flex-1">
               <p className="truncate font-bold text-[#111827]">{course.courseTitle}</p>
@@ -68,9 +68,9 @@ export default function MyProgressPanel() {
                 <p className="mt-1 truncate text-xs text-slate-600">Next: <strong>{course.nextStep}</strong>{course.currentLesson ? ` · ${course.currentLesson}` : ''}</p>
               )}
             </div>
-            <div className="flex shrink-0 flex-col items-end gap-2">
+            <div className="flex w-full shrink-0 items-center justify-between gap-2 sm:w-auto sm:flex-col sm:items-end sm:justify-center">
               {course.rank && <span className="flex items-center gap-1 rounded-full bg-[#FEF9C3] px-2.5 py-1 text-xs font-extrabold text-[#A16207]"><Trophy className="h-3.5 w-3.5" />#{course.rank}<span className="font-semibold text-[#A16207]/70">/{course.rankTotal}</span></span>}
-              <Link href={`/student/learn/${encodeURIComponent(course.courseId)}`} className="flex items-center gap-1 rounded-xl bg-[#111827] px-3 py-1.5 text-xs font-bold text-white">{course.percent === 100 ? 'Review' : 'Continue'}<ArrowRight className="h-3.5 w-3.5" /></Link>
+              <Link href={`/student/learn/${encodeURIComponent(course.courseId)}`} className="ml-auto flex items-center justify-center gap-1 rounded-xl bg-[#111827] px-4 py-1.5 text-xs font-bold text-white sm:ml-0">{course.percent === 100 ? 'Review' : 'Continue'}<ArrowRight className="h-3.5 w-3.5" /></Link>
             </div>
           </div>
         ))}

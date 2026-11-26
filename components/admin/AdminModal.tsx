@@ -22,7 +22,7 @@ export default function AdminModal({
       >
         <div className="flex items-center justify-between gap-3 mb-4">
           <h3 className="font-display font-extrabold text-lg text-slate-900">{title}</h3>
-          <button type="button" onClick={onClose} className="text-xs font-bold text-slate-500 hover:text-slate-900">
+          <button type="button" onClick={onClose} className="min-h-10 shrink-0 px-2 text-xs font-bold text-slate-500 hover:text-slate-900 md:min-h-0 md:px-0">
             Close
           </button>
         </div>

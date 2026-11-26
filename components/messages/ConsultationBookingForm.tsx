@@ -93,34 +93,34 @@ export default function ConsultationBookingForm({ initialService = '', initialBi
 
   if (sent) return <section id={sectionId} className="scroll-mt-28 bg-[#111827] px-4 py-16 text-white sm:px-6 sm:py-20"><div className="mx-auto max-w-5xl rounded-3xl bg-white p-8 text-center text-slate-800 shadow-2xl sm:p-12"><CheckCircle2 className="mx-auto h-14 w-14 text-emerald-600" /><h2 className="mt-4 font-display text-2xl font-extrabold">{content.successTitle}</h2><p className="mx-auto mt-2 max-w-xl text-sm leading-6 text-slate-600">{content.successBody.replace('{date}', dateLabel).replace('{time}', selectedTime)}</p><p className="mt-3 text-xs text-slate-500">{content.noInvitationNote}</p></div></section>;
 
-  return <section id={sectionId} className="relative scroll-mt-28 overflow-hidden bg-[#111827] px-4 py-14 text-white sm:px-6 sm:py-20">
+  return <section id={sectionId} className="relative scroll-mt-28 overflow-hidden bg-[#111827] px-3 py-6 text-white sm:px-6 sm:py-20">
     <div className="relative z-10 mx-auto max-w-6xl">
-      <header className="mx-auto mb-8 max-w-3xl text-center sm:mb-10">
+      <header className="mx-auto mb-4 max-w-3xl text-center sm:mb-10">
         <span className="inline-flex items-center gap-2 rounded-full border border-white/10 bg-white/10 px-4 py-2 text-xs font-bold uppercase tracking-wider text-[#FACC15]">{content.eyebrow}</span>
-        <h2 className="mt-4 font-display text-3xl font-extrabold tracking-tight sm:text-4xl">{content.headline}</h2>
-        <p className="mx-auto mt-3 max-w-2xl text-sm leading-6 text-slate-300 sm:text-base">{content.description}</p>
+        <h2 className="mt-3 font-display text-2xl font-extrabold tracking-tight sm:mt-4 sm:text-4xl">{content.headline}</h2>
+        <p className="mx-auto mt-2 max-w-2xl text-[13px] leading-5 text-slate-300 sm:mt-3 sm:text-base sm:leading-6">{content.description}</p>
       </header>
 
       <div className="overflow-hidden rounded-3xl border border-white/10 bg-white text-slate-800 shadow-2xl">
         <div className="grid min-h-[460px] lg:grid-cols-[1fr_1.08fr]">
-          <div className="bg-[#0f5dbb] p-5 text-white sm:p-7 lg:p-8">
-            <div className="flex items-start justify-between gap-4"><div><div className="flex h-10 w-10 items-center justify-center rounded-full bg-white text-[#0f5dbb]"><CalendarDays className="h-5 w-5" /></div><h3 className="mt-4 font-display text-xl font-bold">{content.meetingTitle}</h3><p className="mt-1 text-sm text-blue-100">{content.calendarHint}</p></div><div className="shrink-0 rounded-full bg-white/15 px-3 py-1.5 text-xs font-semibold">{content.duration}</div></div>
-            <div className="mt-7 flex items-center justify-between"><h4 className="font-semibold">{month.toLocaleDateString('en-US', { month: 'long', year: 'numeric' })}</h4><div className="flex gap-2"><button type="button" aria-label="Previous month" disabled={month.getMonth() === today.getMonth() && month.getFullYear() === today.getFullYear()} onClick={() => setMonth(new Date(month.getFullYear(), month.getMonth() - 1, 1))} className="rounded-full p-2 hover:bg-white/15 disabled:opacity-30"><ChevronLeft size={18} /></button><button type="button" aria-label="Next month" onClick={() => setMonth(new Date(month.getFullYear(), month.getMonth() + 1, 1))} className="rounded-full p-2 hover:bg-white/15"><ChevronRight size={18} /></button></div></div>
-            <div className="mt-3 grid grid-cols-7 gap-1 text-center text-[11px] font-semibold uppercase text-blue-100">{content.weekdayLabels.map((day) => <span key={day} className="py-2">{day}</span>)}</div>
+          <div className="bg-[#0f5dbb] p-3 text-white sm:p-7 lg:p-8">
+            <div className="flex items-start justify-between gap-3 sm:gap-4"><div><div className="hidden h-10 w-10 items-center justify-center rounded-full bg-white text-[#0f5dbb] sm:flex"><CalendarDays className="h-5 w-5" /></div><h3 className="font-display text-base font-bold leading-snug sm:mt-4 sm:text-xl">{content.meetingTitle}</h3><p className="mt-1 text-xs text-blue-100 sm:text-sm">{content.calendarHint}</p></div><div className="shrink-0 rounded-full bg-white/15 px-3 py-1.5 text-xs font-semibold">{content.duration}</div></div>
+            <div className="mt-3 flex items-center justify-between sm:mt-7"><h4 className="font-semibold">{month.toLocaleDateString('en-US', { month: 'long', year: 'numeric' })}</h4><div className="flex gap-2"><button type="button" aria-label="Previous month" disabled={month.getMonth() === today.getMonth() && month.getFullYear() === today.getFullYear()} onClick={() => setMonth(new Date(month.getFullYear(), month.getMonth() - 1, 1))} className="rounded-full p-2 hover:bg-white/15 disabled:opacity-30"><ChevronLeft size={18} /></button><button type="button" aria-label="Next month" onClick={() => setMonth(new Date(month.getFullYear(), month.getMonth() + 1, 1))} className="rounded-full p-2 hover:bg-white/15"><ChevronRight size={18} /></button></div></div>
+            <div className="mt-1 grid grid-cols-7 gap-1 text-center text-[11px] font-semibold uppercase text-blue-100 sm:mt-3">{content.weekdayLabels.map((day) => <span key={day} className="py-1 sm:py-2">{day}</span>)}</div>
             <div className="grid grid-cols-7 gap-1 text-center">{days.map((day, index) => {
               if (!day) return <span key={`empty-${index}`} />;
               const key = calendarKey(day);
               const disabled = day < today || !isWeekday(day) || day > new Date(today.getFullYear(), today.getMonth(), today.getDate() + 45);
               return <button key={key} type="button" disabled={disabled} aria-pressed={selectedDate === key} onClick={() => { setSelectedDate(key); setSelectedTime(''); }} className={`mx-auto flex h-9 w-9 items-center justify-center rounded-full text-sm transition ${selectedDate === key ? 'bg-white font-bold text-[#0f5dbb]' : disabled ? 'cursor-not-allowed text-blue-200/40' : 'text-white hover:bg-white/20'}`}>{day.getDate()}</button>;
             })}</div>
-            <div className="mt-6 space-y-2 border-t border-white/15 pt-4 text-xs text-blue-100"><div className="flex items-center gap-2"><MapPin size={15} /> {content.location}</div><div className="flex items-center gap-2"><Clock3 size={15} /> {content.timezone}</div></div>
+            <div className="mt-3 space-y-2 border-t border-white/15 pt-3 text-xs text-blue-100 sm:mt-6 sm:pt-4"><div className="flex items-center gap-2"><MapPin size={15} /> {content.location}</div><div className="flex items-center gap-2"><Clock3 size={15} /> {content.timezone}</div></div>
           </div>
 
-          <div className="p-5 sm:p-7 lg:p-8">
+          <div className="p-3.5 sm:p-7 lg:p-8">
             {step === 1 ? <>
               <div className="flex items-center gap-2 text-sm font-bold text-slate-800"><Clock3 size={18} className="text-sky-600" /> {content.availableTimesLabel} <span className="font-normal text-slate-500">· {dateLabel}</span></div>
               <p className="mt-2 text-xs leading-5 text-slate-500">{content.pendingNote}</p>
-              <div className="mt-4 grid max-h-[340px] gap-2 overflow-y-auto pr-1 sm:grid-cols-2">
+              <div className="mt-4 grid max-h-[340px] grid-cols-2 gap-2 overflow-y-auto pr-1">
                 {selectedDate ? content.availableTimes.map((slot) => {
                   const disabled = bookedTimes.includes(slot) || hasTimePassed(selectedDate, slot);
                   return <button key={slot} type="button" disabled={disabled} aria-pressed={selectedTime === slot} onClick={() => setSelectedTime(slot)} className={`min-h-11 rounded-lg border px-3 py-2.5 text-sm font-semibold transition ${selectedTime === slot ? 'border-sky-700 bg-sky-50 text-sky-800 ring-1 ring-sky-600' : disabled ? 'cursor-not-allowed border-slate-100 bg-slate-50 text-slate-300 line-through' : 'border-slate-200 text-sky-700 hover:border-sky-600 hover:bg-sky-50'}`}>{slot}</button>;
