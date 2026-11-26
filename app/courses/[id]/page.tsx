@@ -11,6 +11,7 @@ import InstructorAvatar from '@/components/courses/InstructorAvatar';
 import CheckoutModal from '@/components/checkout/CheckoutModal';
 import { getCourseById } from '@/lib/course-client';
 import { getFallbackCourseData } from '@/lib/progress';
+import { featuredCourses } from '@/lib/data';
 import { applyCourseEdit, loadCourseEdits } from '@/lib/course-edits-client';
 import { takaFromUsd } from '@/lib/utils';
 import { coursePoints } from '@/lib/course-overview';
@@ -70,13 +71,13 @@ export default function CourseDetailsPage() {
       if (!courseId) return;
 
       try {
-        const timeout = new Promise<null>((resolve) => setTimeout(() => resolve(null), 3000));
-        const [found, edits] = await Promise.all([
-          Promise.race([getCourseById(courseId).catch(() => null), timeout]),
-          loadCourseEdits(),
-        ]);
-        const fetched = found?.modules ? found : getFallbackCourseData(courseId);
+        // Wait for the saved course, however slow the server is. Only the built-in
+        // courses have a stand-in; any other unknown id shows "Course Not Found".
+        const [found, edits] = await Promise.all([getCourseById(courseId), loadCourseEdits()]);
+        const builtIn = featuredCourses.some((item) => item.id === courseId || item.slug === courseId);
+        const fetched = found?.modules ? found : builtIn ? getFallbackCourseData(courseId) : found;
 
+        setCourse(null);
         if (fetched) {
           const edit = edits[courseId];
           const priced = applyCourseEdit(fetched, edit);

@@ -169,7 +169,7 @@ export default function LessonSteps({
               <div className="flex items-center gap-3">
                 {live.attended && <span className="rounded-full bg-emerald-100 px-2.5 py-0.5 text-[11px] font-bold text-emerald-800">Attended</span>}
                 {live.joinUrl
-                  ? <button type="button" disabled={!live.joinable} onClick={() => join(live)} className="rounded-xl bg-[#111827] px-4 py-2 text-xs font-bold text-white disabled:opacity-40">{live.joinable ? 'Join class' : 'Opens 15 min before'}</button>
+                  ? <button type="button" disabled={!live.joinable} onClick={() => join(live)} className="rounded-xl bg-[#111827] px-4 py-2 text-xs font-bold text-white disabled:opacity-40">{live.joinable ? 'Join class' : Date.now() > Date.parse(live.startsAt) + live.durationMinutes * 60000 ? 'Class ended' : 'Opens 15 min before'}</button>
                   : <span className="text-xs text-slate-500">Link coming soon</span>}
                 {live.recordingUrl && <a href={live.recordingUrl} target="_blank" rel="noopener noreferrer" className="text-xs font-bold text-sky-700 hover:underline">Watch recording</a>}
               </div>

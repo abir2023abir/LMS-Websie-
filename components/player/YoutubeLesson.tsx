@@ -36,16 +36,26 @@ export default function YoutubeLesson({
   autoStart?: boolean;
 }) {
   const host = useRef<HTMLDivElement>(null);
+  // The page passes a new function on every render; reading it from a ref keeps the same player running.
+  const report = useRef(onProgress);
+  report.current = onProgress;
 
   useEffect(() => {
     let player: Player | undefined;
     let timer = 0;
     let cancelled = false;
+    const box = host.current;
 
     const start = () => {
-      if (cancelled || !host.current || !(window as any).YT?.Player) return;
-      player = new (window as any).YT.Player(host.current, {
+      if (cancelled || !box || !(window as any).YT?.Player) return;
+      // YouTube replaces the element it is given with its iframe, so each video gets a fresh one.
+      const mount = document.createElement('div');
+      mount.className = 'w-full h-full';
+      box.replaceChildren(mount);
+      player = new (window as any).YT.Player(mount, {
         videoId: id,
+        width: '100%',
+        height: '100%',
         playerVars: { rel: 0, modestbranding: 1, autoplay: autoStart ? 1 : 0 },
         events: {
           onStateChange: (event: { data: number }) => {
@@ -54,7 +64,7 @@ export default function YoutubeLesson({
               timer = window.setInterval(() => {
                 const duration = player?.getDuration?.() || 0;
                 const current = player?.getCurrentTime?.() || 0;
-                if (duration && onProgress) onProgress(Math.round((current / duration) * 100));
+                if (duration) report.current?.(Math.round((current / duration) * 100));
               }, 1000);
             }
           },
@@ -82,8 +92,9 @@ export default function YoutubeLesson({
       cancelled = true;
       window.clearInterval(timer);
       player?.destroy?.();
+      box?.replaceChildren();
     };
-  }, [id, onProgress]); // eslint-disable-line react-hooks/exhaustive-deps
+  }, [id]); // eslint-disable-line react-hooks/exhaustive-deps
 
   return <div ref={host} className="w-full h-full" title={title || 'Lesson video'} />;
 }

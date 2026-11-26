@@ -16,6 +16,7 @@ import TopCoursesList from './TopCoursesList';
 import OverviewWelcome from './OverviewWelcome';
 import InboxButton from '@/components/inbox/InboxButton';
 import MyPhoto from '@/components/admin/MyPhoto';
+import DemoCoursesButtons from '@/components/admin/DemoCoursesButtons';
 import { takaFromUsd } from '@/lib/utils';
 import BrandLogo from '@/components/brand/BrandLogo';
 
@@ -323,14 +324,17 @@ export default function AdminDashboard({
                 <h2 className="font-display font-extrabold text-xl text-slate-900">Manage Courses ({filteredCourses.length})</h2>
                 <p className="text-xs text-slate-500">Press Manage on a course to work on its lessons, mentor, timeline, quizzes, assignments, exams and live classes in one place.</p>
               </div>
-              <button
-                type="button"
-                onClick={() => setAddingCourse(true)}
-                className="flex items-center gap-2 bg-[#FACC15] hover:bg-[#eab308] text-[#111827] font-bold text-xs px-4 py-2 rounded-full"
-              >
-                <Plus className="w-3.5 h-3.5" />
-                <span>New Course</span>
-              </button>
+              <div className="flex flex-wrap items-center gap-2">
+                {variant === 'admin' && <DemoCoursesButtons onChanged={() => { void mutate(); }} />}
+                <button
+                  type="button"
+                  onClick={() => setAddingCourse(true)}
+                  className="flex items-center gap-2 bg-[#FACC15] hover:bg-[#eab308] text-[#111827] font-bold text-xs px-4 py-2 rounded-full"
+                >
+                  <Plus className="w-3.5 h-3.5" />
+                  <span>New Course</span>
+                </button>
+              </div>
             </div>
 
             <div className="overflow-x-auto">
